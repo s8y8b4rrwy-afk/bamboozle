@@ -1,0 +1,5 @@
+{
+  "name": "Bamboozle",
+  "description": "A multiplayer bluffing game where players write lies to fool their friends, featuring a 3D narrator and unique avatars.",
+  "requestFramePermissions": []
+}
