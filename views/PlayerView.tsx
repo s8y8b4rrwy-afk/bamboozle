@@ -78,6 +78,18 @@ export const PlayerView: React.FC<PlayerViewProps> = ({ state, actions, playerId
       sfx.play('CLICK');
   };
 
+  const handleAvatarClick = () => {
+      if (actions.requestSync) {
+          actions.requestSync((success: boolean) => {
+              if (success) {
+                  sfx.play('JOIN'); 
+              } else {
+                  sfx.play('FAILURE'); // Cooldown
+              }
+          });
+      }
+  };
+
   // Determine avatar expression (local override vs server state)
   const currentExpression = myEmoteExpression || (me ? me.expression : 'NEUTRAL');
 
@@ -215,7 +227,7 @@ export const PlayerView: React.FC<PlayerViewProps> = ({ state, actions, playerId
                <div className="flex-1 flex flex-col items-center justify-center w-full max-w-md">
                    
                    {/* Clean Avatar Display (No Square Box) */}
-                   <div className="relative mb-6">
+                   <div className="relative mb-6 cursor-pointer" onClick={handleAvatarClick} title="Tap to Sync">
                         {amIHost && (
                             <div className="absolute -top-10 left-1/2 -translate-x-1/2 text-yellow-400 drop-shadow-lg flex flex-col items-center animate-bounce-subtle">
                                 <Crown size={32} fill="currentColor" />
@@ -291,7 +303,7 @@ export const PlayerView: React.FC<PlayerViewProps> = ({ state, actions, playerId
               <div className="flex-1 flex flex-col items-center justify-start pb-8 overflow-y-auto w-full relative px-4 pt-6">
                   
                   {/* Big Avatar for Audience */}
-                  <div className="mb-6 relative">
+                  <div className="mb-6 relative cursor-pointer" onClick={handleAvatarClick} title="Tap to Sync">
                       <div className="absolute inset-0 bg-blue-500 blur-2xl opacity-20 rounded-full animate-pulse" />
                       <Avatar seed={amAudience.avatarSeed} size={140} className="relative z-10 drop-shadow-2xl" expression={currentExpression || 'NEUTRAL'} />
                   </div>
@@ -427,7 +439,7 @@ export const PlayerView: React.FC<PlayerViewProps> = ({ state, actions, playerId
               <div className="flex-1 flex flex-col items-center justify-center space-y-6">
                   
                   {/* Clean Avatar Display */}
-                  <div className="relative">
+                  <div className="relative cursor-pointer" onClick={handleAvatarClick} title="Tap to Sync">
                       <Avatar seed={me.avatarSeed} size={140} expression={currentExpression} className="filter drop-shadow-2xl" />
                   </div>
                   

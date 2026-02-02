@@ -17,10 +17,30 @@ const generateRoomCode = () => {
   return result;
 };
 
+// Fisher-Yates Shuffle
+function shuffle<T>(array: T[]): T[] {
+  const arr = [...array];
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+const generateQuestionId = (str: string) => {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash;
+  }
+  return `q-${Math.abs(hash).toString(36)}`;
+};
+
 // Hydrate questions with runtime IDs
-const GAME_QUESTIONS: Question[] = RAW_QUESTIONS.map((q, idx) => ({
+const GAME_QUESTIONS: Question[] = RAW_QUESTIONS.map((q) => ({
     ...q,
-    id: `q-${idx}`
+    id: generateQuestionId(q.fact)
 }));
 
 const STORAGE_KEY = 'bamboozle_used_questions';
@@ -57,7 +77,14 @@ const INITIAL_STATE: GameState = {
 };
 
 export const useGameService = (role: 'HOST' | 'PLAYER' | 'AUDIENCE', playerName?: string) => {
-  const [playerId] = useState(() => generateId()); 
+  const [playerId] = useState(() => {
+    // Persist Player ID to allow reconnection on refresh
+    const stored = localStorage.getItem('bamboozle_player_id');
+    if (stored) return stored;
+    const newId = generateId();
+    localStorage.setItem('bamboozle_player_id', newId);
+    return newId;
+  });
 
   // Initialize state with persistence check for HOST
   const [state, setState] = useState<GameState>(() => {
@@ -86,6 +113,7 @@ export const useGameService = (role: 'HOST' | 'PLAYER' | 'AUDIENCE', playerName?
   const socketRef = useRef<Socket | null>(null);
   const timerRef = useRef<number | null>(null);
   const speechDedupRef = useRef<Record<string, number>>({});
+  const lastSyncRef = useRef<number>(0);
 
   useEffect(() => {
     stateRef.current = state;
@@ -174,6 +202,20 @@ export const useGameService = (role: 'HOST' | 'PLAYER' | 'AUDIENCE', playerName?
       socket.on('playerEvent', (event: GameEvent) => {
         processHostEvent(event);
       });
+    } else {
+        // Auto-reconnect logic for players/audience
+        const storedRoom = localStorage.getItem('bamboozle_room_code');
+        if (storedRoom) {
+            socket.emit('joinRoom', { roomCode: storedRoom, id: playerId }, (response: any) => {
+                if (response.success) {
+                    setState(response.state);
+                    console.log('Auto-reconnected to room:', storedRoom);
+                } else {
+                    // If room invalid, clear storage
+                    localStorage.removeItem('bamboozle_room_code');
+                }
+            });
+        }
     }
 
     // Listen for game state updates
@@ -610,7 +652,7 @@ export const useGameService = (role: 'HOST' | 'PLAYER' | 'AUDIENCE', playerName?
       }
 
       const availableCategories = Array.from(new Set(availableQuestions.map(q => q.category)));
-      const shuffledCategories = availableCategories.sort(() => Math.random() - 0.5);
+      const shuffledCategories = shuffle(availableCategories);
       const options = shuffledCategories.slice(0, 6);
       
       let candidateIds = Object.keys(state.players).filter(pid => !state.playersWhoPicked.includes(pid));
@@ -758,7 +800,7 @@ export const useGameService = (role: 'HOST' | 'PLAYER' | 'AUDIENCE', playerName?
         });
     });
 
-    state.roundAnswers = answers.sort(() => Math.random() - 0.5);
+    state.roundAnswers = shuffle(answers);
     
     const players = Object.values(state.players);
     const randomP = players.length > 0 ? players[Math.floor(Math.random() * players.length)].name : 'someone';
@@ -903,6 +945,7 @@ export const useGameService = (role: 'HOST' | 'PLAYER' | 'AUDIENCE', playerName?
     socketRef.current?.emit('joinRoom', { roomCode, id: playerId }, (response: any) => {
       if (response.success) {
         setState(response.state);
+        localStorage.setItem('bamboozle_room_code', roomCode); // Persist room code
         if (callback) callback(true);
       } else {
         if (callback) callback(false, response.error);
@@ -941,6 +984,27 @@ export const useGameService = (role: 'HOST' | 'PLAYER' | 'AUDIENCE', playerName?
   const sendRestart = () => dispatch({ type: 'RESTART_GAME', payload: null });
   const sendCategorySelection = (category: string) => dispatch({ type: 'SELECT_CATEGORY', payload: { category } });
   
+  const requestSync = (callback?: (success: boolean) => void) => {
+      const now = Date.now();
+      if (now - lastSyncRef.current < 30000) {
+          console.log('Sync cooldown active');
+          if (callback) callback(false); 
+          return;
+      }
+      
+      if (!state.roomCode) return;
+
+      lastSyncRef.current = now;
+      socketRef.current?.emit('requestState', { roomCode: state.roomCode }, (remoteState: GameState | null) => {
+          if (remoteState) {
+              setState(remoteState);
+              if (callback) callback(true);
+          } else {
+              if (callback) callback(false);
+          }
+      });
+  };
+
   const triggerNextPhase = () => {
     if (role === 'HOST') {
         if (stateRef.current.phase === GamePhase.REVEAL) {
@@ -955,6 +1019,7 @@ export const useGameService = (role: 'HOST' | 'PLAYER' | 'AUDIENCE', playerName?
 
   return { state, playerId, actions: { 
       joinRoom,
+      requestSync, // Added requestSync
       sendJoin,
       sendJoinAudience, 
       sendToggleReady,
