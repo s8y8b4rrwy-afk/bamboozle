@@ -81,23 +81,25 @@ const TestModeView = () => {
 }
 
 const GameHostWrapper = ({ onHome, debugMode }: { onHome: () => void, debugMode: boolean }) => {
-  const { state, actions, playerId } = useGameService('HOST');
+  const { state, actions, playerId, isSpeaking } = useGameService('HOST');
 
   if (state.isOnlineMode) {
-    return <OnlinePlayerView state={state} actions={actions} playerId={playerId} />;
+    return <OnlinePlayerView state={state} actions={actions} playerId={playerId} isSpeaking={isSpeaking} />;
   }
 
-  return <HostView state={state} actions={actions} onHome={onHome} debugMode={debugMode} />;
+  return <HostView state={state} actions={actions} onHome={onHome} debugMode={debugMode} isSpeaking={isSpeaking} />;
 };
 
 const GamePlayerWrapper = () => {
-  const { state, actions, playerId } = useGameService('PLAYER');
+  const { state, actions, playerId, isSpeaking } = useGameService('PLAYER');
 
   // New: Switch to Online Player View if mode is enabled
   if (state.isOnlineMode) {
-    return <OnlinePlayerView state={state} actions={actions} playerId={playerId} />;
+    return <OnlinePlayerView state={state} actions={actions} playerId={playerId} isSpeaking={isSpeaking} />;
   }
 
+  // Regular Player View doesn't need isSpeaking yet (it's mobile only, no narrator usually)
+  // But if we want to add it later we can.
   return <PlayerView state={state} actions={actions} playerId={playerId} />;
 };
 

@@ -172,24 +172,22 @@ export const CategoryRoulette = ({ state, onSelect }: { state: GameState, onSele
 };
 
 export const RevealSequence = ({ state, actions, setGalleryOverrides, isHost }: { state: GameState, actions: any, setGalleryOverrides: (o: Record<string, Expression>) => void, isHost: boolean }) => {
-    const [step, setStep] = useState(0);
-    const [phase, setPhase] = useState<'CARD' | 'VOTERS' | 'AUTHOR'>('CARD');
-    const [sequence, setSequence] = useState<Answer[]>([]);
+    // --- REFACTORED TO BE PURELY STATE DRIVEN ---
+    // The Host now drives the sequence via GameState updates (revealStep, revealSubPhase)
 
-    useEffect(() => {
-        const truth = state.roundAnswers.find(a => a.authorIds.includes('SYSTEM'));
-        const relevantAnswers = state.roundAnswers.filter(a =>
-            a.authorIds.includes('SYSTEM') || a.votes.length > 0
-        );
+    // Safety check - if data is missing or out of sync
+    if (!state.revealOrder || state.revealOrder.length === 0) {
+        return <div className="flex h-full items-center justify-center text-4xl">Waiting for Host...</div>;
+    }
 
-        const lies = relevantAnswers.filter(a => !a.authorIds.includes('SYSTEM'));
-        const shuffledLies = lies.sort(() => Math.random() - 0.5);
+    const currentAnswerId = state.revealOrder[state.revealStep];
+    // If step is out of bounds, we might be at end or transitioning
+    if (!currentAnswerId) return null;
 
-        setSequence([...shuffledLies, truth!].filter(Boolean));
-    }, [state.roundAnswers]);
+    const currentAnswer = state.roundAnswers.find(a => a.id === currentAnswerId);
 
-    const currentAnswer = sequence[step];
-    const mounted = useRef(true);
+    // Should verify phase consistency
+    const phase = state.revealSubPhase || 'CARD';
 
     useEffect(() => {
         if (!currentAnswer) {
@@ -200,6 +198,7 @@ export const RevealSequence = ({ state, actions, setGalleryOverrides, isHost }: 
         const overrides: Record<string, Expression> = {};
         const isTruth = currentAnswer.authorIds.includes('SYSTEM');
 
+        // Apply overrides based on current sub-phase from state
         currentAnswer.votes.forEach(vid => {
             if (phase === 'VOTERS') {
                 overrides[vid] = isTruth ? 'HAPPY' : 'SHOCKED';
@@ -223,77 +222,9 @@ export const RevealSequence = ({ state, actions, setGalleryOverrides, isHost }: 
         setGalleryOverrides(overrides);
     }, [currentAnswer, phase, setGalleryOverrides]);
 
-    const speakAndWait = async (text: string, delayAfter: number = 0, key?: string) => {
-        actions.speak(text, false, key);
-        const duration = Math.max(1500, text.split(' ').length * 350 + 800);
-        await new Promise(resolve => setTimeout(resolve, duration + delayAfter));
-    };
+    if (!currentAnswer) return <div className="flex h-full items-center justify-center text-4xl">Loading...</div>;
 
-    useEffect(() => {
-        mounted.current = true;
-        if (!currentAnswer) return;
 
-        const runSequence = async () => {
-            const isTruth = currentAnswer.authorIds.includes('SYSTEM');
-            const voters = currentAnswer.votes.map(vid => state.players[vid]).filter(Boolean);
-            const voterNames = joinNames(voters.map(v => v.name));
-            const authors = currentAnswer.authorIds.map(id => state.players[id]).filter(Boolean);
-
-            if (!mounted.current) return;
-            setPhase('CARD');
-            sfx.play('POP');
-            await speakAndWait(actions.getRandomPhrase('REVEAL_CARD_INTRO', { text: currentAnswer.text }), 500, `REVEAL_CARD_${currentAnswer.id}`);
-
-            if (!mounted.current) return;
-            setPhase('VOTERS');
-
-            if (voters.length > 0 && currentAnswer.audienceVotes.length > 2 && !isTruth) {
-                sfx.play('FAILURE');
-                await speakAndWait(actions.getRandomPhrase('PLAYER_FOOLED_BY_AUDIENCE', { names: voterNames }), 1000, `FOOLED_AUD_${currentAnswer.id}`);
-            } else if (voters.length > 0) {
-                if (isTruth) {
-                    sfx.play('SUCCESS');
-                    await speakAndWait(actions.getRandomPhrase('REVEAL_CORRECT_GROUP', { names: voterNames }), 1000, `CORRECT_${currentAnswer.id}`);
-                }
-                else {
-                    sfx.play('FAILURE');
-                    await speakAndWait(actions.getRandomPhrase('REVEAL_FOOLED_GROUP', { names: voterNames }), 1000, `FOOLED_${currentAnswer.id}`);
-                }
-            } else {
-                if (isTruth) await speakAndWait(actions.getRandomPhrase('REVEAL_NOBODY'), 1000, `NOBODY_${currentAnswer.id}`);
-                else await new Promise(r => setTimeout(r, 1500));
-            }
-
-            if (!mounted.current) return;
-            setPhase('AUTHOR');
-            if (isTruth) {
-                const intro = actions.getRandomPhrase('REVEAL_TRUTH_INTRO');
-                const fullFact = state.currentQuestion?.fact.replace('<BLANK>', currentAnswer.text) || currentAnswer.text;
-                sfx.play('REVEAL');
-                await speakAndWait(`${intro} ${fullFact}`, 2000, `TRUTH_${currentAnswer.id}`);
-            } else {
-                if (authors.length > 0) {
-                    if (authors.length === 1) await speakAndWait(actions.getRandomPhrase('REVEAL_LIAR', { name: authors[0].name }), 1000, `LIAR_${currentAnswer.id}`);
-                    else {
-                        const authorNames = joinNames(authors.map(a => a.name));
-                        await speakAndWait(actions.getRandomPhrase('REVEAL_LIAR_JINX', { names: authorNames }), 1500, `LIAR_JINX_${currentAnswer.id}`);
-                    }
-                }
-            }
-
-            if (!mounted.current) return;
-            if (step < sequence.length - 1) {
-                setStep(s => s + 1);
-            } else {
-                if (isHost) actions.triggerNextPhase();
-            }
-        };
-
-        runSequence();
-        return () => { mounted.current = false; };
-    }, [step, currentAnswer]);
-
-    if (!currentAnswer) return <div className="flex h-full items-center justify-center text-4xl">Calculating lies...</div>;
 
     const isTruth = currentAnswer.authorIds.includes('SYSTEM');
     const authors = currentAnswer.authorIds.map(id => state.players[id]).filter(Boolean);
@@ -467,35 +398,40 @@ export const LeaderboardSequence = ({ state, actions, onHome, isHost }: { state:
         }
     }, []);
 
+    // --- REFACTORED TO BE PURELY STATE DRIVEN ---
+    // Timing and Speech are handled by the Host service now
+
     useEffect(() => {
-        if (state.phase === GamePhase.GAME_OVER) return;
-        let mounted = true;
-        const runSequence = async () => {
-            const intro = actions.getRandomPhrase('LEADERBOARD_INTRO');
-            actions.speak(intro, false, `LEADERBOARD_INTRO_${state.currentRound}`);
-            await new Promise(r => setTimeout(r, 2500));
-            if (!mounted) return;
+        // Just sort for display. The "Switch" happens when phase changes to REVEAL/LEADER
+        const initial = Object.values(state.players).sort((a, b) => {
+            const prevA = a.score - a.lastRoundScore;
+            const prevB = b.score - b.lastRoundScore;
+            return prevB - prevA;
+        });
+        setSortedPlayers(initial);
 
-            setShowNewScores(true);
-            const newOrder = Object.values(state.players).sort((a, b) => b.score - a.score);
-            setSortedPlayers(newOrder);
-
-            if (newOrder.length > 0) {
-                const leader = newOrder[0];
-                const text = actions.getRandomPhrase('LEADERBOARD_LEADER', { name: leader.name });
-                actions.speak(text, false, `LEADERBOARD_LEADER_${state.currentRound}`);
-                const duration = Math.max(1500, text.split(' ').length * 350 + 800);
-                await new Promise(r => setTimeout(r, duration + 2000));
-            } else {
-                await new Promise(r => setTimeout(r, 3000));
-            }
-
-            if (!mounted) return;
-            if (isHost) actions.triggerNextPhase();
-        };
-        runSequence();
-        return () => { mounted = false; };
+        if (state.phase === GamePhase.GAME_OVER) {
+            setSortedPlayers(Object.values(state.players).sort((a, b) => b.score - a.score));
+        }
     }, [state.phase]);
+
+    // Reactive Updates based on Phase
+    useEffect(() => {
+        if (state.leaderboardPhase === 'REVEAL' || state.leaderboardPhase === 'LEADER') {
+            setShowNewScores(true);
+            // Sort by new score
+            setSortedPlayers(Object.values(state.players).sort((a, b) => b.score - a.score));
+        } else if (state.leaderboardPhase === 'INTRO') {
+            setShowNewScores(false);
+            // Sort by old score
+            setSortedPlayers(Object.values(state.players).sort((a, b) => {
+                const prevA = a.score - a.lastRoundScore;
+                const prevB = b.score - b.lastRoundScore;
+                return prevB - prevA;
+            }));
+        }
+    }, [state.leaderboardPhase, state.players]);
+
 
     const getRankEmotion = (p: Player, currentIdx: number): Expression => {
         if (!showNewScores) return 'NEUTRAL';

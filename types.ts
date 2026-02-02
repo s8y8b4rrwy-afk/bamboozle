@@ -88,6 +88,10 @@ export interface GameState {
   emotes: Emote[]; // Queue of emotes to render
   isOnlineMode: boolean; // New: Track online friend mode
   recentCategories: string[]; // Track categories shown in the previous round to ensure variety
+  revealOrder: string[]; // Array of Answer IDs in the order they should be revealed
+  revealStep: number; // Current index in the revealOrder
+  revealSubPhase: 'CARD' | 'VOTERS' | 'AUTHOR'; // Current sub-phase of the reveal animation
+  leaderboardPhase: 'INTRO' | 'REVEAL' | 'LEADER'; // Syncing the exact moment of score update
 }
 
 export type GameEvent =

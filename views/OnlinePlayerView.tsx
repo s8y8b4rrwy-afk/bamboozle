@@ -11,9 +11,12 @@ interface OnlinePlayerViewProps {
     state: GameState;
     actions: any;
     playerId: string;
+    isSpeaking: boolean;
 }
 
-export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actions, playerId }) => {
+const MOBILE_SCALE = 0.66; // <--- CHANGE THIS to scale mobile view (0.5 = 50% size, 1.0 = Normal)
+
+export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actions, playerId, isSpeaking }) => {
     const me = state.players[playerId];
     const amAudience = state.audience[playerId];
     const isVip = state.vipId === playerId;
@@ -23,6 +26,22 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
     const audienceCount = Object.keys(state.audience).length;
     const showTimer = (state.phase === GamePhase.WRITING || state.phase === GamePhase.VOTING || state.phase === GamePhase.CATEGORY_SELECT) && state.timeLeft > 0;
     const isFinalRound = state.currentRound === state.totalRounds;
+
+    // Mobile Scale Logic
+    const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+    useEffect(() => {
+        const handleResize = () => setIsMobile(window.innerWidth < 768);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
+    const mobileStyle = isMobile ? {
+        transform: `scale(${MOBILE_SCALE})`,
+        width: `${100 / MOBILE_SCALE}%`,
+        height: `${100 / MOBILE_SCALE}%`,
+        transformOrigin: 'top left'
+    } : {};
 
     // Local interaction state
     const [lieText, setLieText] = useState('');
@@ -40,6 +59,14 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
         setLieText('');
         setShowTruthWarning(false);
     }, [state.currentRound, state.phase]);
+
+    // Auto-Join if room code exists
+    useEffect(() => {
+        if (state.roomCode && joinStep === 'CODE') {
+            setInputCode(state.roomCode);
+            setJoinStep('NAME');
+        }
+    }, [state.roomCode, joinStep]);
 
     const handleEmote = (type: 'LAUGH' | 'SHOCK' | 'LOVE' | 'TOMATO') => {
         const name = me ? me.name : (amAudience ? amAudience.name : 'Unknown');
@@ -70,7 +97,7 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
     // --- SUB-COMPONENTS ---
 
     const TopBar = () => (
-        <div className="flex items-center justify-center w-full px-4 py-2 bg-transparent z-50 shrink-0 absolute top-0 left-0 right-0">
+        <div className="flex items-center justify-start w-full px-4 py-2 bg-transparent z-50 shrink-0 absolute top-0 left-0 right-0">
             <span className="text-yellow-400 font-black uppercase text-lg drop-shadow-md tracking-wider">ROOM: {state.roomCode}</span>
         </div>
     );
@@ -195,7 +222,10 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
     // --- MAIN GAME RENDER ---
 
     return (
-        <div className="h-full w-full bg-gradient-to-b from-indigo-900 to-purple-900 flex flex-col overflow-hidden relative">
+        <div
+            className="bg-gradient-to-b from-indigo-900 to-purple-900 flex flex-col overflow-hidden relative"
+            style={mobileStyle}
+        >
             <EmotePopupLayer emotes={state.emotes} />
             <TopBar />
 
@@ -203,7 +233,7 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
             <div className={`absolute top-12 left-0 right-0 flex justify-center z-10 pointer-events-none transform transition-all duration-500
                 ${state.phase === GamePhase.WRITING ? 'scale-100 translate-y-2' : 'scale-110 translate-y-0'}
             `}>
-                <Narrator isSpeaking={state.isNarrating} />
+                <Narrator isSpeaking={isSpeaking} />
             </div>
 
             {/* MAIN CONTENT */}
@@ -236,7 +266,7 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
 
                         {/* Lobby Controls Fixed Bottom - Moved up for URL Bar */}
                         {me && (
-                            <div className="fixed bottom-12 left-0 right-0 p-4 bg-gradient-to-t from-indigo-900 via-indigo-900/90 to-transparent z-50 flex flex-col gap-3">
+                            <div className="fixed bottom-12 left-0 right-0 p-4 z-50 flex flex-col gap-3">
                                 <button
                                     onClick={actions.sendToggleReady}
                                     className={`w-full py-4 rounded-xl font-black text-xl shadow-lg uppercase transition-all transform active:scale-95 ${me?.isReady ? 'bg-gray-700 text-gray-400' : 'bg-green-500 text-white'}`}

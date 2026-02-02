@@ -75,7 +75,11 @@ const INITIAL_STATE: GameState = {
   isNarrating: false,
   emotes: [],
   isOnlineMode: false,
-  recentCategories: []
+  recentCategories: [],
+  revealOrder: [],
+  revealStep: 0,
+  revealSubPhase: 'CARD',
+  leaderboardPhase: 'INTRO'
 };
 
 export const useGameService = (role: 'HOST' | 'PLAYER' | 'AUDIENCE', playerName?: string) => {
@@ -147,6 +151,8 @@ export const useGameService = (role: 'HOST' | 'PLAYER' | 'AUDIENCE', playerName?
     return () => clearInterval(interval);
   }, [role]);
 
+  const [localIsNarrating, setLocalIsNarrating] = useState(false);
+
   // --- AUDIO / TTS ENGINE ---
   const speak = (text: string, force: boolean = false, dedupKey?: string) => {
     if ('speechSynthesis' in window) {
@@ -177,18 +183,24 @@ export const useGameService = (role: 'HOST' | 'PLAYER' | 'AUDIENCE', playerName?
 
       // Update Narrating State
       utterance.onstart = () => {
-        setState(prev => {
-          const next = { ...prev, isNarrating: true };
-          broadcastState(next);
-          return next;
-        });
+        setLocalIsNarrating(true);
+        if (role === 'HOST') {
+          setState(prev => {
+            const next = { ...prev, isNarrating: true };
+            broadcastState(next);
+            return next;
+          });
+        }
       };
       utterance.onend = () => {
-        setState(prev => {
-          const next = { ...prev, isNarrating: false };
-          broadcastState(next);
-          return next;
-        });
+        setLocalIsNarrating(false);
+        if (role === 'HOST') {
+          setState(prev => {
+            const next = { ...prev, isNarrating: false };
+            broadcastState(next);
+            return next;
+          });
+        }
       };
 
       window.speechSynthesis.speak(utterance);
@@ -866,27 +878,69 @@ export const useGameService = (role: 'HOST' | 'PLAYER' | 'AUDIENCE', playerName?
 
   const startLeaderboardPhase = () => {
     const s = stateRef.current;
+
+    // Don't restart if already there (unless forcing)
+    // if (s.phase === GamePhase.LEADERBOARD) return;
+
+    if (timerRef.current) clearInterval(timerRef.current);
+
     const n = { ...s };
-    if (n.phase === GamePhase.LEADERBOARD) return;
     n.phase = GamePhase.LEADERBOARD;
+    n.leaderboardPhase = 'INTRO';
     sfx.play('SWOOSH');
-    startTimer(60, () => { handlePostLeaderboard(); });
+
+    // Broadcast initial state (INTRO)
     stateRef.current = n;
     setState(n);
     broadcastState(n);
+
+    // Timeline:
+    // 0s: INTRO (Old Scores) -> Speak Intro
+    const intro = getRandomPhrase('LEADERBOARD_INTRO');
+    speak(intro, false, `LEADERBOARD_INTRO_${n.currentRound}`);
+
+    // 2.5s: REVEAL (New Scores animate)
+    timerRef.current = window.setTimeout(() => {
+      const s2 = { ...stateRef.current, leaderboardPhase: 'REVEAL' as const };
+      stateRef.current = s2;
+      setState(s2);
+      broadcastState(s2);
+
+      // 4.5s: LEADER (Highlight Leader)
+      const diff = 4000; // Time for count up animation
+      timerRef.current = window.setTimeout(() => {
+        const s3 = { ...stateRef.current, leaderboardPhase: 'LEADER' as const };
+        // Sort to find leader
+        const leader = Object.values(s3.players).sort((a, b) => b.score - a.score)[0];
+
+        if (leader) {
+          const text = getRandomPhrase('LEADERBOARD_LEADER', { name: leader.name });
+          speak(text, false, `LEADERBOARD_LEADER_${n.currentRound}`);
+        }
+
+        stateRef.current = s3;
+        setState(s3);
+        broadcastState(s3);
+
+        // 8s: NEXT PHASE (Category or Game Over)
+        timerRef.current = window.setTimeout(() => {
+          handlePostLeaderboard();
+        }, 5000);
+
+      }, diff);
+
+    }, 2500);
+
   };
 
   const startRevealPhase = (state: GameState) => {
     state.phase = GamePhase.REVEAL;
-    sfx.play('DRUMROLL');
     if (timerRef.current) clearInterval(timerRef.current);
 
-    // Points Logic:
-    // 1. Truth Base = 1000 * Multiplier
-    // 2. Lie Base = Half of Truth Base (500 * Multiplier)
+    // Points Logic (Existing)
     const multiplier = state.currentRound >= state.totalRounds ? 3 : (state.currentRound === state.totalRounds - 1 ? 2 : 1);
     const TRUTH_POINTS = 1000 * multiplier;
-    const BASE_LIE_POINTS = TRUTH_POINTS / 2; // Always half of truth points
+    const BASE_LIE_POINTS = TRUTH_POINTS / 2;
 
     Object.values(state.players).forEach((p: Player) => {
       if (!p.currentVote) return;
@@ -908,8 +962,123 @@ export const useGameService = (role: 'HOST' | 'PLAYER' | 'AUDIENCE', playerName?
       }
     });
 
-    startTimer(ROUND_TIMER_SECONDS.REVEAL, () => { startLeaderboardPhase(); });
+    // --- NEW REVEAL LOGIC ---
+    // 1. Generate Order
+    const truth = state.roundAnswers.find(a => a.authorIds.includes('SYSTEM'));
+    const relevantAnswers = state.roundAnswers.filter(a =>
+      a.authorIds.includes('SYSTEM') || a.votes.length > 0
+    );
+    const lies = relevantAnswers.filter(a => !a.authorIds.includes('SYSTEM'));
+    // Shuffle lies deterministically or randomly (randomly is fine as it's done once by host)
+    const shuffledLies = shuffle(lies);
+    const sequence = [...shuffledLies, truth!].filter(Boolean);
+
+    state.revealOrder = sequence.map(a => a.id);
+    state.revealStep = 0;
+    state.revealSubPhase = 'CARD';
+
+    // Broadcast Initial State
     broadcastState(state);
+
+    // 2. Start Recursive Step Loop
+    runRevealStep(state);
+  };
+
+  const runRevealStep = (state: GameState) => {
+    if (timerRef.current) clearInterval(timerRef.current);
+
+    // Check if we are done
+    if (state.revealStep >= state.revealOrder.length) {
+      startLeaderboardPhase();
+      return;
+    }
+
+    const currentAnswerId = state.revealOrder[state.revealStep];
+    const currentAnswer = state.roundAnswers.find(a => a.id === currentAnswerId);
+
+    if (!currentAnswer) {
+      // Should not happen, but skip if bad data
+      state.revealStep++;
+      runRevealStep(state);
+      return;
+    }
+
+    const isTruth = currentAnswer.authorIds.includes('SYSTEM');
+    const voters = currentAnswer.votes.map(vid => state.players[vid]).filter(Boolean);
+    const voterNames = voters.map(v => v.name).join(', '); // Simplified join
+    // const authors = currentAnswer.authorIds.map(id => state.players[id]).filter(Boolean);
+
+    // Helper to advance after delay
+    const advance = (delay: number, nextFn: () => void) => {
+      timerRef.current = window.setTimeout(nextFn, delay);
+    };
+
+    const updateAndBroadcast = (s: GameState) => {
+      stateRef.current = s;
+      setState(s);
+      broadcastState(s);
+    };
+
+    // SEQUENCE FLOW:
+    // 1. CARD Display (Already set before calling this or at end of previous)
+    // - Speak Lie/Truth Text
+    sfx.play('POP');
+    speak(getRandomPhrase('REVEAL_CARD_INTRO', { text: currentAnswer.text }), false, `REVEAL_CARD_${currentAnswerId}`);
+
+    // Wait for text read (approx 2s) + delay -> Go to VOTERS
+    advance(2500, () => {
+      state.revealSubPhase = 'VOTERS';
+      updateAndBroadcast(state);
+
+      // VOTERS Logic
+      // Check triggers for SFX/Speech
+      if (voters.length > 0) {
+        if (isTruth) {
+          sfx.play('SUCCESS');
+          speak(getRandomPhrase('REVEAL_CORRECT_GROUP', { names: voterNames }), false, `CORRECT_${currentAnswerId}`);
+        } else {
+          sfx.play('FAILURE');
+          if (currentAnswer.audienceVotes.length > 2) {
+            speak(getRandomPhrase('PLAYER_FOOLED_BY_AUDIENCE', { names: voterNames }), false, `FOOLED_AUD_${currentAnswerId}`);
+          } else {
+            speak(getRandomPhrase('REVEAL_FOOLED_GROUP', { names: voterNames }), false, `FOOLED_${currentAnswerId}`);
+          }
+        }
+      } else {
+        if (isTruth) speak(getRandomPhrase('REVEAL_NOBODY'), false, `NOBODY_${currentAnswerId}`);
+      }
+
+      // Wait -> Go to AUTHOR
+      advance(3000, () => { // Give time for voter reaction speech
+        state.revealSubPhase = 'AUTHOR';
+        updateAndBroadcast(state);
+
+        // AUTHOR Logic
+        if (isTruth) {
+          sfx.play('REVEAL');
+          const intro = getRandomPhrase('REVEAL_TRUTH_INTRO');
+          const fullFact = state.currentQuestion?.fact.replace('<BLANK>', currentAnswer.text) || currentAnswer.text;
+          speak(`${intro} ${fullFact}`, false, `TRUTH_${currentAnswerId}`);
+        } else {
+          const authors = currentAnswer.authorIds.map(id => state.players[id]).filter(Boolean);
+          if (authors.length > 0) {
+            if (authors.length === 1) speak(getRandomPhrase('REVEAL_LIAR', { name: authors[0].name }), false, `LIAR_${currentAnswerId}`);
+            else {
+              const names = authors.map(a => a.name).join(' and ');
+              speak(getRandomPhrase('REVEAL_LIAR_JINX', { names: names }), false, `LIAR_JINX_${currentAnswerId}`);
+            }
+          }
+        }
+
+        // Wait -> Next Step
+        advance(4000, () => {
+          state.revealStep++;
+          state.revealSubPhase = 'CARD'; // Reset for next
+          updateAndBroadcast(state);
+          runRevealStep(state);
+        });
+      });
+    });
   };
 
   const startTimer = (seconds: number, onComplete: () => void) => {
@@ -1072,6 +1241,7 @@ export const useGameService = (role: 'HOST' | 'PLAYER' | 'AUDIENCE', playerName?
           processHostEvent({ type: 'TOGGLE_ONLINE_MODE', payload: null });
         }
       }
-    }
+    },
+    isSpeaking: state.isNarrating || localIsNarrating
   };
 };

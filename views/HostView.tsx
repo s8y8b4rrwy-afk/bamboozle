@@ -11,6 +11,7 @@ interface HostViewProps {
     actions: any;
     onHome: () => void;
     debugMode: boolean;
+    isSpeaking: boolean;
 }
 
 // Helpers and shared components are now imported from GameSharedComponents.tsx
@@ -23,7 +24,7 @@ import {
     LeaderboardSequence
 } from './GameSharedComponents';
 
-export const HostView: React.FC<HostViewProps> = ({ state, actions, onHome, debugMode }) => {
+export const HostView: React.FC<HostViewProps> = ({ state, actions, onHome, debugMode, isSpeaking }) => {
     const [galleryOverrides, setGalleryOverrides] = useState<Record<string, Expression>>({});
     const audienceCount = Object.keys(state.audience).length;
 
@@ -168,7 +169,7 @@ export const HostView: React.FC<HostViewProps> = ({ state, actions, onHome, debu
             <EmotePopupLayer emotes={state.emotes} />
 
             <div className="absolute top-6 left-8 z-50 pointer-events-none">
-                <Narrator isSpeaking={state.isNarrating} />
+                <Narrator isSpeaking={isSpeaking} />
             </div>
 
             <main className="flex-1 w-full p-8 z-20 relative flex flex-col">
