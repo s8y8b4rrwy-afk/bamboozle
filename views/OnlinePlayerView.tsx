@@ -302,12 +302,12 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
             {/* MAIN CONTENT AREA - FlexGrow to fill space */}
             <div className={`
                 flex-1 relative flex flex-col w-full max-w-4xl mx-auto
-                ${(state.phase === GamePhase.LOBBY || state.phase === GamePhase.REVEAL || state.phase === GamePhase.VOTING) ? 'overflow-hidden' : 'overflow-y-auto no-scrollbar'}
+                ${(state.phase === GamePhase.REVEAL || state.phase === GamePhase.VOTING) ? 'overflow-hidden' : 'overflow-y-auto no-scrollbar'}
             `}>
 
                 {/* 1. LOBBY */}
                 {state.phase === GamePhase.LOBBY && (
-                    <div className="flex-1 flex flex-col w-full max-w-md mx-auto p-4 relative">
+                    <div className="flex-1 flex flex-col w-full max-w-md mx-auto p-4 relative min-h-full">
                         {/* A. DASHBOARD (Fixed Top) */}
                         <div className="shrink-0 animate-fade-in-up pb-4 pt-2">
                             <div className="w-full flex flex-row items-center gap-2">
