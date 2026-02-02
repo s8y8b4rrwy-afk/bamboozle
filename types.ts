@@ -26,8 +26,8 @@ export interface Player {
   currentLie?: string;
   currentVote?: string; // ID of the answer they voted for
   lastRoundScore: number;
-  expression: Expression; 
-  previousRank?: number; 
+  expression: Expression;
+  previousRank?: number;
 }
 
 export interface AudienceMember {
@@ -57,7 +57,7 @@ export interface Question {
 export interface Answer {
   id: string;
   text: string;
-  authorIds: string[]; 
+  authorIds: string[];
   votes: string[];
   audienceVotes: string[]; // Track audience consensus
 }
@@ -81,14 +81,15 @@ export interface GameState {
   timeLeft: number;
   hostId: string;
   vipId: string; // New: Track the 'VIP' player who can restart game
-  usedQuestionIds: string[]; 
-  playersWhoPicked: string[]; 
+  usedQuestionIds: string[];
+  playersWhoPicked: string[];
   categorySelection: CategorySelectionState | null;
-  isNarrating: boolean; 
+  isNarrating: boolean;
   emotes: Emote[]; // Queue of emotes to render
+  isOnlineMode: boolean; // New: Track online friend mode
 }
 
-export type GameEvent = 
+export type GameEvent =
   | { type: 'SYNC_STATE'; payload: GameState }
   | { type: 'REQUEST_STATE'; payload: null }
   | { type: 'JOIN_ROOM'; payload: { id: string; name: string; avatarSeed: string; isBot?: boolean } }
@@ -101,4 +102,5 @@ export type GameEvent =
   | { type: 'SEND_EMOTE'; payload: { type: 'LAUGH' | 'SHOCK' | 'LOVE' | 'TOMATO'; senderName: string; senderSeed: string } }
   | { type: 'START_GAME'; payload: { rounds: number } }
   | { type: 'SELECT_CATEGORY'; payload: { category: string } }
+  | { type: 'TOGGLE_ONLINE_MODE'; payload: null }
   | { type: 'RESTART_GAME'; payload: null };
