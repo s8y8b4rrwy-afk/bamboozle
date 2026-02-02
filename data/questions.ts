@@ -1140,7 +1140,7 @@ export const QUESTIONS = [
     lies: ["isolated battery failures", "minor overheating incidents", "occasional charging issues", "random thermal events", "sporadic electrical failures"]
   },
   {
-    fact: "The Bowery vertical farming startup raised <<BLANK> but collapsed after plant infections destroyed their lettuce production.",
+    fact: "The Bowery vertical farming startup raised <BLANK> but collapsed after plant infections destroyed their lettuce production.",
     answer: "over 700 million",
     category: "Tech Oops",
     lies: ["100 million dollars", "500 million dollars", "1 billion dollars", "250 million dollars", "1.5 billion dollars"]
@@ -1152,7 +1152,7 @@ export const QUESTIONS = [
     lies: ["iPhone model", "iPad Pro version", "AirPods variant", "Mac miniature", "iMac edition"]
   },
   {
-    fact: "Meta lost <<BLANK> in 2022 investing billions into the metaverse despite consumer disinterest.",
+    fact: "Meta lost <BLANK> in 2022 investing billions into the metaverse despite consumer disinterest.",
     answer: "13.7 billion dollars",
     category: "Tech Oops",
     lies: ["5.2 billion dollars", "20 billion dollars", "8.9 billion dollars", "3.1 billion dollars", "15.4 billion dollars"]
@@ -1164,139 +1164,139 @@ export const QUESTIONS = [
     lies: ["Ribbon navigation panel", "Aero visual design", "Fluent appearance system", "Modern interface layout", "Minimal desktop theme"]
   },
   {
-    fact: "WeWork never went public because founder Adam Neumann had questionable voting rights and created a <<BLANK>> culture.",
+    fact: "WeWork never went public because founder Adam Neumann had questionable voting rights and created a <BLANK> culture.",
     answer: "work hard party hard",
     category: "Tech Oops",
     lies: ["move fast break things", "disrupt everything always", "innovate without limits", "take big risks", "push all boundaries"]
   },
   {
-    fact: "Facebook's cryptocurrency project Libra failed due to regulatory scrutiny and lack of support from <<BLANK>> institutions.",
+    fact: "Facebook's cryptocurrency project Libra failed due to regulatory scrutiny and lack of support from <BLANK> institutions.",
     answer: "major financial",
     category: "Tech Oops",
     lies: ["government banking", "national economic", "international trade", "central banking", "global economic"]
   },
   {
-    fact: "In Ancient Greece, athletes competed in the Olympic Games completely <<BLANK>> without any clothing whatsoever.",
+    fact: "In Ancient Greece, athletes competed in the Olympic Games completely <BLANK> without any clothing whatsoever.",
     answer: "naked",
     category: "Greece",
     lies: ["nearly naked", "partially clothed", "barely dressed", "minimally covered", "loosely draped"]
   },
   {
-    fact: "Ancient Greek women considered a single unibrow to be a sign of <<BLANK>> and often drew them on.",
+    fact: "Ancient Greek women considered a single unibrow to be a sign of <BLANK> and often drew them on.",
     answer: "intelligence and beauty",
     category: "Greece",
     lies: ["great wealth", "high status", "noble birth", "priestess power", "divine favor"]
   },
   {
-    fact: "The Oracle of Delphi supposedly channeled the god Apollo while standing above a chasm releasing <<BLANK>> gas.",
+    fact: "The Oracle of Delphi supposedly channeled the god Apollo while standing above a chasm releasing <BLANK> gas.",
     answer: "ethylene hallucinogenic",
     category: "Greece",
     lies: ["carbon dioxide", "nitrogen oxide", "methane sulfur", "hydrogen sulfide", "ammonia vapor"]
   },
   {
-    fact: "Ancient Greeks drank wine mixed with at least <<BLANK>> parts water to avoid becoming drunk or barbaric.",
+    fact: "Ancient Greeks drank wine mixed with at least <BLANK> parts water to avoid becoming drunk or barbaric.",
     answer: "three parts water",
     category: "Greece",
     lies: ["equal amounts water", "mostly water", "one part water", "two parts water", "five parts water"]
   },
   {
-    fact: "The first vending machine was invented in Ancient Greece to dispense <<BLANK>> when coins were inserted.",
+    fact: "The first vending machine was invented in Ancient Greece to dispense <BLANK> when coins were inserted.",
     answer: "holy water",
     category: "Greece",
     lies: ["wine drinks", "olive oil", "grain portions", "incense smoke", "temple coins"]
   },
   {
-    fact: "Plato believed that beans contained the <<BLANK>> of dead people and refused to eat them.",
+    fact: "Plato believed that beans contained the <BLANK> of dead people and refused to eat them.",
     answer: "souls of dead people",
     category: "Greece",
     lies: ["blood of ancestors", "spirits of demons", "essence of death", "curse of gods", "breath of underworld"]
   },
   {
-    fact: "In Athens, citizens could vote to exile any politician or person for <<BLANK>> in a process called ostracism.",
+    fact: "In Athens, citizens could vote to exile any politician or person for <BLANK> in a process called ostracism.",
     answer: "ten years",
     category: "Greece",
     lies: ["five years", "seven years", "lifetime", "twenty years", "three years"]
   },
   {
-    fact: "Saint Nicholas, the original Santa Claus, was from Ancient Greece and became patron saint of <<BLANK>>.",
+    fact: "Saint Nicholas, the original Santa Claus, was from Ancient Greece and became patron saint of <BLANK>.",
     answer: "children",
     category: "Greece",
     "lines": ["merchants", "sailors", "travelers", "thieves", "poor people"]
   },
   {
-    fact: "Ancient Sparta required every newborn to be inspected and <<BLANK>> if any physical defect was found.",
+    fact: "Ancient Sparta required every newborn to be inspected and <BLANK> if any physical defect was found.",
     answer: "abandoned to die",
     category: "Greece",
     lies: ["branded as slaves", "exiled from state", "raised separately", "enslaved permanently", "marked as impure"]
   },
   {
-    fact: "The Antikythera Mechanism discovered in Ancient Greece was so complex it wouldn't be matched until mechanical <<BLANK>> were invented.",
+    fact: "The Antikythera Mechanism discovered in Ancient Greece was so complex it wouldn't be matched until mechanical <BLANK> were invented.",
     answer: "clocks in 14th century",
     category: "Greece",
     lies: ["watches in renaissance", "calculators in 1600s", "telescopes in 1700s", "chronometers recently", "timekeepers ever"]
   },
   {
-    fact: "The E.T. video game was so catastrophically bad that Atari buried thousands of unsold cartridges in <<BLANK>>.",
+    fact: "The E.T. video game was so catastrophically bad that Atari buried thousands of unsold cartridges in <BLANK>.",
     answer: "New Mexico landfill",
     category: "Gaming",
     lies: ["Nevada desert", "Arizona dump", "Texas landfill", "California site", "Colorado burial"]
   },
   {
-    fact: "In Mario's original Donkey Kong arcade game, his profession was a <<BLANK>> not a plumber.",
+    fact: "In Mario's original Donkey Kong arcade game, his profession was a <BLANK> not a plumber.",
     answer: "carpenter",
     category: "Gaming",
     lies: ["painter", "builder", "worker", "foreman", "construction supervisor"]
   },
   {
-    fact: "Tetris played within <<BLANK>> hours of trauma reduced PTSD flashbacks in car accident survivors.",
+    fact: "Tetris played within <BLANK> hours of trauma reduced PTSD flashbacks in car accident survivors.",
     answer: "six hours after trauma",
     category: "Gaming",
     lies: ["two hours of trauma", "one day after trauma", "one week after trauma", "three days after trauma", "immediately after trauma"]
   },
   {
-    fact: "A South Korean law made it illegal for children under <<BLANK>> to play video games from midnight until 6am.",
+    fact: "A South Korean law made it illegal for children under <BLANK> to play video games from midnight until 6am.",
     answer: "16 years old",
     category: "Gaming",
     lies: ["18 years old", "13 years old", "12 years old", "14 years old", "15 years old"]
   },
   {
-    fact: "The NBA Jam creator deliberately rigged the game to make the Chicago Bulls <<BLANK>> in last-second shots.",
+    fact: "The NBA Jam creator deliberately rigged the game to make the Chicago Bulls <BLANK> in last-second shots.",
     answer: "always shoot bricks",
     category: "Gaming",
     lies: ["always win games", "score three pointers", "never miss shots", "control outcomes", "dominate always"]
   },
   {
-    fact: "Space Invaders' aliens appear to speed up because the computer rendered them faster as <<BLANK>> were destroyed.",
+    fact: "Space Invaders' aliens appear to speed up because the computer rendered them faster as <BLANK> were destroyed.",
     answer: "more enemies",
     category: "Gaming",
     lies: ["more shields", "fewer obstacles", "power ups", "more bullets fired", "fewer asteroids"]
   },
   {
-    fact: "Scribblenauts almost launched with a bizarre bug where a lion would eat itself if <<BLANK>> was glued to it.",
+    fact: "Scribblenauts almost launched with a bizarre bug where a lion would eat itself if <BLANK> was glued to it.",
     answer: "bacon on its back",
     category: "Gaming",
     lies: ["meat on its body", "food near it", "its own tail", "another animal", "a magical spell"]
   },
   {
-    fact: "A player in Diablo 1 started a rumor about a secret cow level that the developers actually <<BLANK>> in Diablo II.",
+    fact: "A player in Diablo 1 started a rumor about a secret cow level that the developers actually <BLANK> in Diablo II.",
     answer: "implemented into game",
     category: "Gaming",
     lies: ["acknowledged as fake", "denied completely", "mocked publicly", "banned for spreading", "sued for claiming"]
   },
   {
-    fact: "The Witcher author Andrzej Sapkowski initially thought CD Projekt Red would never make money and demanded <<BLANK>> instead.",
+    fact: "The Witcher author Andrzej Sapkowski initially thought CD Projekt Red would never make money and demanded <BLANK> instead.",
     answer: "payment up front",
     category: "Gaming",
     lies: ["annual royalties only", "percentage of sales", "bonus structure", "equity stake", "lifetime payments"]
   },
   {
-    fact: "Mario's real name comes from landlord Mario Segale who collected unpaid rent from <<BLANK>> in 1981.",
+    fact: "Mario's real name comes from landlord Mario Segale who collected unpaid rent from <BLANK> in 1981.",
     answer: "Nintendo's warehouse",
     category: "Gaming",
     lies: ["Sega's office building", "Atari's headquarters", "arcade game maker", "Famicom distributor", "Game Boy factory"]
   },
   {
-    fact: "The Konami Code appears in over <<BLANK>> video games and became Gaming's most famous cheat code.",
+    fact: "The Konami Code appears in over <BLANK> video games and became Gaming's most famous cheat code.",
     answer: "100 games",
     category: "Gaming",
     lies: ["50 games", "200 games", "75 games", "150 games", "250 games"]
@@ -1308,103 +1308,103 @@ export const QUESTIONS = [
     lies: ["violence from game", "fatalities from game", "gore from game", "fighting from game", "combat from game"]
   },
   {
-    fact: "A World of Warcraft plague bug so closely mirrored real pandemic responses that epidemiologists are using it to study <<BLANK>>.",
+    fact: "A World of Warcraft plague bug so closely mirrored real pandemic responses that epidemiologists are using it to study <BLANK>.",
     answer: "future outbreak behavior",
     category: "Gaming",
     lies: ["disease transmission models", "infection rate patterns", "medical response protocols", "population immunity levels", "vaccine distribution methods"]
   },
   {
-    fact: "Freddie Mercury recorded Queen songs while performing with a <<BLANK>> in the studio during sessions.",
+    fact: "Freddie Mercury recorded Queen songs while performing with a <BLANK> in the studio during sessions.",
     answer: "llama",
     category: "Music",
     lies: ["goat", "alpaca", "sheep", "deer", "camel"]
   },
   {
-    fact: "The Beatles were so Musically illiterate that Paul McCartney finally admitted in 2018 they couldn't <<BLANK>>.",
+    fact: "The Beatles were so Musically illiterate that Paul McCartney finally admitted in 2018 they couldn't <BLANK>.",
     answer: "read Music theory",
     category: "Music",
     lies: ["write songs properly", "play instruments well", "record accurately", "sing harmonies", "perform live"]
   },
   {
-    fact: "Jimi Hendrix couldn't read sheet Music and played a right-handed guitar flipped <<BLANK>> being naturally left-handed.",
+    fact: "Jimi Hendrix couldn't read sheet Music and played a right-handed guitar flipped <BLANK> being naturally left-handed.",
     answer: "upside down",
     category: "Music",
     lies: ["backwards normally", "inverted partially", "reversed completely", "sideways always", "mirrored"]
   },
   {
-    fact: "Leo Fender, inventor of the legendary Stratocaster guitar, could never <<BLANK>> despite revolutionizing guitar design.",
+    fact: "Leo Fender, inventor of the legendary Stratocaster guitar, could never <BLANK> despite revolutionizing guitar design.",
     answer: "play guitar",
     category: "Music",
     lies: ["read Music notes", "sing well", "play drums", "compose songs", "perform publicly"]
   },
   {
-    fact: "Robert Schumann thought he could cure his diseases by sticking his hands into <<BLANK>> from slaughtered animals.",
+    fact: "Robert Schumann thought he could cure his diseases by sticking his hands into <BLANK> from slaughtered animals.",
     answer: "the entrails",
     category: "Music",
     lies: ["blood from veins", "organs directly", "animal remains", "body cavities", "intestinal matter"]
   },
   {
-    fact: "Franz Liszt caused such hysteria among fans that Music historians later called the phenomenon <<BLANK>>.",
+    fact: "Franz Liszt caused such hysteria among fans that Music historians later called the phenomenon <BLANK>.",
     answer: "Lisztomania",
     category: "Music",
     lies: ["Liszt madness", "composer fever", "piano delirium", "performance frenzy", "Musician mania"]
   },
   {
-    fact: "Rossini composed the famous aria Di tanti palpiti while waiting for <<BLANK>> in a Venice restaurant.",
+    fact: "Rossini composed the famous aria Di tanti palpiti while waiting for <BLANK> in a Venice restaurant.",
     answer: "risotto to finish",
     category: "Music",
     lies: ["pasta to cook", "wine to arrive", "dinner to start", "soup to cool", "bread to bake"]
   },
   {
-    fact: "Greece's national anthem has <<BLANK>> verses, making it the longest in the world.",
+    fact: "Greece's national anthem has <BLANK> verses, making it the longest in the world.",
     answer: "158 verses",
     category: "Music",
     lies: ["92 verses", "211 verses", "145 verses", "176 verses", "203 verses"]
   },
   {
-    fact: "Joseph Haydn's tomb contains <<BLANK>> skulls because his actual skull was stolen by phrenologists.",
+    fact: "Joseph Haydn's tomb contains <BLANK> skulls because his actual skull was stolen by phrenologists.",
     answer: "two skulls",
     category: "Music",
     lies: ["three skulls", "one skull only", "no skulls", "four skulls", "five skulls"]
   },
   {
-    fact: "A grand piano exerts a combined force of <<BLANK>> tonnes from the tension of its strings.",
+    fact: "A grand piano exerts a combined force of <BLANK> tonnes from the tension of its strings.",
     answer: "20 tonnes",
     category: "Music",
     lies: ["10 tonnes", "35 tonnes", "15 tonnes", "50 tonnes", "5 tonnes"]
   },
   {
-    fact: "The Koopalings in Super Mario World include a triceratops named <<BLANK>> after Trent Reznor of Nine Inch Nails.",
+    fact: "The Koopalings in Super Mario World include a triceratops named <BLANK> after Trent Reznor of Nine Inch Nails.",
     answer: "Reznor",
     category: "Music",
     lies: ["Marilyn", "Vince", "Dario", "Atticus", "Johnny"]
   },
   {
-    fact: "Rod Stewart's 1993 New Year's Eve concert on Copacabana Beach had <<BLANK>> attending, the most for any free concert.",
+    fact: "Rod Stewart's 1993 New Year's Eve concert on Copacabana Beach had <BLANK> attending, the most for any free concert.",
     answer: "4.2 million people",
     category: "Music",
     lies: ["2.1 million people", "6.5 million people", "3.8 million people", "5.2 million people", "1.9 million people"]
   },
   {
-    fact: "An astronaut named Chris Hadfield recorded his album in <<BLANK>> while orbiting the International Space Station.",
+    fact: "An astronaut named Chris Hadfield recorded his album in <BLANK> while orbiting the International Space Station.",
     answer: "outer space",
     category: "Music",
     lies: ["low Earth orbit", "space station orbit", "vacuum condition", "zero gravity", "space environment"]
   },
   {
-    fact: "The largest rock band ever assembled included <<BLANK>> Musicians performing in Beijing China.",
+    fact: "The largest rock band ever assembled included <BLANK> Musicians performing in Beijing China.",
     answer: "953 Musicians",
     category: "Music",
     lies: ["627 Musicians", "1285 Musicians", "841 Musicians", "1156 Musicians", "734 Musicians"]
   },
   {
-    fact: "Michael Jackson secretly wrote 'Do the Bartman' for The Simpsons but the producers kept it hidden because <<BLANK>>.",
+    fact: "Michael Jackson secretly wrote 'Do the Bartman' for The Simpsons but the producers kept it hidden because <BLANK>.",
     answer: "legal restrictions prevented credit",
     category: "Music",
     lies: ["Jackson wanted anonymity", "copyright issues existed", "contract forbade credit", "label disputes arose", "rights disputes occurred"]
   },
   {
-    fact: "Louis Armstrong wore a Star of David necklace his entire life and spoke fluent <<BLANK>> even though not Jewish.",
+    fact: "Louis Armstrong wore a Star of David necklace his entire life and spoke fluent <BLANK> even though not Jewish.",
     answer: "Yiddish language",
     category: "Music",
     lies: ["Hebrew language", "Yiddish dialect", "German language", "Yiddish script", "Hebrew prayers"]
@@ -1428,61 +1428,61 @@ export const QUESTIONS = [
     lies: ["chickens", "eagles", "ostriches", "geese", "hawks"]
   },
   {
-    fact: "Scientists estimate Sauroposeidon weighed over <<BLANK>> tons and stood more than 60 feet tall.",
+    fact: "Scientists estimate Sauroposeidon weighed over <BLANK> tons and stood more than 60 feet tall.",
     answer: "60 tons",
     category: "Dinosaurs",
     lies: ["40 tons", "100 tons", "30 tons", "150 tons", "80 tons"]
   },
   {
-    fact: "Kentosaurus had a spiked tail that could swing up to <<BLANK>> miles per hour.",
+    fact: "Kentosaurus had a spiked tail that could swing up to <BLANK> miles per hour.",
     answer: "89 miles per hour",
     category: "Dinosaurs",
     lies: ["45 miles per hour", "120 miles per hour", "60 miles per hour", "150 miles per hour", "30 miles per hour"]
   },
   {
-    fact: "The Jurassic Park Velociraptors were actually based on a much larger relative called the <<BLANK>>.",
+    fact: "The Jurassic Park Velociraptors were actually based on a much larger relative called the <BLANK>.",
     answer: "Utahraptor",
     category: "Dinosaurs",
     lies: ["Deinonychus", "Troodon", "Compsognathus", "Velociraptor", "Carnotaurus"]
   },
   {
-    fact: "Nearly half of the 1,200 known dinosaur species are identified from only <<BLANK>> specimen.",
+    fact: "Nearly half of the 1,200 known dinosaur species are identified from only <BLANK> specimen.",
     answer: "single unique",
     category: "Dinosaurs",
     lies: ["two skeletons", "multiple fossils", "three bones", "partial remains", "several teeth"]
   },
   {
-    fact: "Archaeologists believe baby dinosaurs had proportionally larger eyes and <<BLANK>> faces than adults.",
+    fact: "Archaeologists believe baby dinosaurs had proportionally larger eyes and <BLANK> faces than adults.",
     answer: "smaller cuter",
     category: "Dinosaurs",
     lies: ["bigger fiercer", "wider longer", "narrower sharper", "thinner meaner", "rounder flatter"]
   },
   {
-    fact: "Fossil coprolites, which are <<BLANK>>, have taught us about dinosaur diets.",
+    fact: "Fossil coprolites, which are <BLANK>, have taught us about dinosaur diets.",
     answer: "fossilized feces",
     category: "Dinosaurs",
     lies: ["preserved stomach acid", "hardened saliva", "petrified blood", "stone entrails", "calcified organs"]
   },
   {
-    fact: "Brachiosaurus weighed approximately <<BLANK>> tons, the size of 17 large elephants.",
+    fact: "Brachiosaurus weighed approximately <BLANK> tons, the size of 17 large elephants.",
     answer: "80 tons",
     category: "Dinosaurs",
     lies: ["50 tons", "120 tons", "40 tons", "150 tons", "30 tons"]
   },
   {
-    fact: "A man booked a cruise for December 2016 instead of December 2015 because he miscounted <<BLANK>>.",
+    fact: "A man booked a cruise for December 2016 instead of December 2015 because he miscounted <BLANK>.",
     answer: "365 days",
     category: "Traveling Mistakes",
     lies: ["months on calendar", "booking dates", "year numbers", "calendar pages", "day squares"]
   },
   {
-    fact: "An Indian tourist famously asked online how to drive from Sydney to Auckland across <<BLANK>>.",
+    fact: "An Indian tourist famously asked online how to drive from Sydney to Auckland across <BLANK>.",
     answer: "the ocean",
     category: "Traveling Mistakes",
     lies: ["the desert", "the rainforest", "the mountains", "the valley", "the plains"]
   },
   {
-    fact: "A Scottish man booked a flight to Granada Spain but ended up in Grenada in <<BLANK>>.",
+    fact: "A Scottish man booked a flight to Granada Spain but ended up in Grenada in <BLANK>.",
     answer: "the Caribbean",
     category: "Traveling Mistakes",
     lies: ["South America", "Africa", "Southeast Asia", "Central America", "Pacific Islands"]
@@ -1494,475 +1494,475 @@ export const QUESTIONS = [
     lies: ["A Hate Vera", "Bye Vera", "Vera Sucks", "Leave Vera", "Forget Vera"]
   },
   {
-    fact: "A German couple on the Routeburn Track hike walked in the wrong direction for hours and ended up on <<BLANK>>.",
+    fact: "A German couple on the Routeburn Track hike walked in the wrong direction for hours and ended up on <BLANK>.",
     answer: "a remote farm",
     category: "Traveling Mistakes",
     lies: ["a busy highway", "a river crossing", "a mountain cliff", "a private estate", "a marsh"]
   },
   {
-    fact: "A tourist in Paris asked for bread in French but literally asked for <<BLANK>> instead.",
+    fact: "A tourist in Paris asked for bread in French but literally asked for <BLANK> instead.",
     answer: "pain and suffering",
     category: "Traveling Mistakes",
     lies: ["pleasure", "joy and happiness", "love and romance", "peace and quiet", "life itself"]
   },
   {
-    fact: "In 1881, a Utah salesman in Florida wanted to marry <<BLANK>> of a deceased woman.",
+    fact: "In 1881, a Utah salesman in Florida wanted to marry <BLANK> of a deceased woman.",
     answer: "the corpse",
     category: "Romance",
     lies: ["the ghost", "the memory", "the tombstone", "the legacy", "the portrait"]
   },
   {
-    fact: "A woman named Eija-Ritta married <<BLANK>> in 1979 and remained married for 29 years.",
+    fact: "A woman named Eija-Ritta married <BLANK> in 1979 and remained married for 29 years.",
     answer: "the Berlin Wall",
     category: "Romance",
     lies: ["a clock tower", "a bridge", "a lighthouse", "a statue", "a building"]
   },
   {
-    fact: "A Scottish man named Henry met his Russian fiancée Anna again after being separated <<BLANK>>.",
+    fact: "A Scottish man named Henry met his Russian fiancée Anna again after being separated <BLANK>.",
     answer: "60 years apart",
     category: "Romance",
     lies: ["40 years apart", "80 years apart", "30 years apart", "50 years apart", "100 years apart"]
   },
   {
-    fact: "Helen and Les were born on the same day December 31, 1918 and lived together for <<BLANK>>.",
+    fact: "Helen and Les were born on the same day December 31, 1918 and lived together for <BLANK>.",
     answer: "75 years",
     category: "Romance",
     lies: ["50 years", "100 years", "60 years", "80 years", "45 years"]
   },
   {
-    fact: "James Joyce wrote passionate love letters praising his partner Nora's <<BLANK>> style.",
+    fact: "James Joyce wrote passionate love letters praising his partner Nora's <BLANK> style.",
     answer: "flatulent lovemaking",
     category: "Romance",
     lies: ["passionate kissing", "tender embracing", "playful teasing", "romantic language", "adventurous nature"]
   },
   {
-    fact: "According to research, men who kiss their partners every morning live <<BLANK>> longer.",
+    fact: "According to research, men who kiss their partners every morning live <BLANK> longer.",
     answer: "five years",
     category: "Romance",
     lies: ["two years", "ten years", "three years", "seven years", "one year"]
   },
   {
-    fact: "An experiment showed that gazing at a stranger for <<BLANK>> minutes can lead to love.",
+    fact: "An experiment showed that gazing at a stranger for <BLANK> minutes can lead to love.",
     answer: "four minutes",
     category: "Romance",
     lies: ["two minutes", "ten minutes", "one minute", "six minutes", "three minutes"]
   },
   {
-    fact: "Interracial marriage was legalized in America in <<BLANK>> by the Supreme Court.",
+    fact: "Interracial marriage was legalized in America in <BLANK> by the Supreme Court.",
     answer: "1967",
     category: "Romance",
     lies: ["1956", "1972", "1960", "1975", "1950"]
   },
   {
-    fact: "Women consistently prefer the smell of men whose immune systems were <<BLANK>> their own.",
+    fact: "Women consistently prefer the smell of men whose immune systems were <BLANK> their own.",
     answer: "different from",
     category: "Romance",
     lies: ["similar to", "stronger than", "weaker than", "related to", "identical to"]
   },
   {
-    fact: "A mother sow was executed but her <<BLANK>> piglets were acquitted for lack of culpability.",
+    fact: "A mother sow was executed but her <BLANK> piglets were acquitted for lack of culpability.",
     answer: "six suckling",
     category: "Celebrity Gossip",
     lies: ["three young", "ten little", "two small", "five young", "eight baby"]
   },
   {
-    fact: "Ellen DeGeneres faced backlash in 2020 when reports revealed her workplace was <<BLANK>>.",
+    fact: "Ellen DeGeneres faced backlash in 2020 when reports revealed her workplace was <BLANK>.",
     answer: "toxic and abusive",
     category: "Celebrity Gossip",
     lies: ["disorganized chaos", "unprofessional and rude", "unfair to women", "poorly managed overall", "financially corrupt"]
   },
   {
-    fact: "Matthew McConaughey was arrested in 1999 for dancing naked with <<BLANK>> in his home.",
+    fact: "Matthew McConaughey was arrested in 1999 for dancing naked with <BLANK> in his home.",
     answer: "bongo drums",
     category: "Celebrity Gossip",
     lies: ["maracas", "a guitar", "a harmonica", "cowbells", "tambourines"]
   },
   {
-    fact: "A Tom Cruise Scientology promotional video from 2008 caused massive backlash when <<BLANK>>.",
+    fact: "A Tom Cruise Scientology promotional video from 2008 caused massive backlash when <BLANK>.",
     answer: "it was leaked",
     category: "Celebrity Gossip",
     lies: ["aired on television", "published online", "released by studios", "broadcast publicly", "shared by media"]
   },
   {
-    fact: "Michael Jackson held his nine-month-old son out a window <<BLANK>> while showing crowds.",
+    fact: "Michael Jackson held his nine-month-old son out a window <BLANK> while showing crowds.",
     answer: "one-handed",
     category: "Celebrity Gossip",
     lies: ["with both hands", "dangling by leg", "above his head", "by the diaper", "suspended high"]
   },
   {
-    fact: "Harvey Weinstein was convicted of multiple counts and sentenced to <<BLANK>> in prison.",
+    fact: "Harvey Weinstein was convicted of multiple counts and sentenced to <BLANK> in prison.",
     answer: "23 years",
     category: "Celebrity Gossip",
     lies: ["15 years", "30 years", "20 years", "10 years", "40 years"]
   },
   {
-    fact: "Martha Stewart was convicted of insider trading and served <<BLANK>> in federal prison.",
+    fact: "Martha Stewart was convicted of insider trading and served <BLANK> in federal prison.",
     answer: "five months",
     category: "Celebrity Gossip",
     lies: ["three months", "one year", "ten months", "six months", "two years"]
   },
   {
-    fact: "Felicity Huffman paid <<BLANK>> to have someone take her daughter's SAT test for her.",
+    fact: "Felicity Huffman paid <BLANK> to have someone take her daughter's SAT test for her.",
     answer: "15 thousand dollars",
     category: "Celebrity Gossip",
     lies: ["5 thousand dollars", "25 thousand dollars", "10 thousand dollars", "50 thousand dollars", "3 thousand dollars"]
   },
   {
-    fact: "Lori Loughlin paid <<BLANK>> to have her daughter enrolled at USC.",
+    fact: "Lori Loughlin paid <BLANK> to have her daughter enrolled at USC.",
     answer: "500 thousand dollars",
     category: "Celebrity Gossip",
     lies: ["250 thousand dollars", "750 thousand dollars", "100 thousand dollars", "1 million dollars", "300 thousand dollars"]
   },
   {
-    fact: "Janet Jackson's Super Bowl XXXVIII halftime show exposed her breast for about <<BLANK>>.",
+    fact: "Janet Jackson's Super Bowl XXXVIII halftime show exposed her breast for about <BLANK>.",
     answer: "half a second",
     category: "Celebrity Gossip",
     lies: ["one second", "two seconds", "three seconds", "one full minute", "five seconds"]
   },
   {
-    fact: "Kobe Bryant died in a helicopter crash in 2020 with his <<BLANK>> daughter on board.",
+    fact: "Kobe Bryant died in a helicopter crash in 2020 with his <BLANK> daughter on board.",
     answer: "13-year-old",
     category: "Celebrity Gossip",
     lies: ["15-year-old", "10-year-old", "12-year-old", "14-year-old", "16-year-old"]
   },
   {
-    fact: "Jean Harlow married Paul Bern who was already married to another woman named <<BLANK>>.",
+    fact: "Jean Harlow married Paul Bern who was already married to another woman named <BLANK>.",
     answer: "Dorothy Millette",
     category: "Celebrity Gossip",
     lies: ["Margaret Bern", "Vera Millette", "Helen Berman", "Edith Mills", "Clara Martin"]
   },
   {
-    fact: "Charlie Chaplin married a 16-year-old named Mildred Harris when he was <<BLANK>>.",
+    fact: "Charlie Chaplin married a 16-year-old named Mildred Harris when he was <BLANK>.",
     answer: "29 years old",
     category: "Celebrity Gossip",
     lies: ["35 years old", "40 years old", "25 years old", "45 years old", "22 years old"]
   },
   {
-    fact: "Elizabeth Taylor began seeing Eddie Fisher while he was married to <<BLANK>>.",
+    fact: "Elizabeth Taylor began seeing Eddie Fisher while he was married to <BLANK>.",
     answer: "Debbie Reynolds",
     category: "Celebrity Gossip",
     lies: ["Vivien Leigh", "Joan Crawford", "Rita Hayworth", "Audrey Hepburn", "Grace Kelly"]
   },
   {
-    fact: "Arnold Schwarzenegger fathered a child with his housekeeper after being married to <<BLANK>>.",
+    fact: "Arnold Schwarzenegger fathered a child with his housekeeper after being married to <BLANK>.",
     answer: "Maria Shriver",
     category: "Celebrity Gossip",
     lies: ["Katherine Schwarzenegger", "Heidi Klum", "Michelle Pfeiffer", "Peggy Lipton", "Jennifer Beals"]
   },
   {
-    fact: "Jerry Lee Lewis married his <<BLANK>> cousin when he was a rock and roll sensation.",
+    fact: "Jerry Lee Lewis married his <BLANK> cousin when he was a rock and roll sensation.",
     answer: "13-year-old",
     category: "Celebrity Gossip",
     lies: ["16-year-old", "14-year-old", "15-year-old", "12-year-old", "17-year-old"]
   },
   {
-    fact: "Britney Spears' father kept her under a conservatorship from 2008 until <<BLANK>>.",
+    fact: "Britney Spears' father kept her under a conservatorship from 2008 until <BLANK>.",
     answer: "2021",
     category: "Celebrity Gossip",
     lies: ["2019", "2023", "2020", "2024", "2018"]
   },
   {
-    fact: "Roman Polanski fled America in 1978 after being convicted and has lived in <<BLANK>>.",
+    fact: "Roman Polanski fled America in 1978 after being convicted and has lived in <BLANK>.",
     answer: "France since",
     category: "Celebrity Gossip",
     lies: ["Germany forever", "Switzerland always", "Poland returning", "Mexico hiding", "Italy secretly"]
   },
   {
-    fact: "A 1950 case involved the execution of <<BLANK>> who killed a nobleman.",
+    fact: "A 1950 case involved the execution of <BLANK> who killed a nobleman.",
     answer: "a farm pig",
     category: "Celebrity Gossip",
     lies: ["a wild boar", "an attack dog", "a feral horse", "a bull", "a bear"]
   },
   {
-    fact: "The shortest war in history was between the UK and Zanzibar lasting <<BLANK>>.",
+    fact: "The shortest war in history was between the UK and Zanzibar lasting <BLANK>.",
     answer: "38 to 45 minutes",
     category: "Dinosaurs",
     lies: ["2 hours flat", "90 minutes total", "12 minutes only", "one hour exactly", "three hours"]
   },
   {
-    fact: "O.J. Simpson's slow-moving white Bronco chase in 1994 captivated <<BLANK>>.",
+    fact: "O.J. Simpson's slow-moving white Bronco chase in 1994 captivated <BLANK>.",
     answer: "all of America",
     category: "Celebrity Gossip",
     lies: ["the west coast", "California alone", "television viewers", "sports fans", "Los Angeles"]
   },
   {
-    fact: "Ariana Grande's 'donutgate' scandal involved her licking donuts at a <<BLANK>>.",
+    fact: "Ariana Grande's 'donutgate' scandal involved her licking donuts at a <BLANK>.",
     answer: "Los Angeles shop",
     category: "Celebrity Gossip",
     lies: ["New York bakery", "Chicago store", "Miami location", "San Francisco shop", "Houston venue"]
   },
   {
-    fact: "The Hawaii false missile alert of 2018 lasted <<BLANK>> before being announced as a mistake.",
+    fact: "The Hawaii false missile alert of 2018 lasted <BLANK> before being announced as a mistake.",
     answer: "38 fear-filled minutes",
     category: "Celebrity Gossip",
     lies: ["15 minutes only", "one hour total", "5 minutes flat", "30 minutes exactly", "45 minutes"]
   },
   {
-    fact: "In 2021, Joey Chestnut consumed a record of <<BLANK>> hot dogs in just 10 minutes.",
+    fact: "In 2021, Joey Chestnut consumed a record of <BLANK> hot dogs in just 10 minutes.",
     answer: "76 hot dogs",
     category: "Competitive Eating",
     lies: ["88 hot dogs", "64 hot dogs", "92 hot dogs", "55 hot dogs", "71 hot dogs"]
   },
   {
-    fact: "Michelle Lesco set the record for consuming <<BLANK>> of mayonnaise in three minutes.",
+    fact: "Michelle Lesco set the record for consuming <BLANK> of mayonnaise in three minutes.",
     answer: "2448 grams",
     category: "Competitive Eating",
     lies: ["1850 grams", "3200 grams", "1500 grams", "4000 grams", "1200 grams"]
   },
   {
-    fact: "Ken Edwards ate <<BLANK>> live Madagascan hissing cockroaches in just 60 seconds.",
+    fact: "Ken Edwards ate <BLANK> live Madagascan hissing cockroaches in just 60 seconds.",
     answer: "36 cockroaches",
     category: "Competitive Eating",
     lies: ["24 cockroaches", "48 cockroaches", "18 cockroaches", "52 cockroaches", "31 cockroaches"]
   },
   {
-    fact: "Takeru Kobayashi consumed <<BLANK>> cow brains in 15 minutes, weighing over 18 pounds.",
+    fact: "Takeru Kobayashi consumed <BLANK> cow brains in 15 minutes, weighing over 18 pounds.",
     answer: "57 cow brains",
     category: "Competitive Eating",
     lies: ["73 cow brains", "42 cow brains", "91 cow brains", "38 cow brains", "65 cow brains"]
   },
   {
-    fact: "Alex Williams ate 5 feet of raw stinging <<BLANK>> in just one minute.",
+    fact: "Alex Williams ate 5 feet of raw stinging <BLANK> in just one minute.",
     answer: "nettles",
     category: "Competitive Eating",
     lies: ["thorns", "stinging plants", "leaves", "stems", "vines"]
   },
   {
-    fact: "Don Lerman consumed <<BLANK>> of salted butter in five minutes flat.",
+    fact: "Don Lerman consumed <BLANK> of salted butter in five minutes flat.",
     answer: "28 ounces",
     category: "Competitive Eating",
     lies: ["42 ounces", "19 ounces", "36 ounces", "15 ounces", "52 ounces"]
   },
   {
-    fact: "Isaac Harding-Davis ate <<BLANK>> of Ben & Jerry's ice cream in one minute.",
+    fact: "Isaac Harding-Davis ate <BLANK> of Ben & Jerry's ice cream in one minute.",
     answer: "806 grams",
     category: "Competitive Eating",
     lies: ["550 grams", "1100 grams", "680 grams", "1450 grams", "450 grams"]
   },
   {
-    fact: "André Ortolf drank <<BLANK>> of soup in just 30 seconds.",
+    fact: "André Ortolf drank <BLANK> of soup in just 30 seconds.",
     answer: "483 grams",
     category: "Competitive Eating",
     lies: ["325 grams", "620 grams", "410 grams", "750 grams", "290 grams"]
   },
   {
-    fact: "Matt Stonie ate <<BLANK>> Peeps marshmallows at the World Peeps Eating Championship.",
+    fact: "Matt Stonie ate <BLANK> Peeps marshmallows at the World Peeps Eating Championship.",
     answer: "255 Peeps",
     category: "Competitive Eating",
     lies: ["198 Peeps", "287 Peeps", "176 Peeps", "312 Peeps", "223 Peeps"]
   },
   {
-    fact: "Donald Gorske has eaten <<BLANK>> Big Macs in his lifetime since 1972.",
+    fact: "Donald Gorske has eaten <BLANK> Big Macs in his lifetime since 1972.",
     answer: "35000 Big Macs",
     category: "Competitive Eating",
     lies: ["28000 Big Macs", "42000 Big Macs", "31000 Big Macs", "48000 Big Macs", "24000 Big Macs"]
   },
   {
-    fact: "Rolf Buchholz from Germany holds the record for <<BLANK>> body modifications.",
+    fact: "Rolf Buchholz from Germany holds the record for <BLANK> body modifications.",
     answer: "516 body modifications",
     category: "Body Modifications",
     lies: ["412 body modifications", "638 body modifications", "487 body modifications", "724 body modifications", "356 body modifications"]
   },
   {
-    fact: "Rolf has <<BLANK>> piercings, with 278 on his genitals alone.",
+    fact: "Rolf has <BLANK> piercings, with 278 on his genitals alone.",
     answer: "481 piercings",
     category: "Body Modifications",
     lies: ["365 piercings", "542 piercings", "419 piercings", "603 piercings", "298 piercings"]
   },
   {
-    fact: "Rolf Buchholz has <<BLANK>> magnetic implants in his fingertips that can pick up metal objects.",
+    fact: "Rolf Buchholz has <BLANK> magnetic implants in his fingertips that can pick up metal objects.",
     answer: "five magnetic implants",
     category: "Body Modifications",
     lies: ["three magnetic implants", "eight magnetic implants", "two magnetic implants", "seven magnetic implants", "four magnetic implants"]
   },
   {
-    fact: "Elaine Davidson holds the record for <<BLANK>> piercings on her entire body.",
+    fact: "Elaine Davidson holds the record for <BLANK> piercings on her entire body.",
     answer: "4225 piercings",
     category: "Body Modifications",
     lies: ["2847 piercings", "5100 piercings", "3156 piercings", "6234 piercings", "2001 piercings"]
   },
   {
-    fact: "Maria José Cristerna has <<BLANK>> body modifications including transdermal implants.",
+    fact: "Maria José Cristerna has <BLANK> body modifications including transdermal implants.",
     answer: "49 body modifications",
     category: "Body Modifications",
     lies: ["38 body modifications", "67 body modifications", "42 body modifications", "73 body modifications", "31 body modifications"]
   },
   {
-    fact: "Sarwan Singh has the longest beard at <<BLANK>> in length.",
+    fact: "Sarwan Singh has the longest beard at <BLANK> in length.",
     answer: "2.54 meters long",
     category: "Body Modifications",
     lies: ["1.98 meters long", "3.15 meters long", "2.89 meters long", "3.42 meters long", "2.21 meters long"]
   },
   {
-    fact: "Hans Langseth's beard measured <<BLANK>> when he died in 1927.",
+    fact: "Hans Langseth's beard measured <BLANK> when he died in 1927.",
     answer: "5.33 meters long",
     category: "Body Modifications",
     lies: ["4.12 meters long", "6.48 meters long", "3.87 meters long", "7.15 meters long", "4.91 meters long"]
   },
   {
-    fact: "Lucky Diamond Rich has covered his entire body in black ink including <<BLANK>>.",
+    fact: "Lucky Diamond Rich has covered his entire body in black ink including <BLANK>.",
     answer: "his eyeballs",
     category: "Body Modifications",
     lies: ["his fingernails", "his toenails", "his teeth", "his gums", "his tongue"]
   },
   {
-    fact: "An 86-person beard chain measured <<BLANK>> long at the National Beard Championships.",
+    fact: "An 86-person beard chain measured <BLANK> long at the National Beard Championships.",
     answer: "195 feet long",
     category: "Body Modifications",
     lies: ["156 feet long", "234 feet long", "178 feet long", "267 feet long", "129 feet long"]
   },
   {
-    fact: "The heaviest pumpkin ever recorded weighed <<BLANK>> grown by the Paton brothers.",
+    fact: "The heaviest pumpkin ever recorded weighed <BLANK> grown by the Paton brothers.",
     answer: "1278.8 kilograms",
     category: "Giant Vegetables",
     lies: ["987.5 kilograms", "1456.2 kilograms", "1089.3 kilograms", "1634.7 kilograms", "856.1 kilograms"]
   },
   {
-    fact: "The largest pumpkin by circumference measured <<BLANK>> from stem to blossom.",
+    fact: "The largest pumpkin by circumference measured <BLANK> from stem to blossom.",
     answer: "649.8 centimeters",
     category: "Giant Vegetables",
     lies: ["524.3 centimeters", "782.1 centimeters", "438.9 centimeters", "901.2 centimeters", "356.7 centimeters"]
   },
   {
-    fact: "Peter Glazebrook grew the tallest runner bean plant at <<BLANK>> in height.",
+    fact: "Peter Glazebrook grew the tallest runner bean plant at <BLANK> in height.",
     answer: "8.006 meters tall",
     category: "Giant Vegetables",
     lies: ["6.234 meters tall", "9.781 meters tall", "7.115 meters tall", "10.342 meters tall", "5.987 meters tall"]
   },
   {
-    fact: "Joe Atherton set the record for longest radish at <<BLANK>>.",
+    fact: "Joe Atherton set the record for longest radish at <BLANK>.",
     answer: "7.8 meters long",
     category: "Giant Vegetables",
     lies: ["5.42 meters long", "9.15 meters long", "6.38 meters long", "10.23 meters long", "4.91 meters long"]
   },
   {
-    fact: "The longest aubergine ever grown measured <<BLANK>> in length.",
+    fact: "The longest aubergine ever grown measured <BLANK> in length.",
     answer: "49 centimeters",
     category: "Giant Vegetables",
     lies: ["38 centimeters", "62 centimeters", "43 centimeters", "71 centimeters", "32 centimeters"]
   },
   {
-    fact: "Graham Barratt grew the tallest luffa plant at <<BLANK>> in height.",
+    fact: "Graham Barratt grew the tallest luffa plant at <BLANK> in height.",
     answer: "11.672 meters tall",
     category: "Giant Vegetables",
     lies: ["8.945 meters tall", "14.231 meters tall", "9.876 meters tall", "15.542 meters tall", "7.389 meters tall"]
   },
   {
-    fact: "The longest marrow ever recorded by Mark Baggs measured <<BLANK>>.",
+    fact: "The longest marrow ever recorded by Mark Baggs measured <BLANK>.",
     answer: "1.454 meters long",
     category: "Giant Vegetables",
     lies: ["0.987 meters long", "1.823 meters long", "1.156 meters long", "2.134 meters long", "0.756 meters long"]
   },
   {
-    fact: "The world record heaviest onion weighed <<BLANK>> and took 13 years to achieve.",
+    fact: "The world record heaviest onion weighed <BLANK> and took 13 years to achieve.",
     answer: "8.97 kilograms",
     category: "Giant Vegetables",
     lies: ["6.34 kilograms", "11.23 kilograms", "7.56 kilograms", "12.89 kilograms", "5.12 kilograms"]
   },
   {
-    fact: "The longest sweet pepper ever grown measured <<BLANK>> in length.",
+    fact: "The longest sweet pepper ever grown measured <BLANK> in length.",
     answer: "26.7 centimeters",
     category: "Giant Vegetables",
     lies: ["19.2 centimeters", "34.8 centimeters", "22.5 centimeters", "39.1 centimeters", "16.3 centimeters"]
   },
   {
-    fact: "The giant waterlily Victoria amazonica grows leaves that reach <<BLANK>> in diameter.",
+    fact: "The giant waterlily Victoria amazonica grows leaves that reach <BLANK> in diameter.",
     answer: "3 meters wide",
     category: "Giant Vegetables",
     lies: ["2.1 meters wide", "4.5 meters wide", "2.8 meters wide", "5.2 meters wide", "1.9 meters wide"]
   },
   {
-    fact: "The titan arum corpse flower can grow to <<BLANK>> tall when blooming.",
+    fact: "The titan arum corpse flower can grow to <BLANK> tall when blooming.",
     answer: "more than 3 metres",
     category: "Giant Vegetables",
     lies: ["less than 2 metres", "over 5 metres", "around 2 metres", "nearly 4 metres", "under 1 metre"]
   },
   {
-    fact: "In 1998, a person married <<BLANK>> in a bizarre ceremony.",
+    fact: "In 1998, a person married <BLANK> in a bizarre ceremony.",
     answer: "the Berlin Wall",
     category: "Bizarre Records",
     lies: ["a bridge", "a statue", "a clock tower", "a lighthouse", "a church"]
   },
   {
-    fact: "Charles Osborne hiccupped continuously for <<BLANK>> without stopping.",
+    fact: "Charles Osborne hiccupped continuously for <BLANK> without stopping.",
     answer: "68 years",
     category: "Bizarre Records",
     lies: ["45 years", "82 years", "37 years", "91 years", "52 years"]
   },
   {
-    fact: "Etibar Elchiyev balanced <<BLANK>> spoons on his body in a single attempt.",
+    fact: "Etibar Elchiyev balanced <BLANK> spoons on his body in a single attempt.",
     answer: "250 spoons",
     category: "Bizarre Records",
     lies: ["187 spoons", "312 spoons", "156 spoons", "428 spoons", "89 spoons"]
   },
   {
-    fact: "Sanath Bandara wore <<BLANK>> t-shirts at the same time for a record.",
+    fact: "Sanath Bandara wore <BLANK> t-shirts at the same time for a record.",
     answer: "257 t-shirts",
     category: "Bizarre Records",
     lies: ["189 t-shirts", "324 t-shirts", "142 t-shirts", "396 t-shirts", "201 t-shirts"]
   },
   {
-    fact: "Anand S. from India inserted <<BLANK>> straws into his mouth simultaneously.",
+    fact: "Anand S. from India inserted <BLANK> straws into his mouth simultaneously.",
     answer: "459 straws",
     category: "Bizarre Records",
     lies: ["312 straws", "587 straws", "234 straws", "723 straws", "156 straws"]
   },
   {
-    fact: "Charlotte Lee amassed over <<BLANK>> different rubber ducks in her collection.",
+    fact: "Charlotte Lee amassed over <BLANK> different rubber ducks in her collection.",
     answer: "9000 ducks",
     category: "Bizarre Records",
     lies: ["5600 ducks", "12300 ducks", "3400 ducks", "14800 ducks", "2100 ducks"]
   },
   {
-    fact: "Hollis Cantrell set a record for <<BLANK>> tattoos inked in a single 24-hour period.",
+    fact: "Hollis Cantrell set a record for <BLANK> tattoos inked in a single 24-hour period.",
     answer: "801 tattoos",
     category: "Bizarre Records",
     lies: ["567 tattoos", "1024 tattoos", "423 tattoos", "1256 tattoos", "312 tattoos"]
   },
   {
-    fact: "A couple dressed as Smurfs gathered <<BLANK>> people in Germany for a record.",
+    fact: "A couple dressed as Smurfs gathered <BLANK> people in Germany for a record.",
     answer: "2762 people",
     category: "Bizarre Records",
     lies: ["1843 people", "3456 people", "1201 people", "4128 people", "945 people"]
   },
   {
-    fact: "Takeru Kobayashi ate a bowl of pasta in just <<BLANK>> seconds.",
+    fact: "Takeru Kobayashi ate a bowl of pasta in just <BLANK> seconds.",
     answer: "26.69 seconds",
     category: "Bizarre Records",
     lies: ["18.34 seconds", "35.12 seconds", "14.78 seconds", "41.56 seconds", "8.92 seconds"]
   },
   {
-    fact: "Ann Atkin collected <<BLANK>> garden gnomes and pixies over four decades.",
+    fact: "Ann Atkin collected <BLANK> garden gnomes and pixies over four decades.",
     answer: "2042 gnomes",
     category: "Bizarre Records",
     lies: ["1456 gnomes", "2891 gnomes", "987 gnomes", "3234 gnomes", "712 gnomes"]
   },
   {
-    fact: "In 2014, the oldest cycad plant at Kew Gardens weighed over <<BLANK>> and stood four metres tall.",
+    fact: "In 2014, the oldest cycad plant at Kew Gardens weighed over <BLANK> and stood four metres tall.",
     answer: "one tonne",
     category: "Bizarre Records",
     lies: ["half a tonne", "two tonnes", "three-quarters tonne", "one and a half tonnes", "quarter tonne"]
   },
   {
-    fact: "The largest collection of living plants at a single botanical garden is <<BLANK>> species.",
+    fact: "The largest collection of living plants at a single botanical garden is <BLANK> species.",
     answer: "16900 species",
     category: "Bizarre Records",
     lies: ["12340 species", "21567 species", "8976 species", "24892 species", "5234 species"]
   },
   {
-    fact: "Patrick Bertoletti ate <<BLANK>> cream-filled donuts in just five minutes.",
+    fact: "Patrick Bertoletti ate <BLANK> cream-filled donuts in just five minutes.",
     answer: "47 donuts",
     category: "Competitive Eating",
     lies: ["32 donuts", "58 donuts", "41 donuts", "69 donuts", "28 donuts"]
   },
   {
-    fact: "Eric Booker consumed <<BLANK>> one-pound bowls of peas in 12 minutes.",
+    fact: "Eric Booker consumed <BLANK> one-pound bowls of peas in 12 minutes.",
     answer: "nine and a half bowls",
     category: "Competitive Eating",
     lies: ["six bowls", "thirteen bowls", "eight bowls", "fourteen and a half bowls", "five bowls"]
   },
   {
-    fact: "The Eastern Cape giant cycad at Kew has been growing since <<BLANK>> when it arrived from South Africa.",
+    fact: "The Eastern Cape giant cycad at Kew has been growing since <BLANK> when it arrived from South Africa.",
     answer: "1775",
     category: "Giant Vegetables",
     lies: ["1823", "1656", "1901", "1542", "1734"]

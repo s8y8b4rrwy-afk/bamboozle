@@ -490,7 +490,7 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
 
             {/* PERSISTENT BOTTOM BAR (Avatar Strip + Emotes) - Transparent */}
             {state.phase !== GamePhase.LOBBY && state.phase !== GamePhase.LEADERBOARD && state.phase !== GamePhase.GAME_OVER && (
-                <div className="border-t border-white/5 pb-10 relative">
+                <div className={`border-t border-white/5 relative ${isMobile ? 'pb-10' : ''}`}>
                     <AvatarStrip />
                     <div className="grid grid-cols-4 gap-2 px-4 pb-4 pt-2 w-full max-w-sm mx-auto z-20 relative">
                         <button onClick={() => handleEmote('LAUGH')} className="bg-white/10 p-3 rounded-xl hover:bg-white/20 text-2xl active:scale-95 transition border border-white/5">😂</button>

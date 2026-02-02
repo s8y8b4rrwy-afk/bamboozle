@@ -154,7 +154,8 @@ export const useGameService = (role: 'HOST' | 'PLAYER' | 'AUDIENCE', playerName?
   const [localIsNarrating, setLocalIsNarrating] = useState(false);
 
   // --- AUDIO / TTS ENGINE ---
-  const speak = (text: string, force: boolean = false, dedupKey?: string) => {
+  // --- AUDIO / TTS ENGINE ---
+  const internalSpeak = (text: string, force: boolean = false, dedupKey?: string) => {
     if ('speechSynthesis' in window) {
       const now = Date.now();
       const key = dedupKey || text;
@@ -169,7 +170,8 @@ export const useGameService = (role: 'HOST' | 'PLAYER' | 'AUDIENCE', playerName?
       const randomPitch = 0.9 + Math.random() * 0.2;
 
       // Ensure we don't cut off previous speech abruptly unless forced
-      if (force) window.speechSynthesis.cancel();
+      // if (force) window.speechSynthesis.cancel();
+      // Actually, for better flow, we probably shouldn't cancel unless forced
 
       const utterance = new SpeechSynthesisUtterance(text);
       const voices = window.speechSynthesis.getVoices();
@@ -184,26 +186,29 @@ export const useGameService = (role: 'HOST' | 'PLAYER' | 'AUDIENCE', playerName?
       // Update Narrating State
       utterance.onstart = () => {
         setLocalIsNarrating(true);
-        if (role === 'HOST') {
-          setState(prev => {
-            const next = { ...prev, isNarrating: true };
-            broadcastState(next);
-            return next;
-          });
-        }
       };
       utterance.onend = () => {
         setLocalIsNarrating(false);
-        if (role === 'HOST') {
-          setState(prev => {
-            const next = { ...prev, isNarrating: false };
-            broadcastState(next);
-            return next;
-          });
-        }
+      };
+      utterance.onerror = () => {
+        setLocalIsNarrating(false);
       };
 
       window.speechSynthesis.speak(utterance);
+    }
+  };
+
+  const speak = (text: string, force: boolean = false, dedupKey?: string) => {
+    // HOST LOGIC:
+    // 1. Emit Event to everyone else
+    // 2. Play locally immediately
+    if (role === 'HOST') {
+      processHostEvent({ type: 'PLAY_NARRATION', payload: { text, key: dedupKey } });
+    } else {
+      // Players don't trigger global narration directly usually, but if they do, likely just local feedback?
+      // For now, assume player calls to speak are local only (e.g. feedback) OR ignored if global.
+      // Assuming local feedback is OK.
+      internalSpeak(text, force, dedupKey);
     }
   };
 
@@ -229,6 +234,13 @@ export const useGameService = (role: 'HOST' | 'PLAYER' | 'AUDIENCE', playerName?
     socket.on('gameStateUpdate', (gameState: GameState) => {
       if (role !== 'HOST') {
         setState(gameState);
+      }
+    });
+
+    // Listen for Host Events (Narration)
+    socket.on('hostEvent', (event: GameEvent) => {
+      if (event.type === 'PLAY_NARRATION') {
+        internalSpeak(event.payload.text, false, event.payload.key);
       }
     });
 
@@ -642,6 +654,14 @@ export const useGameService = (role: 'HOST' | 'PLAYER' | 'AUDIENCE', playerName?
       setState(next);
       broadcastState(next);
     }
+
+    // Special Handling for Narrator Event (State Independent Broadcast)
+    if (event.type === 'PLAY_NARRATION') {
+      // Broadcast via hostEvent channel
+      socketRef.current?.emit('hostEvent', { roomCode: next.roomCode, event });
+      // Play locally for Host
+      internalSpeak(event.payload.text, false, event.payload.key);
+    }
   };
 
   // --- BOT/AUDIENCE AUTO-START WATCHER ---
@@ -1049,29 +1069,42 @@ export const useGameService = (role: 'HOST' | 'PLAYER' | 'AUDIENCE', playerName?
       }
 
       // Wait -> Go to AUTHOR
+      // Wait -> Go to AUTHOR
       advance(3000, () => { // Give time for voter reaction speech
         state.revealSubPhase = 'AUTHOR';
         updateAndBroadcast(state);
 
         // AUTHOR Logic
+        let speechText = '';
+
         if (isTruth) {
           sfx.play('REVEAL');
           const intro = getRandomPhrase('REVEAL_TRUTH_INTRO');
           const fullFact = state.currentQuestion?.fact.replace('<BLANK>', currentAnswer.text) || currentAnswer.text;
-          speak(`${intro} ${fullFact}`, false, `TRUTH_${currentAnswerId}`);
+          speechText = `${intro} ${fullFact}`;
+          speak(speechText, false, `TRUTH_${currentAnswerId}`);
         } else {
           const authors = currentAnswer.authorIds.map(id => state.players[id]).filter(Boolean);
           if (authors.length > 0) {
-            if (authors.length === 1) speak(getRandomPhrase('REVEAL_LIAR', { name: authors[0].name }), false, `LIAR_${currentAnswerId}`);
+            if (authors.length === 1) {
+              speechText = getRandomPhrase('REVEAL_LIAR', { name: authors[0].name });
+              speak(speechText, false, `LIAR_${currentAnswerId}`);
+            }
             else {
               const names = authors.map(a => a.name).join(' and ');
-              speak(getRandomPhrase('REVEAL_LIAR_JINX', { names: names }), false, `LIAR_JINX_${currentAnswerId}`);
+              speechText = getRandomPhrase('REVEAL_LIAR_JINX', { names: names });
+              speak(speechText, false, `LIAR_JINX_${currentAnswerId}`);
             }
           }
         }
 
+        // Calculate duration based on text length
+        // Approx 450ms per word (slower reading) + 3s buffer to let it sink in
+        const wordCount = speechText.split(' ').length;
+        const duration = Math.max(4000, wordCount * 450 + 1000);
+
         // Wait -> Next Step
-        advance(4000, () => {
+        advance(duration, () => {
           state.revealStep++;
           state.revealSubPhase = 'CARD'; // Reset for next
           updateAndBroadcast(state);
@@ -1242,6 +1275,6 @@ export const useGameService = (role: 'HOST' | 'PLAYER' | 'AUDIENCE', playerName?
         }
       }
     },
-    isSpeaking: state.isNarrating || localIsNarrating
+    isSpeaking: localIsNarrating // Use local state primarily for lip sync as it reflects actual audio
   };
 };

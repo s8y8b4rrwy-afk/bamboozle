@@ -108,4 +108,5 @@ export type GameEvent =
   | { type: 'START_GAME'; payload: { rounds: number } }
   | { type: 'SELECT_CATEGORY'; payload: { category: string } }
   | { type: 'TOGGLE_ONLINE_MODE'; payload: null }
+  | { type: 'PLAY_NARRATION'; payload: { text: string; key?: string } }
   | { type: 'RESTART_GAME'; payload: null };

@@ -39,21 +39,21 @@ io.on('connection', (socket) => {
 
   socket.on('createRoom', (callback) => {
     const roomCode = generateRoomCode();
-    
+
     // Clear any pending deletion for this room code (unlikely collision but safe)
     if (roomTimeouts[roomCode]) {
       clearTimeout(roomTimeouts[roomCode]);
       delete roomTimeouts[roomCode];
     }
 
-    rooms[roomCode] = { 
+    rooms[roomCode] = {
       hostSocketId: socket.id,
-      players: {}, 
-      audience: {}, 
-      state: { 
-        roomCode, 
-        players: {}, 
-        audience: {}, 
+      players: {},
+      audience: {},
+      state: {
+        roomCode,
+        players: {},
+        audience: {},
         phase: 'LOBBY',
         currentRound: 0,
         totalRounds: 3,
@@ -82,11 +82,11 @@ io.on('connection', (socket) => {
     socket.join(roomCode);
     socket.data.roomCode = roomCode; // Track room for disconnect logic
     const user = { id: id || socket.id, name: name || 'Anonymous' };
-    
+
     // We don't necessarily need to store players/audience separately here 
     // if the GameState is managed by the Host and synced.
     // But it's good for tracking connections.
-    
+
     if (callback) callback({ success: true, state: rooms[roomCode].state });
     console.log(`User ${user.name} joined room ${roomCode} as ${role}`);
   });
@@ -97,6 +97,11 @@ io.on('connection', (socket) => {
       // Broadcast to everyone in the room EXCEPT the sender (host)
       socket.to(roomCode).emit('gameStateUpdate', gameState);
     }
+  });
+
+  // Relay generic events from Host to All
+  socket.on('hostEvent', ({ roomCode, event }) => {
+    socket.to(roomCode).emit('hostEvent', event);
   });
 
   socket.on('requestState', ({ roomCode }, callback) => {
@@ -115,14 +120,14 @@ io.on('connection', (socket) => {
 
   socket.on('disconnect', () => {
     console.log('User disconnected:', socket.id);
-    
+
     const roomCode = socket.data.roomCode;
     if (roomCode && rooms[roomCode]) {
       // Check if host disconnected
       if (rooms[roomCode].hostSocketId === socket.id) {
         console.log(`Host disconnected from ${roomCode}. Closing room.`);
         io.to(roomCode).emit('roomClosed');
-        
+
         if (roomTimeouts[roomCode]) {
           clearTimeout(roomTimeouts[roomCode]);
           delete roomTimeouts[roomCode];
@@ -134,7 +139,7 @@ io.on('connection', (socket) => {
       // Check if room is empty of human players
       const roomSockets = io.sockets.adapter.rooms.get(roomCode);
       const numClients = roomSockets ? roomSockets.size : 0;
-      
+
       console.log(`User left ${roomCode}. Remaining connections: ${numClients}`);
 
       if (numClients === 0 && rooms[roomCode]) {
