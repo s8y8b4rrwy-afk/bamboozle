@@ -202,20 +202,6 @@ export const useGameService = (role: 'HOST' | 'PLAYER' | 'AUDIENCE', playerName?
       socket.on('playerEvent', (event: GameEvent) => {
         processHostEvent(event);
       });
-    } else {
-        // Auto-reconnect logic for players/audience
-        const storedRoom = localStorage.getItem('bamboozle_room_code');
-        if (storedRoom) {
-            socket.emit('joinRoom', { roomCode: storedRoom, id: playerId }, (response: any) => {
-                if (response.success) {
-                    setState(response.state);
-                    console.log('Auto-reconnected to room:', storedRoom);
-                } else {
-                    // If room invalid, clear storage
-                    localStorage.removeItem('bamboozle_room_code');
-                }
-            });
-        }
     }
 
     // Listen for game state updates
@@ -223,6 +209,11 @@ export const useGameService = (role: 'HOST' | 'PLAYER' | 'AUDIENCE', playerName?
       if (role !== 'HOST') {
         setState(gameState);
       }
+    });
+
+    socket.on('roomClosed', () => {
+      alert('The host has disconnected. The room is now closed.');
+      window.location.href = '/';
     });
 
     return () => {
@@ -945,7 +936,6 @@ export const useGameService = (role: 'HOST' | 'PLAYER' | 'AUDIENCE', playerName?
     socketRef.current?.emit('joinRoom', { roomCode, id: playerId }, (response: any) => {
       if (response.success) {
         setState(response.state);
-        localStorage.setItem('bamboozle_room_code', roomCode); // Persist room code
         if (callback) callback(true);
       } else {
         if (callback) callback(false, response.error);
