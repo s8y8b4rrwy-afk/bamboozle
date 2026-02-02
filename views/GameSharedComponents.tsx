@@ -131,9 +131,9 @@ export const CategoryRoulette = ({ state, onSelect }: { state: GameState, onSele
         <div className="flex flex-col items-center justify-center h-full w-full z-30 relative px-4 md:px-12 py-safe overflow-y-auto">
             <div className="mb-4 md:mb-12 text-center max-w-2xl mx-auto flex-shrink-0 pt-4 md:pt-0">
                 <h2 className="text-sm md:text-3xl text-purple-200 uppercase tracking-widest font-black drop-shadow-sm mb-2 md:mb-4">Category Selection</h2>
-                <div className="bg-white/10 backdrop-blur-xl border border-white/20 px-6 py-3 md:px-8 md:py-4 rounded-3xl inline-flex flex-col items-center shadow-2xl">
-                    <span className="text-yellow-400 font-black text-xl md:text-4xl uppercase mb-0.5 md:mb-1">{selectorName}</span>
-                    <span className="text-white/80 text-xs md:text-lg font-bold uppercase tracking-wider">{onSelect ? 'PICK A CATEGORY' : 'IS CHOOSING...'}</span>
+                <div className="flex flex-col items-center">
+                    <span className="text-yellow-400 font-black text-2xl md:text-6xl uppercase tracking-tighter drop-shadow-xl">{selectorName}</span>
+                    <span className="text-white text-xs md:text-2xl font-black uppercase tracking-[0.3em] opacity-50">{onSelect ? 'PICK A CATEGORY' : 'IS CHOOSING...'}</span>
                 </div>
             </div>
 

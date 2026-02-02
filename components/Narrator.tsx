@@ -6,16 +6,16 @@ import { NARRATOR_SEED } from '../constants';
 interface NarratorProps {
   isSpeaking: boolean;
   className?: string;
+  size?: number;
 }
 
-export const Narrator: React.FC<NarratorProps> = ({ isSpeaking, className }) => {
+export const Narrator: React.FC<NarratorProps> = ({ isSpeaking, className, size = 80 }) => {
   return (
     <div className={className}>
       <div className="relative">
-        {/* Speech bubble or indicator could go here */}
         <Avatar
           seed={NARRATOR_SEED}
-          size={80}
+          size={size}
           speaking={isSpeaking}
           expression={isSpeaking ? 'HAPPY' : 'NEUTRAL'}
           className="filter drop-shadow-2xl"

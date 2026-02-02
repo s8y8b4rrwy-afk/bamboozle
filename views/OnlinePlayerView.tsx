@@ -12,9 +12,10 @@ interface OnlinePlayerViewProps {
     actions: any;
     playerId: string;
     isSpeaking: boolean;
+    onHome: () => void;
 }
 
-export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actions, playerId, isSpeaking }) => {
+export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actions, playerId, isSpeaking, onHome }) => {
     const me = state.players[playerId];
     const amAudience = state.audience[playerId];
     const isVip = state.vipId === playerId;
@@ -64,6 +65,24 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
     const [joinName, setJoinName] = useState('');
     const [codeError, setCodeError] = useState('');
 
+    // Mobile Reaction Bar State - Only affects "Mobile" (<768px)
+    const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+    const [showReactions, setShowReactions] = useState(false);
+    const reactionTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+    useEffect(() => {
+        const handleResize = () => setIsMobile(window.innerWidth < 768);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
+    const resetReactionTimer = () => {
+        if (reactionTimerRef.current) clearTimeout(reactionTimerRef.current);
+        reactionTimerRef.current = setTimeout(() => {
+            setShowReactions(false);
+        }, 10000);
+    };
+
     // Reset interactions on phase change
     useEffect(() => {
         setLieText('');
@@ -88,6 +107,8 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
         else if (type === 'TOMATO') setMyEmoteExpression('ANGRY');
         else setMyEmoteExpression('HAPPY');
         setTimeout(() => setMyEmoteExpression(null), 2000);
+
+        if (isMobile) resetReactionTimer();
     };
 
     const submitLie = () => {
@@ -119,7 +140,20 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
         if (state.phase === GamePhase.LOBBY) return null;
 
         return (
-            <div className="w-full py-3 px-2 overflow-x-auto flex items-center justify-center gap-3 z-40 shrink-0 no-scrollbar relative min-h-[4.5rem]">
+            <div
+                onClick={() => {
+                    if (isMobile) {
+                        if (showReactions) {
+                            setShowReactions(false);
+                            if (reactionTimerRef.current) clearTimeout(reactionTimerRef.current);
+                        } else {
+                            setShowReactions(true);
+                            resetReactionTimer();
+                        }
+                    }
+                }}
+                className="w-full py-3 px-2 overflow-x-auto flex items-center justify-center gap-3 z-40 shrink-0 no-scrollbar relative min-h-[4.5rem]"
+            >
                 {players.map(p => {
                     const isDone = (state.phase === GamePhase.WRITING && !!state.submittedLies[p.id]) ||
                         (state.phase === GamePhase.VOTING && !!p.currentVote);
@@ -180,6 +214,9 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
                                 >
                                     ENTER
                                 </button>
+                                <button onClick={() => { sfx.play('CLICK'); onHome(); }} className="w-full text-center text-white/40 text-xs hover:text-white uppercase mt-6 font-bold py-4">
+                                    Cancel
+                                </button>
                             </motion.div>
                         )}
 
@@ -234,14 +271,14 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
                                     )}
                                 </div>
 
-                                <button onClick={() => setJoinStep('CODE')} className="w-full text-center text-white/40 text-xs hover:text-white uppercase mt-6 font-bold py-4">
+                                <button onClick={() => { sfx.play('CLICK'); onHome(); }} className="w-full text-center text-white/40 text-xs hover:text-white uppercase mt-6 font-bold py-4">
                                     Cancel
                                 </button>
                             </motion.div>
                         )}
                     </div>
                 </div>
-            </div>
+            </div >
         );
     }
 
@@ -256,6 +293,7 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
             <div
                 className={`w-full flex justify-center mt-2 z-10 shrink-0 transform transition-all duration-500 relative
                     ${state.phase === GamePhase.WRITING ? 'scale-90' : 'scale-100'}
+                    ${state.phase === GamePhase.LOBBY ? 'hidden' : 'flex'}
                 `}
             >
                 <Narrator isSpeaking={isSpeaking} />
@@ -269,64 +307,69 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
 
                 {/* 1. LOBBY */}
                 {state.phase === GamePhase.LOBBY && (
-                    <div className="flex-1 flex flex-col items-center justify-center p-4">
-                        {/* Centered Content */}
-                        <div className="flex-1 flex flex-col items-center w-full max-w-md gap-2 pb-32 pt-2 overflow-y-auto no-scrollbar">
-
-                            {/* MICRO-ARCADE DASHBOARD */}
-                            <div className="w-full flex flex-col items-center gap-2 shrink-0 animate-fade-in-up px-4">
-                                {/* Compact Room Code Room */}
-                                <div className="w-full bg-indigo-950 border-4 border-yellow-400 shadow-[4px_4px_0px_0px_#FACC15] rounded-xl p-3 flex flex-row items-center justify-between relative overflow-hidden">
+                    <div className="flex-1 flex flex-col w-full max-w-md mx-auto p-4 relative">
+                        {/* A. DASHBOARD (Fixed Top) */}
+                        <div className="shrink-0 animate-fade-in-up pb-4 pt-2">
+                            <div className="w-full flex flex-row items-center gap-2">
+                                <Narrator isSpeaking={isSpeaking} size={70} className="shrink-0" />
+                                <div className="flex-1 bg-indigo-950 border-4 border-yellow-400 shadow-[4px_4px_0px_0px_#FACC15] rounded-xl p-3 flex flex-row items-center justify-between relative overflow-hidden">
                                     <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-20" />
-
                                     <div className="z-10 flex flex-col items-start leading-none">
-                                        <span className="text-yellow-400/80 font-black uppercase tracking-widest text-[8px] md:text-[10px]">Room Code</span>
-                                        <span className="text-4xl md:text-5xl font-black text-white tracking-[0.1em] drop-shadow-[2px_2px_0px_rgba(0,0,0,1)] font-mono">
+                                        <span className="text-yellow-400/80 font-black uppercase tracking-widest text-[8px]">Room Code</span>
+                                        <span className="text-3xl md:text-4xl font-black text-white tracking-[0.1em] drop-shadow-[2px_2px_0px_rgba(0,0,0,1)] font-mono">
                                             {state.roomCode}
                                         </span>
                                     </div>
-
-                                    {/* Stats as simple text pill */}
                                     <div className="z-10 flex flex-col gap-1 items-end">
-                                        <div className="flex items-center gap-2 bg-black/40 px-2 py-1 rounded border border-white/10">
-                                            <span className="text-white font-bold text-xs uppercase">Rounds</span>
-                                            <span className="text-yellow-400 font-mono font-black">{state.totalRounds}</span>
+                                        <div className="flex items-center gap-1.5 bg-black/40 px-2 py-0.5 rounded border border-white/10">
+                                            <span className="text-white font-bold text-[8px] uppercase">Rounds</span>
+                                            <span className="text-yellow-400 font-mono font-black text-xs">{state.totalRounds}</span>
                                         </div>
-                                        <div className="flex items-center gap-2 bg-black/40 px-2 py-1 rounded border border-white/10">
-                                            <Users size={12} className="text-blue-400" />
-                                            <span className="text-white font-mono font-black text-xs">{audienceCount} Audience</span>
+                                        <div className="flex items-center gap-1.5 bg-black/40 px-2 py-0.5 rounded border border-white/10">
+                                            <Users size={10} className="text-blue-400" />
+                                            <span className="text-white font-mono font-black text-[10px]">{audienceCount}</span>
                                         </div>
                                     </div>
                                 </div>
                             </div>
+                        </div>
 
-                            {/* Players Label */}
-                            <div className="w-full px-4 flex items-center gap-2 opacity-40 mt-1">
-                                <div className="h-px bg-white/20 flex-1" />
-                                <span className="text-[10px] uppercase font-bold text-white tracking-widest">Players</span>
-                                <div className="h-px bg-white/20 flex-1" />
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-2 w-full px-2">
+                        {/* B. CENTERED PLAYER GRID */}
+                        <div className="flex-1 flex flex-col items-center justify-center p-2">
+                            <div className="grid grid-cols-3 gap-y-12 gap-x-2 w-full">
                                 {Object.values(state.players).map((p) => (
-                                    <div key={p.id} className={`flex flex-col items-center bg-black/40 p-2 rounded-xl border-2 shadow-sm ${p.isReady ? 'border-green-400 bg-green-900/40' : 'border-white/10'}`}>
-                                        {p.id === state.vipId && <Crown size={12} className="text-yellow-400 mb-1" fill="currentColor" />}
-                                        <Avatar seed={p.avatarSeed} size={40} expression={p.expression} />
-                                        <div className="font-bold text-white uppercase mt-1 text-[10px] truncate max-w-full px-2">{p.name}</div>
-                                        <div className={`text-[9px] font-black uppercase mt-0.5 ${p.isReady ? 'text-green-400' : 'text-white/30'}`}>{p.isReady ? 'READY' : 'WAITING'}</div>
+                                    <div key={p.id} className="flex flex-col items-center relative">
+                                        {p.id === state.vipId && (
+                                            <div className="absolute -top-5 z-10">
+                                                <Crown size={16} className="text-yellow-400 filter drop-shadow-md" fill="currentColor" />
+                                            </div>
+                                        )}
+                                        <div className="relative">
+                                            <Avatar seed={p.avatarSeed} size={80} expression={p.expression} className={`filter drop-shadow-xl transition-all ${p.isReady ? 'opacity-100 scale-110' : 'opacity-80'}`} />
+                                        </div>
+                                        <div className="font-black text-white uppercase mt-4 text-[11px] tracking-wider truncate max-w-full text-center drop-shadow-md">{p.name}</div>
+                                        <div className={`text-[9px] font-black uppercase mt-1 tracking-widest ${p.isReady ? 'text-green-400' : 'text-white/30'}`}>
+                                            {p.isReady ? 'READY' : 'WAITING'}
+                                        </div>
                                     </div>
                                 ))}
                                 {Array.from({ length: Math.max(0, 6 - Object.values(state.players).length) }).map((_, i) => (
-                                    <div key={`empty-${i}`} className="flex items-center justify-center border-dashed border border-white/10 rounded-xl min-h-[4.5rem]">
-                                        <span className="text-white/10 font-bold uppercase text-[10px]">Empty</span>
+                                    <div key={`empty-${i}`} className="flex flex-col items-center opacity-20">
+                                        <div className="w-[80px] h-[80px] rounded-full border-2 border-dashed border-white/40 flex items-center justify-center">
+                                            <Users size={24} className="text-white/20" />
+                                        </div>
+                                        <div className="mt-4 w-16 h-2 bg-white/10 rounded-full" />
                                     </div>
                                 ))}
                             </div>
                         </div>
 
-                        {/* Lobby Controls Fixed Bottom */}
+                        {/* C. BOTTOM SPACER (Clearing the Absolute Controls) */}
+                        <div className={`${isVip ? 'h-[320px]' : 'h-[240px]'} shrink-0`} />
+
+                        {/* Lobby Controls Fixed Bottom (Absolute) */}
                         {me && (
-                            <div className="absolute bottom-4 left-0 right-0 p-4 z-50 flex flex-col gap-3 pb-safe-bottom">
+                            <div className={`absolute ${isVip ? 'bottom-4' : 'bottom-20'} left-4 right-4 z-50 flex flex-col gap-3 pb-safe-bottom`}>
                                 <button
                                     onClick={actions.sendToggleReady}
                                     className={`w-full py-4 rounded-xl font-black text-xl shadow-lg uppercase transition-all transform active:scale-95 ${me?.isReady ? 'bg-gray-700 text-gray-400' : 'bg-green-500 text-white'}`}
@@ -603,14 +646,23 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
             {/* PERSISTENT BOTTOM BAR (Avatar Strip + Emotes) - With Safe Area support */}
             {
                 state.phase !== GamePhase.LOBBY && state.phase !== GamePhase.LEADERBOARD && state.phase !== GamePhase.GAME_OVER && (
-                    <div className="border-t border-white/5 bg-indigo-900/50 backdrop-blur-sm pb-safe-bottom z-50">
+                    <div className="pb-safe-bottom z-50 transition-all duration-300">
                         <AvatarStrip />
-                        <div className="grid grid-cols-4 gap-2 px-4 pb-2 w-full max-w-sm mx-auto z-20 relative">
-                            <button onClick={() => handleEmote('LAUGH')} className="bg-white/10 p-3 rounded-xl hover:bg-white/20 text-2xl active:scale-95 transition border border-white/5 aspect-square flex items-center justify-center">😂</button>
-                            <button onClick={() => handleEmote('SHOCK')} className="bg-white/10 p-3 rounded-xl hover:bg-white/20 text-2xl active:scale-95 transition border border-white/5 aspect-square flex items-center justify-center">😮</button>
-                            <button onClick={() => handleEmote('LOVE')} className="bg-white/10 p-3 rounded-xl hover:bg-white/20 text-2xl active:scale-95 transition border border-white/5 aspect-square flex items-center justify-center">❤️</button>
-                            <button onClick={() => handleEmote('TOMATO')} className="bg-white/10 p-3 rounded-xl hover:bg-white/20 text-2xl active:scale-95 transition border border-white/5 aspect-square flex items-center justify-center">🍅</button>
-                        </div>
+                        <AnimatePresence>
+                            {(!isMobile || showReactions) && (
+                                <motion.div
+                                    initial={{ height: 0, opacity: 0 }}
+                                    animate={{ height: 'auto', opacity: 1 }}
+                                    exit={{ height: 0, opacity: 0 }}
+                                    className="grid grid-cols-4 gap-2 px-4 pb-2 w-full max-w-sm mx-auto z-20 relative overflow-hidden"
+                                >
+                                    <button onClick={() => handleEmote('LAUGH')} className="bg-white/10 p-3 rounded-xl hover:bg-white/20 text-2xl active:scale-95 transition border border-white/5 aspect-square flex items-center justify-center">😂</button>
+                                    <button onClick={() => handleEmote('SHOCK')} className="bg-white/10 p-3 rounded-xl hover:bg-white/20 text-2xl active:scale-95 transition border border-white/5 aspect-square flex items-center justify-center">😮</button>
+                                    <button onClick={() => handleEmote('LOVE')} className="bg-white/10 p-3 rounded-xl hover:bg-white/20 text-2xl active:scale-95 transition border border-white/5 aspect-square flex items-center justify-center">❤️</button>
+                                    <button onClick={() => handleEmote('TOMATO')} className="bg-white/10 p-3 rounded-xl hover:bg-white/20 text-2xl active:scale-95 transition border border-white/5 aspect-square flex items-center justify-center">🍅</button>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
                     </div>
                 )
             }
