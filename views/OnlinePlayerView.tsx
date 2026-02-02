@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { GameState, GamePhase, Player, Answer, Expression } from '../types';
 import { Avatar } from '../components/Avatar';
 import { Narrator } from '../components/Narrator';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Clock, Users, CheckCircle, Lock, Play, Minus, Plus, RotateCcw, Crown, ArrowUp, Star } from 'lucide-react';
+import { Clock, Users, CheckCircle, Lock, Play, Crown, ArrowUp, Star, Menu, X } from 'lucide-react';
 import { sfx } from '../services/audioService';
 import { RevealSequence, LeaderboardSequence, CategoryRoulette, PointsPopup, EmotePopupLayer, CountUp } from './GameSharedComponents';
 
@@ -18,6 +18,12 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
     const amAudience = state.audience[playerId];
     const isVip = state.vipId === playerId;
 
+    // Derived State
+    const isJoined = !!me || !!amAudience;
+    const audienceCount = Object.keys(state.audience).length;
+    const showTimer = (state.phase === GamePhase.WRITING || state.phase === GamePhase.VOTING || state.phase === GamePhase.CATEGORY_SELECT) && state.timeLeft > 0;
+    const isFinalRound = state.currentRound === state.totalRounds;
+
     // Local interaction state
     const [lieText, setLieText] = useState('');
     const [showTruthWarning, setShowTruthWarning] = useState(false);
@@ -28,8 +34,6 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
     const [inputCode, setInputCode] = useState(state.roomCode || '');
     const [joinName, setJoinName] = useState('');
     const [codeError, setCodeError] = useState('');
-
-    const isJoined = !!me || !!amAudience;
 
     // Reset interactions on phase change
     useEffect(() => {
@@ -63,406 +67,409 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
         actions.sendLie(lieText);
     };
 
-    // Reused Emote Grid
-    const EmoteGrid = () => (
-        <div className="absolute bottom-4 right-4 flex gap-2 z-50">
-            <button onClick={() => handleEmote('LAUGH')} className="bg-black/50 p-3 rounded-full hover:bg-black/70 text-2xl backdrop-blur-sm">😂</button>
-            <button onClick={() => handleEmote('SHOCK')} className="bg-black/50 p-3 rounded-full hover:bg-black/70 text-2xl backdrop-blur-sm">😮</button>
-            <button onClick={() => handleEmote('LOVE')} className="bg-black/50 p-3 rounded-full hover:bg-black/70 text-2xl backdrop-blur-sm">❤️</button>
-            <button onClick={() => handleEmote('TOMATO')} className="bg-black/50 p-3 rounded-full hover:bg-black/70 text-2xl backdrop-blur-sm">🍅</button>
+    // --- SUB-COMPONENTS ---
+
+    const TopBar = () => (
+        <div className="flex items-center justify-center w-full px-4 py-2 bg-transparent z-50 shrink-0 absolute top-0 left-0 right-0">
+            <span className="text-yellow-400 font-black uppercase text-lg drop-shadow-md tracking-wider">ROOM: {state.roomCode}</span>
         </div>
     );
 
-    // --- UNIFIED JOIN FLOW ---
+    const AvatarStrip = () => {
+        const players = Object.values(state.players);
+        // During lobby we show full grid, so skip strip
+        if (state.phase === GamePhase.LOBBY) return null;
+
+        return (
+            <div className="w-full p-2 overflow-x-auto flex items-center justify-center gap-2 z-40 shrink-0 no-scrollbar relative min-h-[60px]">
+                {/* Clean background as requested */}
+
+                {players.map(p => {
+                    const isDone = (state.phase === GamePhase.WRITING && !!state.submittedLies[p.id]) ||
+                        (state.phase === GamePhase.VOTING && !!p.currentVote);
+                    return (
+                        <div key={p.id} className="relative flex-shrink-0 flex flex-col items-center min-w-[50px] z-10">
+                            {isDone && <div className="absolute top-0 right-0 bg-green-500 w-3 h-3 rounded-full border border-white z-10" />}
+                            <Avatar seed={p.avatarSeed} size={40} expression={p.expression} className="filter drop-shadow-lg" />
+                            <span className="text-[10px] text-white/90 truncate max-w-[50px] uppercase font-bold mt-1 shadow-black/50 drop-shadow-md">{p.name}</span>
+                        </div>
+                    );
+                })}
+            </div>
+        );
+    }
+
+    // --- JOIN FLOW ---
     if (!isJoined) {
         return (
-            <div className="h-full bg-purple-900 p-6 flex flex-col items-center justify-center relative overflow-hidden">
-                <EmotePopupLayer emotes={state.emotes} />
-                <div className="w-full max-w-md space-y-6 relative z-10">
-                    <h1 className="text-4xl font-display text-center text-yellow-400 mb-2">Bamboozle</h1>
+            <div className="h-full bg-purple-900 flex flex-col overflow-y-auto">
+                <div className="flex-1 flex flex-col items-center justify-center p-6 relative">
+                    <EmotePopupLayer emotes={state.emotes} />
+                    <div className="w-full max-w-sm space-y-6 relative z-10">
+                        <h1 className="text-5xl font-display text-center text-yellow-400 mb-8 drop-shadow-lg">Bamboozle</h1>
 
-                    {joinStep === 'CODE' && (
-                        <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="space-y-6">
-                            <p className="text-center text-white/70 mb-6 uppercase">Enter Room Code to Play</p>
-
-                            <input
-                                type="text"
-                                placeholder="ABCD"
-                                className="w-full p-4 text-center text-3xl font-black rounded-xl uppercase tracking-widest bg-white text-black placeholder-gray-500 border-4 border-transparent focus:border-yellow-400 outline-none"
-                                maxLength={4}
-                                value={inputCode}
-                                onChange={(e) => {
-                                    setInputCode(e.target.value.toUpperCase());
-                                    setCodeError('');
-                                }}
-                            />
-
-                            {codeError && (
-                                <div className="text-red-300 text-center font-bold animate-pulse uppercase">
-                                    {codeError}
-                                </div>
-                            )}
-
-                            <button
-                                onClick={() => {
-                                    actions.joinRoom(inputCode, (success: boolean, error?: string) => {
-                                        if (success) {
-                                            sfx.play('CLICK');
-                                            setJoinStep('NAME');
-                                        } else {
-                                            sfx.play('FAILURE');
-                                            setCodeError(error || 'Room not found');
-                                        }
-                                    });
-                                }}
-                                className="w-full bg-yellow-400 hover:bg-yellow-300 text-black py-4 rounded-xl font-black text-2xl shadow-lg uppercase"
-                            >
-                                ENTER
-                            </button>
-                        </motion.div>
-                    )}
-
-                    {joinStep === 'NAME' && (
-                        <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-6">
-                            <div className="bg-black/20 p-4 rounded-xl text-center">
-                                <p className="text-sm font-bold text-white/60 mb-1 uppercase">ROOM FOUND</p>
-                                <p className="text-4xl font-black text-white tracking-widest">{state.roomCode}</p>
-                            </div>
-
-                            <input
-                                type="text"
-                                placeholder="ENTER YOUR NAME"
-                                className="w-full p-4 text-center text-xl font-bold rounded-xl bg-white text-black placeholder-gray-500 uppercase"
-                                value={joinName}
-                                onChange={e => setJoinName(e.target.value.toUpperCase())}
-                                maxLength={12}
-                            />
-
-                            <div className="space-y-4">
-                                <button
-                                    disabled={!joinName || Object.keys(state.players).length >= 6}
-                                    onClick={() => { sfx.play('CLICK'); actions.sendJoin(joinName, joinName); }}
-                                    className="w-full bg-green-500 hover:bg-green-400 text-white py-4 rounded-xl font-black text-2xl shadow-lg transform transition active:scale-95 disabled:opacity-50 uppercase"
-                                >
-                                    {Object.keys(state.players).length >= 6 ? 'GAME FULL' : 'JOIN GAME'}
-                                </button>
-
-                                <button
-                                    disabled={!joinName}
-                                    onClick={() => { sfx.play('CLICK'); actions.sendJoinAudience(joinName, joinName); }}
-                                    className="w-full bg-blue-600 hover:bg-blue-500 text-white py-3 rounded-xl font-bold text-xl shadow-lg flex items-center justify-center gap-2 transform transition active:scale-95 disabled:opacity-50 uppercase"
-                                >
-                                    <Users size={24} /> JOIN AUDIENCE
-                                </button>
-                            </div>
-
-                            <button onClick={() => setJoinStep('CODE')} className="w-full text-center text-white/40 text-sm hover:text-white uppercase mt-4">
-                                Back to Code
-                            </button>
-                        </motion.div>
-                    )}
-                </div>
-            </div>
-        );
-    }
-
-    // --- RENDER PHASES ---
-
-    // 1. LOBBY (Hybrid)
-    if (state.phase === GamePhase.LOBBY) {
-        const allPlayers = Object.values(state.players);
-        const allReady = allPlayers.length > 0 && allPlayers.every(p => p.isReady);
-
-        return (
-            <div className="h-full w-full bg-indigo-900 overflow-hidden relative flex flex-col items-center justify-center p-4">
-                <EmotePopupLayer emotes={state.emotes} />
-
-                <div className="absolute top-4 left-4 z-10 text-left">
-                    <div className="text-yellow-400 font-bold text-xl uppercase tracking-widest">Room Code</div>
-                    <div className="text-5xl font-black text-white">{state.roomCode}</div>
-                </div>
-
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-6 max-w-4xl w-full z-10 mt-16">
-                    {allPlayers.map((p) => (
-                        <motion.div
-                            key={p.id}
-                            layout
-                            initial={{ scale: 0 }}
-                            animate={{ scale: 1 }}
-                            className={`relative flex flex-col items-center bg-black/20 p-4 rounded-3xl border-4 ${p.isReady ? 'border-green-400 bg-green-900/20' : 'border-white/10'}`}
-                        >
-                            {p.id === state.vipId && <Crown size={24} className="absolute top-2 right-2 text-yellow-400" fill="currentColor" />}
-                            <Avatar seed={p.avatarSeed} size={80} expression={p.expression} />
-                            <div className="font-bold text-white uppercase mt-2 text-lg">{p.name}</div>
-                            <div className="text-xs font-bold uppercase text-white/50">{p.isReady ? 'READY' : 'WAITING'}</div>
-                        </motion.div>
-                    ))}
-                    {Array.from({ length: Math.max(0, 6 - allPlayers.length) }).map((_, i) => (
-                        <div key={`empty-${i}`} className="flex items-center justify-center border-4 border-dashed border-white/10 rounded-3xl min-h-[160px]">
-                            <span className="text-white/20 font-bold uppercase">Open Slot</span>
-                        </div>
-                    ))}
-                </div>
-
-                {/* Player Controls */}
-                {me && (
-                    <div className="mt-8 z-20 w-full max-w-md space-y-4">
-                        <button
-                            onClick={actions.sendToggleReady}
-                            className={`w-full py-4 rounded-xl font-black text-xl shadow-lg uppercase transition-all transform active:scale-95 ${me?.isReady
-                                ? 'bg-gray-700 text-gray-400'
-                                : 'bg-green-500 hover:bg-green-400 text-white'
-                                }`}
-                        >
-                            {me?.isReady ? 'Waiting for others...' : 'I AM READY!'}
-                        </button>
-
-                        {isVip && (
-                            <button
-                                disabled={!allReady}
-                                onClick={() => actions.sendStartGame(state.totalRounds)}
-                                className="w-full bg-yellow-400 hover:bg-yellow-300 disabled:opacity-30 disabled:cursor-not-allowed text-black py-4 rounded-xl font-black text-xl shadow-xl flex items-center justify-center gap-2 uppercase"
-                            >
-                                <Play size={24} /> START GAME
-                            </button>
-                        )}
-                    </div>
-                )}
-                {amAudience && (
-                    <div className="mt-8 z-20 bg-black/40 px-6 py-3 rounded-full text-white font-bold uppercase backdrop-blur-md border border-white/10 animate-pulse">
-                        You are in the Audience
-                    </div>
-                )}
-            </div>
-        );
-    }
-
-    // 2. CATEGORY SELECT
-    if (state.phase === GamePhase.CATEGORY_SELECT) {
-        const isSelector = state.categorySelection?.selectorId === playerId;
-
-        return (
-            <div className="h-full w-full bg-indigo-900 relative overflow-hidden flex flex-col">
-                <EmotePopupLayer emotes={state.emotes} />
-                <div className="flex-1 relative z-10">
-                    <CategoryRoulette state={state} />
-                </div>
-
-                {/* Overlay Controls for Selector */}
-                {isSelector && !state.categorySelection?.selected && (
-                    <div className="absolute inset-0 z-50 bg-black/60 backdrop-blur-sm flex flex-col items-center justify-center p-8">
-                        <h2 className="text-4xl font-black text-yellow-400 mb-8 uppercase drop-shadow-lg">It's Your Turn!</h2>
-                        <div className="grid grid-cols-2 gap-4 w-full max-w-2xl">
-                            {state.categorySelection?.options.map(opt => (
-                                <button
-                                    key={opt}
-                                    onClick={() => { sfx.play('CLICK'); actions.sendCategorySelection(opt); }}
-                                    className="bg-white hover:bg-gray-100 text-indigo-900 p-6 rounded-2xl font-black text-xl shadow-2xl active:scale-95 transition-transform uppercase"
-                                >
-                                    {opt}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-                )}
-                <EmoteGrid />
-            </div>
-        );
-    }
-
-    // 3. WRITING PHASE
-    if (state.phase === GamePhase.WRITING) {
-        const hasSubmitted = !!state.submittedLies[playerId];
-
-        return (
-            <div className="h-full w-full bg-purple-900 relative flex flex-col p-6 overflow-hidden">
-                <Narrator text={state.currentQuestion?.fact || ''} isSpeaking={true} />
-                <EmotePopupLayer emotes={state.emotes} />
-
-                <AnimatePresence>
-                    {showTruthWarning && (
-                        <motion.div
-                            initial={{ opacity: 0, scale: 0.8 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0 }}
-                            className="absolute inset-0 bg-red-900/90 z-[60] flex flex-col items-center justify-center text-center p-8 backdrop-blur-sm"
-                        >
-                            <Lock size={64} className="mb-4 text-red-200" />
-                            <h2 className="text-4xl font-black text-white mb-2 uppercase">Whoops!</h2>
-                            <p className="text-xl text-red-100 uppercase">You accidentally wrote the truth! Try to write a lie instead.</p>
-                        </motion.div>
-                    )}
-                </AnimatePresence>
-
-                {/* TV Style Question Display */}
-                <div className="flex-1 flex flex-col items-center justify-center relative z-10">
-                    <div className="w-full max-w-4xl text-center space-y-8">
-                        <div className="bg-purple-800/50 p-8 rounded-3xl border-4 border-purple-400/30 backdrop-blur-md shadow-2xl">
-                            <h3 className="text-3xl font-bold text-purple-200 mb-4 uppercase tracking-widest">
-                                {state.currentQuestion?.category}
-                            </h3>
-                            <p className="text-3xl md:text-5xl font-black text-white leading-tight uppercase drop-shadow-md">
-                                {state.currentQuestion?.fact.replace('<BLANK>', '________')}
-                            </p>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Player Input Overlay */}
-                {me && (
-                    <motion.div
-                        initial={{ y: 100 }}
-                        animate={{ y: 0 }}
-                        className="w-full max-w-2xl mx-auto bg-white p-4 rounded-t-3xl shadow-[0_-10px_40px_rgba(0,0,0,0.5)] z-20"
-                    >
-                        {!hasSubmitted ? (
-                            <div className="flex gap-4">
+                        {joinStep === 'CODE' && (
+                            <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="space-y-6">
+                                <p className="text-center text-white/70 mb-2 uppercase font-bold tracking-widest text-sm">Room Code</p>
                                 <input
                                     type="text"
-                                    className="flex-1 bg-gray-100 p-4 rounded-xl text-xl font-bold text-black uppercase outline-none focus:ring-4 focus:ring-yellow-400"
-                                    placeholder="WRITE YOUR LIE HERE..."
-                                    value={lieText}
-                                    onChange={e => setLieText(e.target.value.toUpperCase())}
-                                    maxLength={50}
+                                    placeholder="ABCD"
+                                    className="w-full p-6 text-center text-5xl font-black rounded-2xl uppercase tracking-[0.5em] bg-white text-black placeholder-gray-300 border-4 border-transparent focus:border-yellow-400 outline-none shadow-xl"
+                                    maxLength={4}
+                                    value={inputCode}
+                                    onChange={(e) => {
+                                        setInputCode(e.target.value.toUpperCase());
+                                        setCodeError('');
+                                    }}
                                 />
+                                {codeError && (
+                                    <div className="text-red-300 text-center font-bold animate-pulse uppercase text-sm bg-red-900/50 p-2 rounded">
+                                        {codeError}
+                                    </div>
+                                )}
                                 <button
-                                    onClick={submitLie}
-                                    disabled={!lieText.trim()}
-                                    className="bg-yellow-400 hover:bg-yellow-300 text-black px-8 rounded-xl font-black text-xl uppercase shadow-lg active:scale-95 disabled:opacity-50"
+                                    onClick={() => {
+                                        actions.joinRoom(inputCode, (success: boolean, error?: string) => {
+                                            if (success) {
+                                                sfx.play('CLICK');
+                                                setJoinStep('NAME');
+                                            } else {
+                                                sfx.play('FAILURE');
+                                                setCodeError(error || 'Room not found');
+                                            }
+                                        });
+                                    }}
+                                    className="w-full bg-yellow-400 hover:bg-yellow-300 text-black py-4 rounded-xl font-black text-2xl shadow-lg uppercase"
                                 >
-                                    SEND
+                                    ENTER
                                 </button>
-                            </div>
-                        ) : (
-                            <div className="text-center py-4">
-                                <h3 className="text-2xl font-black text-green-600 uppercase flex items-center justify-center gap-2">
-                                    <CheckCircle size={32} /> LIE SUBMITTED
-                                </h3>
-                                <p className="text-gray-500 uppercase font-bold text-sm mt-1">Wait for others...</p>
+                            </motion.div>
+                        )}
+
+                        {joinStep === 'NAME' && (
+                            <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-6">
+                                <div className="text-center mb-6">
+                                    <span className="bg-black/20 text-white/60 text-xs font-bold px-3 py-1 rounded-full uppercase">Joining Room {state.roomCode}</span>
+                                </div>
+
+                                <input
+                                    type="text"
+                                    placeholder="YOUR NAME"
+                                    className="w-full p-4 text-center text-2xl font-black rounded-xl bg-white text-black placeholder-gray-400 uppercase shadow-lg"
+                                    value={joinName}
+                                    onChange={e => setJoinName(e.target.value.toUpperCase())}
+                                    maxLength={12}
+                                />
+
+                                <div className="space-y-3 pt-4">
+                                    <button
+                                        disabled={!joinName || Object.keys(state.players).length >= 6}
+                                        onClick={() => { sfx.play('CLICK'); actions.sendJoin(joinName, joinName); }}
+                                        className="w-full bg-green-500 hover:bg-green-400 text-white py-4 rounded-xl font-black text-2xl shadow-lg transform transition active:scale-95 disabled:opacity-50 uppercase flex items-center justify-center gap-2"
+                                    >
+                                        PLAY
+                                    </button>
+
+                                    <div className="text-center text-white/20 font-bold uppercase text-xs my-2">- OR -</div>
+
+                                    <button
+                                        disabled={!joinName}
+                                        onClick={() => { sfx.play('CLICK'); actions.sendJoinAudience(joinName, joinName); }}
+                                        className="w-full bg-blue-600 hover:bg-blue-500 text-white py-3 rounded-xl font-bold text-lg shadow-lg flex items-center justify-center gap-2 transform transition active:scale-95 disabled:opacity-50 uppercase"
+                                    >
+                                        <Users size={20} /> WATCH
+                                    </button>
+                                </div>
+
+                                <button onClick={() => setJoinStep('CODE')} className="w-full text-center text-white/40 text-xs hover:text-white uppercase mt-6 font-bold">
+                                    Cancel
+                                </button>
+                            </motion.div>
+                        )}
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    // --- MAIN GAME RENDER ---
+
+    return (
+        <div className="h-full w-full bg-gradient-to-b from-indigo-900 to-purple-900 flex flex-col overflow-hidden relative">
+            <EmotePopupLayer emotes={state.emotes} />
+            <TopBar />
+
+            {/* GLOBAL NARRATOR - Better positioning & Larger Size */}
+            <div className={`absolute top-12 left-0 right-0 flex justify-center z-10 pointer-events-none transform transition-all duration-500
+                ${state.phase === GamePhase.WRITING ? 'scale-100 translate-y-2' : 'scale-110 translate-y-0'}
+            `}>
+                <Narrator isSpeaking={state.isNarrating} />
+            </div>
+
+            {/* MAIN CONTENT */}
+            <div className={`
+                flex-1 relative flex flex-col pt-16
+                ${(state.phase === GamePhase.LOBBY || state.phase === GamePhase.REVEAL || state.phase === GamePhase.VOTING) ? 'overflow-hidden' : 'overflow-y-auto no-scrollbar'}
+            `}>
+
+                {/* 1. LOBBY */}
+                {/* 1. LOBBY */}
+                {state.phase === GamePhase.LOBBY && (
+                    <div className="flex-1 p-4 flex flex-col items-center mt-32 md:mt-40">
+                        <h2 className="text-white text-center font-bold uppercase tracking-widest text-sm mb-4 opacity-70">Waiting for players...</h2>
+
+                        <div className="grid grid-cols-2 gap-4 w-full max-w-md pb-64">
+                            {Object.values(state.players).map((p) => (
+                                <div key={p.id} className={`flex flex-col items-center bg-black/20 p-3 rounded-2xl border-2 ${p.isReady ? 'border-green-400 bg-green-900/20' : 'border-white/10'}`}>
+                                    {p.id === state.vipId && <Crown size={16} className="text-yellow-400 mb-1" fill="currentColor" />}
+                                    <Avatar seed={p.avatarSeed} size={60} expression={p.expression} />
+                                    <div className="font-bold text-white uppercase mt-2 text-sm">{p.name}</div>
+                                    <div className="text-[10px] font-bold uppercase text-white/50">{p.isReady ? 'READY' : '...'}</div>
+                                </div>
+                            ))}
+                            {Array.from({ length: Math.max(0, 6 - Object.values(state.players).length) }).map((_, i) => (
+                                <div key={`empty-${i}`} className="flex items-center justify-center border-2 border-dashed border-white/5 rounded-2xl min-h-[120px]">
+                                    <span className="text-white/10 font-bold uppercase text-sm">Empty</span>
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* Lobby Controls Fixed Bottom - Moved up for URL Bar */}
+                        {me && (
+                            <div className="fixed bottom-12 left-0 right-0 p-4 bg-gradient-to-t from-indigo-900 via-indigo-900/90 to-transparent z-50 flex flex-col gap-3">
+                                <button
+                                    onClick={actions.sendToggleReady}
+                                    className={`w-full py-4 rounded-xl font-black text-xl shadow-lg uppercase transition-all transform active:scale-95 ${me?.isReady ? 'bg-gray-700 text-gray-400' : 'bg-green-500 text-white'}`}
+                                >
+                                    {me?.isReady ? 'Ready!' : 'READY UP'}
+                                </button>
+                                {isVip && (
+                                    <button
+                                        disabled={!Object.values(state.players).every(p => p.isReady) || Object.values(state.players).length === 0}
+                                        onClick={() => actions.sendStartGame(state.totalRounds)}
+                                        className="w-full bg-yellow-400 text-black py-3 rounded-xl font-black text-lg shadow-xl uppercase disabled:opacity-50 disabled:grayscale"
+                                    >
+                                        START GAME
+                                    </button>
+                                )}
                             </div>
                         )}
-                    </motion.div>
-                )}
-
-                {amAudience && (
-                    <div className="absolute bottom-20 left-1/2 -translate-x-1/2 bg-black/60 px-6 py-3 rounded-full text-white font-bold uppercase backdrop-blur-md border border-white/10 z-20">
-                        Watch & React!
+                        {amAudience && <div className="fixed bottom-0 w-full p-4 text-center text-white/50 font-bold uppercase">Audience Mode</div>}
                     </div>
                 )}
 
-                <div className="absolute top-6 right-6 z-20 flex items-center gap-2 bg-black/40 px-4 py-2 rounded-full border border-white/10">
-                    <Clock size={20} className="text-yellow-400" />
-                    <span className="font-mono font-bold text-xl text-white">{state.timeLeft}</span>
-                </div>
-                <EmoteGrid />
-            </div>
-        );
-    }
+                {/* 2. CATEGORY SELECT */}
+                {state.phase === GamePhase.CATEGORY_SELECT && (
+                    <div className="flex-1 flex flex-col items-center justify-center transform scale-90 origin-center relative">
+                        {/* Timer moved to corner to avoid Presenter */}
+                        <div className="absolute top-4 right-4 bg-black/50 px-4 py-2 rounded-full border border-white/20 backdrop-blur-md z-50">
+                            <div className="flex items-center gap-2">
+                                <Clock size={20} className="text-yellow-400 animate-pulse" />
+                                <span className="font-mono font-bold text-2xl text-white">{state.timeLeft}</span>
+                            </div>
+                        </div>
+                        <CategoryRoulette
+                            state={state}
+                            onSelect={state.categorySelection?.selectorId === playerId ? (cat) => actions.sendCategorySelection(cat) : undefined}
+                        />
+                    </div>
+                )}
 
-    // 4. VOTING PHASE
-    if (state.phase === GamePhase.VOTING) {
-        const choices = state.roundAnswers.filter(a => !a.authorIds.includes(playerId));
-        const hasVoted = !!me?.currentVote;
+                {/* 3. WRITING (And INTRO) */}
+                {(state.phase === GamePhase.WRITING || state.phase === GamePhase.INTRO) && (
+                    <div className="flex-1 flex flex-col items-center p-4">
+                        <div className="w-full max-w-sm flex flex-col items-center gap-4 mt-20">
 
-        return (
-            <div className="h-full w-full bg-blue-900 relative flex flex-col p-6 overflow-hidden">
-                <Narrator text="Pick the truth!" isSpeaking={true} />
-                <EmotePopupLayer emotes={state.emotes} />
 
-                <div className="text-center mb-8 relative z-10">
-                    <h2 className="text-4xl font-black text-white uppercase drop-shadow-md mb-2">Find the Truth</h2>
-                    <p className="text-xl text-blue-200 uppercase font-bold">{state.currentQuestion?.fact.replace('<BLANK>', '________')}</p>
-                </div>
+                            {/* Stats Header (Round, Audience, Multiplier) - GAME STYLE BADGES */}
+                            <div className="w-full flex items-center justify-between px-2 pb-2 relative z-20">
+                                <div className="flex items-center gap-2">
+                                    <div className="bg-purple-600/90 text-white text-[10px] font-black uppercase px-3 py-1 rounded-lg border-2 border-purple-400 shadow-[0_2px_0_rgba(0,0,0,0.5)]">
+                                        {isFinalRound ? 'FINAL ROUND' : `ROUND ${state.currentRound}/${state.totalRounds}`}
+                                    </div>
+                                    {(state.currentRound === state.totalRounds) && (
+                                        <div className="bg-yellow-400 text-black text-[10px] font-black uppercase px-3 py-1 rounded-lg border-2 border-white shadow-[0_2px_0_rgba(0,0,0,0.5)] animate-pulse">
+                                            TRIPLE POINTS
+                                        </div>
+                                    )}
+                                    {(state.currentRound === state.totalRounds - 1) && (
+                                        <div className="bg-blue-400 text-black text-[10px] font-black uppercase px-3 py-1 rounded-lg border-2 border-white shadow-[0_2px_0_rgba(0,0,0,0.5)] animate-pulse">
+                                            DOUBLE POINTS
+                                        </div>
+                                    )}
+                                </div>
+                                <div className="flex items-center gap-1 bg-black/40 px-2 py-1 rounded-lg border border-white/10">
+                                    <Users size={12} className="text-white" />
+                                    <span className="text-xs font-black text-white">{audienceCount}</span>
+                                </div>
+                            </div>
 
-                <div className="flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-w-6xl mx-auto w-full relative z-20 overflow-y-auto pb-20">
-                    {choices.map((ans, idx) => {
-                        const iVoted = amAudience ? ans.audienceVotes.includes(playerId) : me?.currentVote === ans.id;
+                            {/* Fact Card */}
+                            <div className="w-full bg-white text-purple-900 p-6 rounded-3xl shadow-xl border-b-8 border-purple-300 relative z-10">
+                                <p className="text-2xl md:text-3xl font-black leading-tight uppercase text-center break-words">
+                                    {state.currentQuestion?.fact.replace('<BLANK>', '________')}
+                                </p>
+                            </div>
 
-                        return (
-                            <motion.button
-                                key={ans.id}
-                                initial={{ opacity: 0, scale: 0.9 }}
-                                animate={{ opacity: 1, scale: 1 }}
-                                transition={{ delay: idx * 0.1 }}
-                                onClick={() => {
-                                    if (!iVoted) {
-                                        sfx.play('CLICK');
-                                        if (amAudience) actions.sendAudienceVote(ans.id);
-                                        else actions.sendVote(ans.id);
-                                    }
-                                }}
-                                disabled={iVoted && !amAudience} // Audience can technically switch vote? Logic in PlayerView allowed it implicitly? No, PlayerView sends vote. Server handles it.
-                                className={`
-                                   p-6 rounded-2xl border-4 text-center font-black text-2xl shadow-xl transition-all transform active:scale-95 uppercase relative overflow-hidden group
-                                   ${iVoted
-                                        ? 'bg-yellow-400 border-white text-black scale-105 z-30'
-                                        : (me?.currentVote || (amAudience && ans.audienceVotes.includes(playerId))) // If I voted (logic handled above by iVoted)
-                                            ? 'bg-blue-800 border-blue-700 text-blue-400 opacity-50'
-                                            : 'bg-white border-blue-300 text-blue-900 hover:bg-blue-50 hover:scale-105'
-                                    }
-                               `}
-                            >
-                                {/* Selection Ring */}
-                                {iVoted && (
-                                    <motion.div layoutId="vote-ring" className="absolute inset-0 border-8 border-white/50 rounded-xl" />
+                            <AnimatePresence>
+                                {showTruthWarning && (
+                                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="bg-red-500 text-white px-4 py-2 rounded-full font-bold uppercase text-xs shadow-lg animate-bounce">
+                                        Cannot write the truth!
+                                    </motion.div>
                                 )}
+                            </AnimatePresence>
 
-                                <span className="relative z-10">{ans.text}</span>
-                            </motion.button>
-                        );
-                    })}
-                </div>
+                            {/* Input Area (Only in WRITING phase) */}
+                            {state.phase === GamePhase.WRITING && (
+                                <>
+                                    {me && !state.submittedLies[playerId] ? (
+                                        <div className="w-full space-y-3 mt-2">
+                                            <input
+                                                type="text"
+                                                className="w-full bg-black/20 text-white p-4 rounded-xl text-lg font-bold uppercase outline-none focus:ring-2 focus:ring-yellow-400 placeholder-white/30 text-center"
+                                                placeholder="LIE HERE..."
+                                                value={lieText}
+                                                onChange={e => setLieText(e.target.value.toUpperCase())}
+                                                maxLength={50}
+                                            />
 
-                {hasVoted && (
-                    <motion.div
-                        initial={{ y: 50, opacity: 0 }}
-                        animate={{ y: 0, opacity: 1 }}
-                        className="absolute bottom-20 left-1/2 -translate-x-1/2 bg-black/80 backdrop-blur text-white px-8 py-4 rounded-full font-bold uppercase z-30"
-                    >
-                        Vote Locked! Wait for reveal...
-                    </motion.div>
-                )}
-                <EmoteGrid />
-            </div>
-        );
-    }
+                                            {/* Timer between Input and Button */}
+                                            <div className="w-full flex justify-center py-2">
+                                                <div className="flex items-center gap-2 bg-black/20 px-4 py-2 rounded-full border border-white/10">
+                                                    <Clock size={20} className="text-yellow-400 animate-pulse" />
+                                                    <span className="font-mono font-bold text-2xl text-white">{state.timeLeft}s</span>
+                                                </div>
+                                            </div>
 
-    // 5. REVEAL & LEADERBOARD (Direct reuse of Host Views)
-    if (state.phase === GamePhase.REVEAL) {
-        return (
-            <div className="h-full w-full bg-gray-900 relative overflow-hidden">
-                <EmotePopupLayer emotes={state.emotes} />
-                <RevealSequence state={state} actions={actions} setGalleryOverrides={() => { }} isHost={state.hostId === playerId} />
-                <EmoteGrid />
-            </div>
-        );
-    }
-
-    if (state.phase === GamePhase.LEADERBOARD || state.phase === GamePhase.GAME_OVER) {
-        return (
-            <div className="h-full w-full bg-gray-900 relative overflow-hidden flex flex-col">
-                <EmotePopupLayer emotes={state.emotes} />
-                <div className="flex-1 relative z-10 mt-8">
-                    <LeaderboardSequence state={state} actions={actions} onHome={() => { }} isHost={state.hostId === playerId} />
-                </div>
-                {isVip && state.phase === GamePhase.GAME_OVER && (
-                    <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-50 flex gap-4">
-                        <button onClick={() => actions.sendRestart()} className="bg-green-500 hover:bg-green-600 text-white px-8 py-4 rounded-xl font-black text-xl shadow-lg uppercase">
-                            PLAY AGAIN
-                        </button>
+                                            <button
+                                                onClick={submitLie}
+                                                disabled={!lieText.trim()}
+                                                className="w-full bg-yellow-400 hover:bg-yellow-300 text-black py-4 rounded-xl font-black text-xl uppercase shadow-lg active:scale-95 disabled:opacity-50"
+                                            >
+                                                SUBMIT
+                                            </button>
+                                        </div>
+                                    ) : me && (
+                                        <div className="mt-8 bg-green-500/20 text-green-400 px-6 py-3 rounded-xl font-black uppercase flex items-center gap-2 border border-green-500/50">
+                                            <CheckCircle /> LIE SENT
+                                        </div>
+                                    )}
+                                    {amAudience && <div className="mt-8 text-white/50 font-bold uppercase">Waiting for players...</div>}
+                                </>
+                            )}
+                        </div>
                     </div>
                 )}
-                <EmoteGrid />
-            </div>
-        );
-    }
 
-    // Fallback for INTRO or other states
-    return (
-        <div className="h-full w-full bg-indigo-900 flex items-center justify-center">
-            <h1 className="text-4xl font-black text-white animate-pulse uppercase">
-                {state.phase}...
-            </h1>
+                {state.phase === GamePhase.VOTING && (
+                    <div className="flex-1 flex flex-col items-center p-4">
+                        {/* Mini Fact Header */}
+                        <div className="w-full max-w-md mb-2 text-center mt-20">
+                            {/* Timer in Voting Phase - Contextual */}
+                            <div className="flex justify-center mb-4 relative z-30">
+                                <div className="flex items-center gap-2 bg-black/60 backdrop-blur-md px-4 py-1 rounded-full border border-white/20 shadow-lg">
+                                    <Clock size={16} className="text-yellow-400 animate-pulse" />
+                                    <span className="font-mono font-bold text-xl text-white">{state.timeLeft}s</span>
+                                </div>
+                            </div>
+
+                            <p className="text-white/70 text-sm font-bold uppercase mb-1">Find the Truth</p>
+                            <div className="bg-purple-800/50 p-3 rounded-xl border border-white/10 backdrop-blur-sm">
+                                <p className="text-lg font-bold text-white leading-tight uppercase">
+                                    {state.currentQuestion?.fact.replace('<BLANK>', '________')}
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* Answers Grid */}
+                        <div className="grid grid-cols-1 gap-3 w-full max-w-md pb-24">
+                            {state.roundAnswers.filter(a => !a.authorIds.includes(playerId)).map((ans, idx) => {
+                                const iVoted = amAudience ? ans.audienceVotes.includes(playerId) : me?.currentVote === ans.id;
+                                return (
+                                    <motion.button
+                                        key={ans.id}
+                                        initial={{ scale: 0.9, opacity: 0 }}
+                                        animate={{ scale: 1, opacity: 1 }}
+                                        transition={{ delay: idx * 0.05 }}
+                                        onClick={() => {
+                                            if (!iVoted) {
+                                                sfx.play('CLICK');
+                                                if (amAudience) actions.sendAudienceVote(ans.id);
+                                                else actions.sendVote(ans.id);
+                                            }
+                                        }}
+                                        disabled={iVoted && !amAudience}
+                                        className={`
+                                              w-full p-4 rounded-xl border-l-8 text-left font-bold text-lg shadow-md transition-all active:scale-95 uppercase relative overflow-hidden
+                                              ${iVoted
+                                                ? 'bg-indigo-600 border-indigo-400 text-white'
+                                                : 'bg-white border-transparent text-indigo-900'
+                                            }
+                                              ${(me?.currentVote && !iVoted) ? 'opacity-50 grayscale' : ''}
+                                          `}
+                                    >
+                                        <span className="relative z-10 flex flex-col">
+                                            <span>{ans.text}</span>
+                                            {/* Audience Indicator */}
+                                            {ans.audienceVotes.length > 0 && (
+                                                <div className="flex items-center gap-1 mt-1 opacity-70 scale-90 origin-left">
+                                                    <Users size={14} className={iVoted ? 'text-black' : 'text-purple-500'} />
+                                                    <span className={`text-xs font-black ${iVoted ? 'text-black' : 'text-purple-500'}`}>
+                                                        {ans.audienceVotes.length} AUDIENCE
+                                                    </span>
+                                                </div>
+                                            )}
+                                        </span>
+                                        {iVoted && <motion.div layoutId="voted-check" className="absolute right-4 top-1/2 -translate-y-1/2"><CheckCircle size={24} /></motion.div>}
+                                    </motion.button>
+                                )
+                            })}
+                        </div>
+                    </div>
+                )}
+
+                {/* 5. REVEAL & LEADERBOARD (Shared) */}
+                {state.phase === GamePhase.REVEAL && (
+                    <div className="mt-20 transform scale-90 origin-top">
+                        <RevealSequence state={state} actions={actions} setGalleryOverrides={() => { }} isHost={isVip} />
+                    </div>
+                )}
+
+                {state.phase === GamePhase.LEADERBOARD && (
+                    <div className="mt-20 transform scale-90 origin-top">
+                        <LeaderboardSequence state={state} actions={actions} onHome={() => { }} isHost={isVip} />
+                    </div>
+                )}
+
+                {state.phase === GamePhase.GAME_OVER && (
+                    <div className="flex-1 flex flex-col items-center justify-center p-4 mt-20 transform scale-90 origin-top">
+                        <LeaderboardSequence state={state} actions={actions} onHome={() => { }} isHost={isVip} />
+                        {isVip && (
+                            <div className="flex flex-col gap-4 mt-8 w-full max-w-sm">
+                                <button onClick={() => actions.sendRestart()} className="bg-green-500 hover:bg-green-600 text-white px-8 py-4 rounded-xl font-black text-xl shadow-lg uppercase w-full">
+                                    PLAY AGAIN
+                                </button>
+                                <button onClick={() => window.location.reload()} className="bg-red-500 hover:bg-red-600 text-white px-8 py-4 rounded-xl font-black text-xl shadow-lg uppercase w-full">
+                                    END GAME
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                )}
+            </div>
+
+            {/* PERSISTENT BOTTOM BAR (Avatar Strip + Emotes) - Transparent */}
+            {state.phase !== GamePhase.LOBBY && state.phase !== GamePhase.LEADERBOARD && state.phase !== GamePhase.GAME_OVER && (
+                <div className="border-t border-white/5 pb-10 relative">
+                    <AvatarStrip />
+                    <div className="grid grid-cols-4 gap-2 px-4 pb-4 pt-2 w-full max-w-sm mx-auto z-20 relative">
+                        <button onClick={() => handleEmote('LAUGH')} className="bg-white/10 p-3 rounded-xl hover:bg-white/20 text-2xl active:scale-95 transition border border-white/5">😂</button>
+                        <button onClick={() => handleEmote('SHOCK')} className="bg-white/10 p-3 rounded-xl hover:bg-white/20 text-2xl active:scale-95 transition border border-white/5">😮</button>
+                        <button onClick={() => handleEmote('LOVE')} className="bg-white/10 p-3 rounded-xl hover:bg-white/20 text-2xl active:scale-95 transition border border-white/5">❤️</button>
+                        <button onClick={() => handleEmote('TOMATO')} className="bg-white/10 p-3 rounded-xl hover:bg-white/20 text-2xl active:scale-95 transition border border-white/5">🍅</button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

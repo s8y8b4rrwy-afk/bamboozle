@@ -74,7 +74,8 @@ const INITIAL_STATE: GameState = {
   categorySelection: null,
   isNarrating: false,
   emotes: [],
-  isOnlineMode: false
+  isOnlineMode: false,
+  recentCategories: []
 };
 
 export const useGameService = (role: 'HOST' | 'PLAYER' | 'AUDIENCE', playerName?: string) => {
@@ -176,10 +177,18 @@ export const useGameService = (role: 'HOST' | 'PLAYER' | 'AUDIENCE', playerName?
 
       // Update Narrating State
       utterance.onstart = () => {
-        setState(prev => ({ ...prev, isNarrating: true }));
+        setState(prev => {
+          const next = { ...prev, isNarrating: true };
+          broadcastState(next);
+          return next;
+        });
       };
       utterance.onend = () => {
-        setState(prev => ({ ...prev, isNarrating: false }));
+        setState(prev => {
+          const next = { ...prev, isNarrating: false };
+          broadcastState(next);
+          return next;
+        });
       };
 
       window.speechSynthesis.speak(utterance);
@@ -651,9 +660,33 @@ export const useGameService = (role: 'HOST' | 'PLAYER' | 'AUDIENCE', playerName?
       availableQuestions = GAME_QUESTIONS;
     }
 
-    const availableCategories = Array.from(new Set(availableQuestions.map(q => q.category)));
-    const shuffledCategories = shuffle(availableCategories);
-    const options = shuffledCategories.slice(0, 6);
+    // --- SMART CATEGORY SELECTION ---
+    // 1. Get all technically available categories from unused questions
+    const validCategories = Array.from(new Set(availableQuestions.map(q => q.category)));
+
+    // 2. Split into Fresh (not seen recently) and Stale (seen recently)
+    const recent = state.recentCategories || [];
+    const freshCategories = validCategories.filter(c => !recent.includes(c));
+    const staleCategories = validCategories.filter(c => recent.includes(c));
+
+    // 3. Shuffle both lists
+    const shuffledFresh = shuffle(freshCategories);
+    const shuffledStale = shuffle(staleCategories);
+
+    // 4. Fill slots: Prioritize Fresh
+    const options: string[] = [];
+
+    // Take as many fresh as possible up to 6
+    options.push(...shuffledFresh.slice(0, 6));
+
+    // If we still need more, take from Stale
+    if (options.length < 6) {
+      const needed = 6 - options.length;
+      options.push(...shuffledStale.slice(0, needed));
+    }
+
+    // 5. Update recent categories for next time
+    state.recentCategories = options;
 
     let candidateIds = Object.keys(state.players).filter(pid => !state.playersWhoPicked.includes(pid));
     if (candidateIds.length === 0) {

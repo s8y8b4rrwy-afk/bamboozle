@@ -33,22 +33,22 @@ export const HostView: React.FC<HostViewProps> = ({ state, actions, onHome, debu
 
     const renderLobby = () => (
         <div className="flex flex-col items-center justify-center h-full space-y-8 z-20 relative">
-            <div className="text-center">
-                <h2 className="text-4xl text-purple-300 font-bold mb-2 uppercase tracking-widest">Join Game at</h2>
-                <h1 className="text-8xl text-yellow-400 font-display tracking-tighter shadow-glow">bamboozle.party</h1>
-                <p className="text-2xl mt-4 opacity-75 uppercase">Room Code:</p>
-                <div className="text-9xl font-black bg-white text-black px-8 py-4 rounded-xl mt-2 inline-block transform -rotate-2 border-8 border-purple-500 uppercase">
+            <div className="text-center w-full px-4">
+                <h2 className="text-xl md:text-4xl text-purple-300 font-bold mb-2 uppercase tracking-widest">Join Game at</h2>
+                <h1 className="text-5xl md:text-8xl text-yellow-400 font-display tracking-tighter shadow-glow break-all">bamboozle.party</h1>
+                <p className="text-lg md:text-2xl mt-4 opacity-75 uppercase">Room Code:</p>
+                <div className="text-6xl md:text-9xl font-black bg-white text-black px-4 md:px-8 py-2 md:py-4 rounded-xl mt-2 inline-block transform -rotate-2 border-4 md:border-8 border-purple-500 uppercase">
                     {state.roomCode}
                 </div>
             </div>
 
-            <div className="flex items-center gap-8">
+            <div className="flex flex-col md:flex-row items-center gap-4 md:gap-8">
                 <div className="bg-black/30 px-6 py-2 rounded-full flex items-center gap-3">
                     <User size={24} />
-                    <span className="font-bold text-xl uppercase">{Object.keys(state.players).length} / 6 PLAYERS</span>
+                    <span className="font-bold text-lg md:text-xl uppercase">{Object.keys(state.players).length} / 6 PLAYERS</span>
                 </div>
                 <div className="bg-black/30 px-6 py-2 rounded-full flex items-center gap-3 border border-white/10">
-                    <span className="font-bold text-xl uppercase text-yellow-400">{state.totalRounds} ROUNDS</span>
+                    <span className="font-bold text-lg md:text-xl uppercase text-yellow-400">{state.totalRounds} ROUNDS</span>
                 </div>
             </div>
 

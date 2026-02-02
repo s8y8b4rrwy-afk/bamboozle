@@ -65,15 +65,15 @@ export const PointsPopup = ({ amount, label = 'PTS' }: { amount: number, label?:
     return (
         <motion.div
             initial={{ scale: 0, y: 50, opacity: 0 }}
-            animate={{ scale: 1.2, y: -80, opacity: 1 }}
+            animate={{ scale: 0.9, y: -80, opacity: 1 }}
             exit={{ scale: 0, opacity: 0 }}
             transition={{ type: "spring", stiffness: 200, damping: 10 }}
             className="absolute z-[100] flex flex-col items-center pointer-events-none w-full"
         >
-            <div className="text-6xl font-black text-yellow-400 drop-shadow-[0_4px_4px_rgba(0,0,0,0.8)] stroke-black" style={{ WebkitTextStroke: '2px black' }}>
+            <div className="text-4xl md:text-6xl font-black text-yellow-400 drop-shadow-[0_4px_4px_rgba(0,0,0,0.8)] stroke-black" style={{ WebkitTextStroke: '1px black' }}>
                 +{amount}
             </div>
-            <div className="text-xl font-bold text-white bg-black/80 px-3 py-1 rounded-full uppercase border-2 border-yellow-400 transform -rotate-3">{label}</div>
+            <div className="text-lg md:text-xl font-bold text-white bg-black/80 px-3 py-1 rounded-full uppercase border-2 border-yellow-400 transform -rotate-3">{label}</div>
         </motion.div>
     );
 };
@@ -120,31 +120,33 @@ export const EmotePopupLayer = ({ emotes }: { emotes: Emote[] }) => {
 };
 
 // --- CATEGORY ROULETTE ---
-export const CategoryRoulette = ({ state }: { state: GameState }) => {
+export const CategoryRoulette = ({ state, onSelect }: { state: GameState, onSelect?: (category: string) => void }) => {
     const selectorId = state.categorySelection?.selectorId;
     const selectorName = selectorId ? state.players[selectorId]?.name : 'Someone';
     const options = state.categorySelection?.options || [];
     const selected = state.categorySelection?.selected;
 
     return (
-        <div className="flex flex-col items-center justify-center h-full w-full z-30 relative px-12">
-            <div className="mb-12 text-center">
-                <h2 className="text-4xl text-purple-200 uppercase tracking-widest font-black drop-shadow-md">Category Selection</h2>
-                <p className="text-2xl text-white mt-2 font-bold bg-black/30 px-6 py-2 rounded-full inline-block border border-white/10 uppercase">
-                    <span className="text-yellow-400">{selectorName}</span> is choosing...
+        <div className="flex flex-col items-center justify-center h-full w-full z-30 relative px-4 md:px-12">
+            <div className="mb-4 md:mb-12 text-center">
+                <h2 className="text-2xl md:text-4xl text-purple-200 uppercase tracking-widest font-black drop-shadow-md">Category Selection</h2>
+                <p className="text-lg md:text-2xl text-white mt-2 font-bold bg-black/30 px-6 py-2 rounded-full inline-block border border-white/10 uppercase">
+                    <span className="text-yellow-400">{selectorName}</span> {onSelect ? 'pick one!' : 'is choosing...'}
                 </p>
             </div>
 
-            <div className="grid grid-cols-3 gap-6 w-full max-w-6xl">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-2 md:gap-6 w-full max-w-6xl">
                 {options.map((opt, idx) => {
                     const isSelected = selected === opt;
                     const isDimmed = selected && !isSelected;
                     const isHighlight = !selected && (Math.floor(Date.now() / 300) % options.length === idx);
 
                     return (
-                        <motion.div
+                        <motion.button
                             key={opt}
                             layout
+                            onClick={() => onSelect && onSelect(opt)}
+                            disabled={!onSelect || !!selected}
                             initial={{ scale: 0.8, opacity: 0 }}
                             animate={{
                                 scale: isSelected ? 1.15 : 1,
@@ -154,13 +156,14 @@ export const CategoryRoulette = ({ state }: { state: GameState }) => {
                                 borderColor: isSelected ? '#FFF' : 'rgba(255,255,255,0.1)'
                             }}
                             className={`
-                                p-8 rounded-3xl border-4 text-center font-black text-3xl shadow-2xl flex items-center justify-center h-40 relative overflow-hidden uppercase
+                                p-4 md:p-8 rounded-3xl border-4 text-center font-black text-xl md:text-3xl shadow-2xl flex items-center justify-center h-24 md:h-40 relative overflow-hidden uppercase
                                 ${isSelected ? 'z-50 ring-8 ring-yellow-400/50' : ''}
+                                ${onSelect && !selected ? 'hover:scale-105 active:scale-95 cursor-pointer hover:bg-purple-800' : ''}
                             `}
                         >
                             <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent pointer-events-none" />
                             <span className="relative z-10">{opt}</span>
-                        </motion.div>
+                        </motion.button>
                     );
                 })}
             </div>
@@ -303,8 +306,8 @@ export const RevealSequence = ({ state, actions, setGalleryOverrides, isHost }: 
 
     return (
         <div className="flex flex-col items-center justify-center h-full w-full max-w-5xl mx-auto relative z-20">
-            <div className="mb-8 text-center bg-black/40 px-8 py-4 rounded-xl backdrop-blur-md border border-white/10 w-full uppercase">
-                <p className="text-xl font-bold text-gray-200 leading-relaxed">
+            <div className="mb-4 md:mb-8 text-center bg-black/40 px-4 md:px-8 py-2 md:py-4 rounded-xl backdrop-blur-md border border-white/10 w-full uppercase">
+                <p className="text-sm md:text-xl font-bold text-gray-200 leading-relaxed">
                     {factParts[0]}
                     <AnimatePresence mode="wait">
                         {showFilledFact ? (
@@ -339,11 +342,11 @@ export const RevealSequence = ({ state, actions, setGalleryOverrides, isHost }: 
                     animate={{ scale: 1, opacity: 1, rotate: 0 }}
                     exit={{ scale: 1.5, opacity: 0 }}
                     transition={{ type: 'spring', bounce: 0.5 }}
-                    className={`relative w-full p-12 rounded-3xl border-8 shadow-2xl flex flex-col items-center text-center transition-colors duration-500 uppercase
+                    className={`relative w-full p-4 md:p-12 rounded-3xl border-4 md:border-8 shadow-2xl flex flex-col items-center text-center transition-colors duration-500 uppercase
                       ${isTruth && phase === 'AUTHOR' ? 'bg-green-600 border-green-300 text-white' : 'bg-white border-gray-300 text-black'}
                   `}
                 >
-                    <h2 className="text-6xl font-black mb-8 leading-tight">{currentAnswer.text}</h2>
+                    <h2 className="text-2xl md:text-6xl font-black mb-4 md:mb-8 leading-tight">{currentAnswer.text}</h2>
 
                     {/* Voters Container */}
                     <div className="h-40 w-full flex flex-wrap items-center justify-center gap-4 mb-4 relative">

@@ -22,42 +22,42 @@ const App: React.FC = () => {
 };
 
 const HomeSelector = ({ onSelect }: { onSelect: (v: 'HOST' | 'PLAYER' | 'TEST') => void }) => (
-  <div className="min-h-screen bg-gray-900 text-white flex flex-col items-center justify-center p-8">
-    <h1 className="text-6xl font-display text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-600 mb-12 animate-bounce">
+  <div className="min-h-screen bg-gray-900 text-white flex flex-col items-center justify-center p-4 overflow-y-auto">
+    <h1 className="text-4xl md:text-6xl font-display text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-600 mb-8 md:mb-12 animate-bounce text-center">
       Bamboozle
     </h1>
 
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full max-w-6xl">
+    <div className="flex flex-col md:grid md:grid-cols-3 gap-4 md:gap-8 w-full max-w-sm md:max-w-6xl">
       <button
         onClick={() => onSelect('HOST')}
-        className="group relative bg-purple-800 p-8 rounded-3xl border-4 border-purple-600 hover:border-yellow-400 transition-all transform hover:-translate-y-2 hover:shadow-2xl flex flex-col items-center"
+        className="group relative bg-purple-800 p-6 md:p-8 rounded-3xl border-4 border-purple-600 hover:border-yellow-400 transition-all transform hover:-translate-y-2 hover:shadow-2xl flex flex-col items-center"
       >
-        <Monitor size={64} className="mb-6 text-purple-300 group-hover:text-yellow-400" />
-        <h2 className="text-3xl font-bold mb-2">HOST GAME</h2>
-        <p className="text-center opacity-70">Use this on the big screen</p>
+        <Monitor size={48} className="mb-4 text-purple-300 group-hover:text-yellow-400 md:w-16 md:h-16" />
+        <h2 className="text-2xl md:text-3xl font-bold mb-1">HOST GAME</h2>
+        <p className="text-sm md:text-base opacity-70">Big Screen</p>
       </button>
 
       <button
         onClick={() => onSelect('PLAYER')}
-        className="group relative bg-blue-800 p-8 rounded-3xl border-4 border-blue-600 hover:border-green-400 transition-all transform hover:-translate-y-2 hover:shadow-2xl flex flex-col items-center"
+        className="group relative bg-blue-800 p-6 md:p-8 rounded-3xl border-4 border-blue-600 hover:border-green-400 transition-all transform hover:-translate-y-2 hover:shadow-2xl flex flex-col items-center"
       >
-        <Smartphone size={64} className="mb-6 text-blue-300 group-hover:text-green-400" />
-        <h2 className="text-3xl font-bold mb-2">JOIN GAME</h2>
-        <p className="text-center opacity-70">Use this on your phone</p>
+        <Smartphone size={48} className="mb-4 text-blue-300 group-hover:text-green-400 md:w-16 md:h-16" />
+        <h2 className="text-2xl md:text-3xl font-bold mb-1">JOIN GAME</h2>
+        <p className="text-sm md:text-base opacity-70">Your Phone</p>
       </button>
 
       <button
         onClick={() => onSelect('TEST')}
-        className="group relative bg-gray-800 p-8 rounded-3xl border-4 border-gray-600 hover:border-orange-400 transition-all transform hover:-translate-y-2 hover:shadow-2xl flex flex-col items-center"
+        className="group relative bg-gray-800 p-6 md:p-8 rounded-3xl border-4 border-gray-600 hover:border-orange-400 transition-all transform hover:-translate-y-2 hover:shadow-2xl flex flex-col items-center"
       >
-        <SplitSquareHorizontal size={64} className="mb-6 text-gray-300 group-hover:text-orange-400" />
-        <h2 className="text-3xl font-bold mb-2">TEST MODE</h2>
-        <p className="text-center opacity-70">Split screen to play alone</p>
+        <SplitSquareHorizontal size={48} className="mb-4 text-gray-300 group-hover:text-orange-400 md:w-16 md:h-16" />
+        <h2 className="text-2xl md:text-3xl font-bold mb-1">TEST MODE</h2>
+        <p className="text-sm md:text-base opacity-70">Debug Split</p>
       </button>
     </div>
 
-    <p className="mt-12 text-gray-500 max-w-lg text-center">
-      Open this URL in multiple tabs for multiplayer. Use Test Mode to debug on one screen.
+    <p className="mt-8 text-gray-500 text-xs md:text-base max-w-xs md:max-w-lg text-center">
+      Multiplayer Party Game. Open on multiple devices to play!
     </p>
   </div>
 );

@@ -87,6 +87,7 @@ export interface GameState {
   isNarrating: boolean;
   emotes: Emote[]; // Queue of emotes to render
   isOnlineMode: boolean; // New: Track online friend mode
+  recentCategories: string[]; // Track categories shown in the previous round to ensure variety
 }
 
 export type GameEvent =
