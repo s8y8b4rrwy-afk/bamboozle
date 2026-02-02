@@ -91,7 +91,7 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
         if (state.phase === GamePhase.LOBBY) return null;
 
         return (
-            <div className="w-full py-3 px-2 overflow-x-auto flex items-center justify-center gap-3 z-40 shrink-0 no-scrollbar relative min-h-[70px]">
+            <div className="w-full py-3 px-2 overflow-x-auto flex items-center justify-center gap-3 z-40 shrink-0 no-scrollbar relative min-h-[4.5rem]">
                 {players.map(p => {
                     const isDone = (state.phase === GamePhase.WRITING && !!state.submittedLies[p.id]) ||
                         (state.phase === GamePhase.VOTING && !!p.currentVote);
@@ -112,10 +112,10 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
         return (
             <div className="h-full bg-purple-900 flex flex-col overflow-y-auto pb-safe-bottom">
                 <TopBar />
-                <div className="flex-1 flex flex-col items-center justify-center p-6 relative min-h-[500px]">
+                <div className="flex-1 flex flex-col items-center justify-center p-6 relative min-h-[60vh]">
                     <EmotePopupLayer emotes={state.emotes} />
                     <div className="w-full max-w-sm space-y-6 relative z-10">
-                        <h1 className="text-4xl md:text-5xl font-display text-center text-yellow-400 mb-8 drop-shadow-lg">Bamboozle</h1>
+                        <h1 className="text-3xl md:text-5xl font-display text-center text-yellow-400 mb-8 drop-shadow-lg">Bamboozle</h1>
 
                         {joinStep === 'CODE' && (
                             <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="space-y-6">
@@ -243,21 +243,54 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
                 {state.phase === GamePhase.LOBBY && (
                     <div className="flex-1 flex flex-col items-center justify-center p-4">
                         {/* Centered Content */}
-                        <div className="flex-1 flex flex-col items-center justify-center w-full max-w-md gap-4 pb-32"> {/* Added padding bottom for fixed footer */}
-                            <h2 className="text-white text-center font-bold uppercase tracking-widest text-sm mb-4 opacity-70">Waiting for players...</h2>
+                        <div className="flex-1 flex flex-col items-center w-full max-w-md gap-2 pb-32 pt-2 overflow-y-auto no-scrollbar">
 
-                            <div className="grid grid-cols-2 gap-3 w-full">
+                            {/* MICRO-ARCADE DASHBOARD */}
+                            <div className="w-full flex flex-col items-center gap-2 shrink-0 animate-fade-in-up px-4">
+                                {/* Compact Room Code Room */}
+                                <div className="w-full bg-indigo-950 border-4 border-yellow-400 shadow-[4px_4px_0px_0px_#FACC15] rounded-xl p-3 flex flex-row items-center justify-between relative overflow-hidden">
+                                    <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-20" />
+
+                                    <div className="z-10 flex flex-col items-start leading-none">
+                                        <span className="text-yellow-400/80 font-black uppercase tracking-widest text-[8px] md:text-[10px]">Room Code</span>
+                                        <span className="text-4xl md:text-5xl font-black text-white tracking-[0.1em] drop-shadow-[2px_2px_0px_rgba(0,0,0,1)] font-mono">
+                                            {state.roomCode}
+                                        </span>
+                                    </div>
+
+                                    {/* Stats as simple text pill */}
+                                    <div className="z-10 flex flex-col gap-1 items-end">
+                                        <div className="flex items-center gap-2 bg-black/40 px-2 py-1 rounded border border-white/10">
+                                            <span className="text-white font-bold text-xs uppercase">Rounds</span>
+                                            <span className="text-yellow-400 font-mono font-black">{state.totalRounds}</span>
+                                        </div>
+                                        <div className="flex items-center gap-2 bg-black/40 px-2 py-1 rounded border border-white/10">
+                                            <Users size={12} className="text-blue-400" />
+                                            <span className="text-white font-mono font-black text-xs">{audienceCount} Audience</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Players Label */}
+                            <div className="w-full px-4 flex items-center gap-2 opacity-40 mt-1">
+                                <div className="h-px bg-white/20 flex-1" />
+                                <span className="text-[10px] uppercase font-bold text-white tracking-widest">Players</span>
+                                <div className="h-px bg-white/20 flex-1" />
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-2 w-full px-2">
                                 {Object.values(state.players).map((p) => (
-                                    <div key={p.id} className={`flex flex-col items-center bg-black/20 p-2 py-4 rounded-2xl border-2 ${p.isReady ? 'border-green-400 bg-green-900/20' : 'border-white/10'}`}>
-                                        {p.id === state.vipId && <Crown size={14} className="text-yellow-400 mb-1" fill="currentColor" />}
-                                        <Avatar seed={p.avatarSeed} size={50} expression={p.expression} />
-                                        <div className="font-bold text-white uppercase mt-2 text-xs truncate max-w-full px-2">{p.name}</div>
-                                        <div className="text-[10px] font-bold uppercase text-white/50">{p.isReady ? 'READY' : '...'}</div>
+                                    <div key={p.id} className={`flex flex-col items-center bg-black/40 p-2 rounded-xl border-2 shadow-sm ${p.isReady ? 'border-green-400 bg-green-900/40' : 'border-white/10'}`}>
+                                        {p.id === state.vipId && <Crown size={12} className="text-yellow-400 mb-1" fill="currentColor" />}
+                                        <Avatar seed={p.avatarSeed} size={40} expression={p.expression} />
+                                        <div className="font-bold text-white uppercase mt-1 text-[10px] truncate max-w-full px-2">{p.name}</div>
+                                        <div className={`text-[9px] font-black uppercase mt-0.5 ${p.isReady ? 'text-green-400' : 'text-white/30'}`}>{p.isReady ? 'READY' : 'WAITING'}</div>
                                     </div>
                                 ))}
                                 {Array.from({ length: Math.max(0, 6 - Object.values(state.players).length) }).map((_, i) => (
-                                    <div key={`empty-${i}`} className="flex items-center justify-center border-2 border-dashed border-white/5 rounded-2xl min-h-[100px]">
-                                        <span className="text-white/10 font-bold uppercase text-xs">Empty</span>
+                                    <div key={`empty-${i}`} className="flex items-center justify-center border-dashed border border-white/10 rounded-xl min-h-[4.5rem]">
+                                        <span className="text-white/10 font-bold uppercase text-[10px]">Empty</span>
                                     </div>
                                 ))}
                             </div>
@@ -273,13 +306,50 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
                                     {me?.isReady ? 'Ready!' : 'READY UP'}
                                 </button>
                                 {isVip && (
-                                    <button
-                                        disabled={!Object.values(state.players).every(p => p.isReady) || Object.values(state.players).length === 0}
-                                        onClick={() => actions.sendStartGame(state.totalRounds)}
-                                        className="w-full bg-yellow-400 text-black py-3 rounded-xl font-black text-lg shadow-xl uppercase disabled:opacity-50 disabled:grayscale"
-                                    >
-                                        START GAME
-                                    </button>
+                                    <div className="flex flex-col gap-4 w-full">
+                                        <div className="flex items-center justify-between bg-black/40 p-3 rounded-xl border border-white/10">
+                                            <span className="font-bold text-white uppercase text-sm">Rounds</span>
+                                            <div className="flex items-center gap-4">
+                                                <button
+                                                    onClick={() => actions.sendUpdateRounds(Math.max(1, state.totalRounds - 1))}
+                                                    className="w-8 h-8 flex items-center justify-center bg-white/10 hover:bg-white/20 rounded-lg text-white font-bold"
+                                                >
+                                                    -
+                                                </button>
+                                                <span className="text-xl font-black text-yellow-400 w-4 text-center">{state.totalRounds}</span>
+                                                <button
+                                                    onClick={() => actions.sendUpdateRounds(Math.min(10, state.totalRounds + 1))}
+                                                    className="w-8 h-8 flex items-center justify-center bg-white/10 hover:bg-white/20 rounded-lg text-white font-bold"
+                                                >
+                                                    +
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <button
+                                                onClick={actions.addBot}
+                                                className="bg-blue-600/50 hover:bg-blue-600 py-3 rounded-xl text-xs font-bold uppercase"
+                                                disabled={Object.keys(state.players).length >= 6}
+                                            >
+                                                + Bot
+                                            </button>
+                                            <button
+                                                onClick={actions.addAudienceBot}
+                                                className="bg-indigo-600/50 hover:bg-indigo-600 py-3 rounded-xl text-xs font-bold uppercase"
+                                            >
+                                                + Audience
+                                            </button>
+                                        </div>
+
+                                        <button
+                                            disabled={!Object.values(state.players).every(p => p.isReady) || Object.values(state.players).length === 0}
+                                            onClick={() => actions.sendStartGame(state.totalRounds)}
+                                            className="w-full bg-yellow-400 text-black py-3 rounded-xl font-black text-lg shadow-xl uppercase disabled:opacity-50 disabled:grayscale"
+                                        >
+                                            START GAME
+                                        </button>
+                                    </div>
                                 )}
                             </div>
                         )}
@@ -306,7 +376,7 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
 
                 {/* 3. WRITING (And INTRO) */}
                 {(state.phase === GamePhase.WRITING || state.phase === GamePhase.INTRO) && (
-                    <div className="flex-1 flex flex-col items-center p-4"> {/* Removed pt-12 md:pt-20 */}
+                    <div className="flex-1 flex flex-col items-center justify-center p-4">
                         <div className="w-full max-w-md flex flex-col items-center gap-4">
 
                             {/* Stats Header */}
@@ -323,13 +393,13 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
                                 </div>
                                 <div className="flex items-center gap-1 bg-black/40 px-2 py-1 rounded-lg border border-white/10">
                                     <Users size={12} className="text-white" />
-                                    <span className="text-xs font-black text-white">{audienceCount}</span>
+                                    <span className="text-[10px] md:text-xs font-black text-white">{audienceCount}</span>
                                 </div>
                             </div>
 
                             {/* Fact Card */}
-                            <div className="w-full bg-white text-purple-900 p-6 rounded-3xl shadow-xl border-b-8 border-purple-300 relative z-10 min-h-[160px] flex items-center justify-center">
-                                <p className="text-xl md:text-2xl font-black leading-tight uppercase text-center break-words">
+                            <div className="w-full bg-white text-purple-900 p-4 md:p-6 rounded-2xl md:rounded-3xl shadow-xl border-b-4 md:border-b-8 border-purple-300 relative z-10 min-h-[15vh] flex items-center justify-center">
+                                <p className="text-base md:text-2xl font-black leading-tight uppercase text-center break-words">
                                     {state.currentQuestion?.fact.replace('<BLANK>', '________')}
                                 </p>
                             </div>
@@ -349,7 +419,7 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
                                         <>
                                             <input
                                                 type="text"
-                                                className="w-full bg-black/20 text-white p-4 rounded-xl text-lg font-bold uppercase outline-none focus:ring-2 focus:ring-yellow-400 placeholder-white/30 text-center shadow-inner"
+                                                className="w-full bg-black/20 text-white p-4 rounded-xl text-base md:text-lg font-bold uppercase outline-none focus:ring-2 focus:ring-yellow-400 placeholder-white/30 text-center shadow-inner"
                                                 placeholder="LIE HERE..."
                                                 value={lieText}
                                                 onChange={e => setLieText(e.target.value.toUpperCase())}
@@ -386,7 +456,7 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
 
                 {/* 4. VOTING */}
                 {state.phase === GamePhase.VOTING && (
-                    <div className="flex-1 flex flex-col items-center p-4 pt-12 md:pt-20">
+                    <div className="flex-1 flex flex-col items-center justify-center p-4">
                         <div className="w-full max-w-md mb-4 text-center">
                             {/* Timer */}
                             <div className="flex justify-center mb-4 relative z-30">
@@ -422,7 +492,7 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
                                         }}
                                         disabled={iVoted && !amAudience}
                                         className={`
-                                              w-full p-4 rounded-xl border-l-8 text-left font-bold text-lg shadow-md transition-all active:scale-95 uppercase relative overflow-hidden min-h-[60px] flex items-center
+                                              w-full p-3 md:p-4 rounded-xl border-l-4 md:border-l-8 text-left font-bold text-base md:text-lg shadow-md transition-all active:scale-95 uppercase relative overflow-hidden min-h-[2.5rem] flex items-center
                                               ${iVoted
                                                 ? 'bg-indigo-600 border-indigo-400 text-white'
                                                 : 'bg-white border-transparent text-indigo-900'
@@ -430,8 +500,8 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
                                               ${(me?.currentVote && !iVoted) ? 'opacity-50 grayscale' : ''}
                                           `}
                                     >
-                                        <div className="relative z-10 flex flex-col w-full">
-                                            <span className="leading-tight">{ans.text}</span>
+                                        <div className="relative z-10 flex flex-col w-full min-h-[3rem] justify-center">
+                                            <span className="leading-tight text-sm md:text-base">{ans.text}</span>
                                             {/* Audience Indicator */}
                                             {ans.audienceVotes.length > 0 && (
                                                 <div className="flex items-center gap-1 mt-1 opacity-70">
@@ -481,17 +551,19 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
             </div>
 
             {/* PERSISTENT BOTTOM BAR (Avatar Strip + Emotes) - With Safe Area support */}
-            {state.phase !== GamePhase.LOBBY && state.phase !== GamePhase.LEADERBOARD && state.phase !== GamePhase.GAME_OVER && (
-                <div className="border-t border-white/5 bg-indigo-900/50 backdrop-blur-sm pb-safe-bottom z-50">
-                    <AvatarStrip />
-                    <div className="grid grid-cols-4 gap-2 px-4 pb-2 w-full max-w-sm mx-auto z-20 relative">
-                        <button onClick={() => handleEmote('LAUGH')} className="bg-white/10 p-3 rounded-xl hover:bg-white/20 text-2xl active:scale-95 transition border border-white/5 h-14 flex items-center justify-center">😂</button>
-                        <button onClick={() => handleEmote('SHOCK')} className="bg-white/10 p-3 rounded-xl hover:bg-white/20 text-2xl active:scale-95 transition border border-white/5 h-14 flex items-center justify-center">😮</button>
-                        <button onClick={() => handleEmote('LOVE')} className="bg-white/10 p-3 rounded-xl hover:bg-white/20 text-2xl active:scale-95 transition border border-white/5 h-14 flex items-center justify-center">❤️</button>
-                        <button onClick={() => handleEmote('TOMATO')} className="bg-white/10 p-3 rounded-xl hover:bg-white/20 text-2xl active:scale-95 transition border border-white/5 h-14 flex items-center justify-center">🍅</button>
+            {
+                state.phase !== GamePhase.LOBBY && state.phase !== GamePhase.LEADERBOARD && state.phase !== GamePhase.GAME_OVER && (
+                    <div className="border-t border-white/5 bg-indigo-900/50 backdrop-blur-sm pb-safe-bottom z-50">
+                        <AvatarStrip />
+                        <div className="grid grid-cols-4 gap-2 px-4 pb-2 w-full max-w-sm mx-auto z-20 relative">
+                            <button onClick={() => handleEmote('LAUGH')} className="bg-white/10 p-3 rounded-xl hover:bg-white/20 text-2xl active:scale-95 transition border border-white/5 aspect-square flex items-center justify-center">😂</button>
+                            <button onClick={() => handleEmote('SHOCK')} className="bg-white/10 p-3 rounded-xl hover:bg-white/20 text-2xl active:scale-95 transition border border-white/5 aspect-square flex items-center justify-center">😮</button>
+                            <button onClick={() => handleEmote('LOVE')} className="bg-white/10 p-3 rounded-xl hover:bg-white/20 text-2xl active:scale-95 transition border border-white/5 aspect-square flex items-center justify-center">❤️</button>
+                            <button onClick={() => handleEmote('TOMATO')} className="bg-white/10 p-3 rounded-xl hover:bg-white/20 text-2xl active:scale-95 transition border border-white/5 aspect-square flex items-center justify-center">🍅</button>
+                        </div>
                     </div>
-                </div>
-            )}
-        </div>
+                )
+            }
+        </div >
     );
 };

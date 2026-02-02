@@ -901,6 +901,28 @@ export const useGameService = (role: 'HOST' | 'PLAYER' | 'AUDIENCE', playerName?
       else groupedLies[normalizedText] = [pid];
     });
 
+    // --- HOST BOT LIES (If < 6 players) ---
+    const activePlayersCount = Object.keys(state.players).length;
+    if (activePlayersCount < 6 && state.currentQuestion?.lies) {
+      const numToadd = Math.random() < 0.5 ? 1 : 2;
+      const potentialLies = state.currentQuestion.lies.filter(l =>
+        l.toLowerCase() !== state.currentQuestion!.answer.toLowerCase() &&
+        !Object.values(state.submittedLies).some(sl => sl.toLowerCase() === l.toLowerCase())
+      );
+
+      const shuffled = shuffle(potentialLies);
+      const selected = shuffled.slice(0, numToadd);
+
+      selected.forEach(lie => {
+        const normalized = lie.trim();
+        if (groupedLies[normalized]) {
+          groupedLies[normalized].push('HOST_BOT');
+        } else {
+          groupedLies[normalized] = ['HOST_BOT'];
+        }
+      });
+    }
+
     Object.entries(groupedLies).forEach(([text, pids], idx) => {
       answers.push({
         id: `LIE_${idx}`,
@@ -936,9 +958,16 @@ export const useGameService = (role: 'HOST' | 'PLAYER' | 'AUDIENCE', playerName?
     } else {
       n.phase = GamePhase.GAME_OVER;
       sfx.play('SUCCESS');
-      const winner = Object.values(n.players).sort((a: any, b: any) => b.score - a.score)[0];
-      speak(getRandomPhrase('GAME_OVER', { winner: winner?.name }), false, 'GAME_OVER');
-      if (winner) n.players[winner.id].expression = 'HAPPY';
+      const allPlayers = Object.values(n.players);
+      const winner = allPlayers.length > 0 ? allPlayers.sort((a: any, b: any) => b.score - a.score)[0] : null;
+      if (winner) {
+        speak(getRandomPhrase('GAME_OVER', { winner: winner.name }), false, 'GAME_OVER');
+        if (n.players[winner.id]) {
+          n.players[winner.id].expression = 'HAPPY';
+        }
+      } else {
+        speak("Game over!", false, 'GAME_OVER_DEFAULT');
+      }
     }
     stateRef.current = n;
     setState(n);
@@ -1144,6 +1173,11 @@ export const useGameService = (role: 'HOST' | 'PLAYER' | 'AUDIENCE', playerName?
               speechText = getRandomPhrase('REVEAL_LIAR_JINX', { names: names });
               speak(speechText, false, `LIAR_JINX_${currentAnswerId}`);
             }
+          } else if (currentAnswer.authorIds.includes('HOST_BOT')) {
+            // HOST LIE REVEAL
+            sfx.play('FAILURE');
+            speechText = getRandomPhrase('REVEAL_HOST_LIE', { names: voterNames });
+            speak(speechText, false, `HOST_LIE_${currentAnswerId}`);
           }
         }
 

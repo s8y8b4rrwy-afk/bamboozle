@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { GameState, GamePhase } from '../types';
 import { Avatar } from '../components/Avatar';
-import { Clock, Users, CheckCircle, Lock, Play, Minus, Plus, RotateCcw, Crown } from 'lucide-react';
+import { Clock, Users, CheckCircle, Lock, Play, Minus, Plus, RotateCcw, Crown, Home } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { sfx } from '../services/audioService';
 
