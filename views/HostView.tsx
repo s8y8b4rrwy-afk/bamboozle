@@ -3,7 +3,7 @@ import { GameState, GamePhase, Player, Answer, Expression, Emote } from '../type
 import { Avatar } from '../components/Avatar';
 import { Narrator } from '../components/Narrator';
 import { motion, AnimatePresence } from 'framer-motion';
-import { QrCode, User, Play, Clock, Trophy, Bot, ArrowUp, CheckCircle, RotateCcw, Home, Disc, Users, Crown } from 'lucide-react';
+import { QrCode, User, Play, Clock, Trophy, Bot, ArrowUp, CheckCircle, RotateCcw, Home, Disc, Users, Crown, Quote } from 'lucide-react';
 import { sfx } from '../services/audioService';
 
 interface HostViewProps {
@@ -33,23 +33,26 @@ export const HostView: React.FC<HostViewProps> = ({ state, actions, onHome, debu
     }, [state.phase]);
 
     const renderLobby = () => (
-        <div className="flex flex-col items-center justify-center h-full space-y-8 z-20 relative">
-            <div className="text-center w-full px-4">
-                <h2 className="text-xl md:text-4xl text-purple-300 font-bold mb-2 uppercase tracking-widest">Join Game at</h2>
-                <h1 className="text-5xl md:text-8xl text-yellow-400 font-display tracking-tighter shadow-glow break-all">bamboozle.party</h1>
-                <p className="text-lg md:text-2xl mt-4 opacity-75 uppercase">Room Code:</p>
-                <div className="text-6xl md:text-9xl font-black bg-white text-black px-4 md:px-8 py-2 md:py-4 rounded-xl mt-2 inline-block transform -rotate-2 border-4 md:border-8 border-purple-500 uppercase">
-                    {state.roomCode}
+        <div className="flex flex-col items-center justify-center h-full space-y-10 z-20 relative px-6">
+            <div className="text-center w-full px-4 transform transition-all hover:scale-105 duration-500 cursor-default">
+                <h2 className="text-2xl md:text-3xl text-purple-200 font-bold mb-3 uppercase tracking-[0.2em] drop-shadow-md">Join now at</h2>
+                <h1 className="text-6xl md:text-9xl text-yellow-400 font-display tracking-tighter shadow-glow break-all leading-none mb-6">bamboozle.party</h1>
+                <div className="relative inline-block mt-4 group">
+                    <div className="absolute -inset-1 bg-gradient-to-r from-yellow-400 to-purple-600 rounded-2xl blur opacity-75 group-hover:opacity-100 transition duration-1000 group-hover:duration-200 animate-tilt"></div>
+                    <div className="relative text-7xl md:text-9xl font-black bg-white text-black px-10 py-6 rounded-2xl transform -rotate-2 border-8 border-transparent uppercase tracking-widest shadow-2xl">
+                        {state.roomCode}
+                    </div>
                 </div>
             </div>
 
-            <div className="flex flex-col md:flex-row items-center gap-4 md:gap-8">
-                <div className="bg-black/30 px-6 py-2 rounded-full flex items-center gap-3">
-                    <User size={24} />
-                    <span className="font-bold text-lg md:text-xl uppercase">{Object.keys(state.players).length} / 6 PLAYERS</span>
+            <div className="flex flex-col md:flex-row items-center gap-6 md:gap-12 mt-8">
+                <div className="bg-black/40 backdrop-blur-md px-8 py-4 rounded-full flex items-center gap-4 border border-white/10 shadow-lg">
+                    <User size={32} className="text-blue-400" />
+                    <span className="font-bold text-2xl uppercase tracking-wider">{Object.keys(state.players).length} / 6 PLAYERS</span>
                 </div>
-                <div className="bg-black/30 px-6 py-2 rounded-full flex items-center gap-3 border border-white/10">
-                    <span className="font-bold text-lg md:text-xl uppercase text-yellow-400">{state.totalRounds} ROUNDS</span>
+                <div className="bg-black/40 backdrop-blur-md px-8 py-4 rounded-full flex items-center gap-4 border border-white/10 shadow-lg">
+                    <Trophy size={32} className="text-yellow-400" />
+                    <span className="font-bold text-2xl uppercase tracking-wider text-yellow-400">{state.totalRounds} ROUNDS</span>
                 </div>
             </div>
 
@@ -64,19 +67,22 @@ export const HostView: React.FC<HostViewProps> = ({ state, actions, onHome, debu
                 </div>
             )}
             {!debugMode && (
-                <div className="flex flex-col items-center gap-4 mt-8">
-                    <div className="text-xl text-yellow-400 font-bold animate-pulse uppercase">
+                <div className="flex flex-col items-center gap-6 mt-12">
+                    <div className="text-2xl text-yellow-400 font-bold animate-pulse uppercase tracking-widest flex items-center gap-3">
+                        <div className="w-3 h-3 bg-yellow-400 rounded-full animate-ping" />
                         Waiting for players to ready up...
                     </div>
 
                     <button
                         onClick={() => { sfx.play('CLICK'); actions.sendToggleOnlineMode(); }}
-                        className={`flex items-center gap-3 px-6 py-3 rounded-full border-2 transition-all ${state.isOnlineMode ? 'bg-green-600 border-green-400' : 'bg-transparent border-gray-500 hover:border-white'}`}
+                        className={`flex items-center gap-4 px-8 py-4 rounded-full border-2 transition-all shadow-xl hover:scale-105 active:scale-95 ${state.isOnlineMode ? 'bg-green-600 border-green-400' : 'bg-black/40 border-gray-500 hover:border-white hover:bg-black/60'}`}
                     >
-                        <div className={`w-6 h-6 rounded-full border-2 ${state.isOnlineMode ? 'bg-white border-white' : 'border-gray-500'}`} />
+                        <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${state.isOnlineMode ? 'bg-white border-white' : 'border-gray-500'}`}>
+                            {state.isOnlineMode && <CheckCircle size={16} className="text-green-600" strokeWidth={4} />}
+                        </div>
                         <div className="flex flex-col items-start">
-                            <span className="font-bold text-white uppercase tracking-wider">Online Friends Mode</span>
-                            <span className="text-xs text-gray-300 uppercase">Single Device View (No TV needed)</span>
+                            <span className="font-black text-white uppercase tracking-wider text-lg">Online Friends Mode</span>
+                            <span className="text-xs text-gray-300 uppercase font-bold tracking-wide opacity-80">Single Device View (No TV needed)</span>
                         </div>
                     </button>
                 </div>
@@ -86,21 +92,24 @@ export const HostView: React.FC<HostViewProps> = ({ state, actions, onHome, debu
 
 
     const renderQuestion = () => (
-        <div className="flex flex-col items-center h-full pt-12 relative z-20">
-            <div className="mt-12 max-w-4xl text-center">
-                <h3 className="text-3xl text-purple-300 font-bold mb-4 uppercase tracking-widest">
+        <div className="flex flex-col items-center h-full pt-16 md:pt-24 relative z-20 px-8">
+            <div className="mt-8 md:mt-16 max-w-5xl text-center w-full">
+                <h3 className="text-2xl md:text-4xl text-purple-200 font-bold mb-8 uppercase tracking-[0.2em] flex items-center justify-center gap-4 drop-shadow-md">
                     {state.currentQuestion?.category}
-                    {(state.currentRound === state.totalRounds) && <span className="text-yellow-400 ml-4 animate-pulse">TRIPLE POINTS</span>}
-                    {(state.currentRound === state.totalRounds - 1) && <span className="text-yellow-400 ml-4 animate-pulse">DOUBLE POINTS</span>}
+                    {(state.currentRound === state.totalRounds) && <span className="text-yellow-400 bg-yellow-900/50 px-3 py-1 rounded text-lg animate-pulse border border-yellow-400/50">3X POINTS</span>}
+                    {(state.currentRound === state.totalRounds - 1) && <span className="text-yellow-400 bg-yellow-900/50 px-3 py-1 rounded text-lg animate-pulse border border-yellow-400/50">2X POINTS</span>}
                 </h3>
-                <div className="bg-white text-purple-900 p-12 rounded-3xl shadow-2xl transform rotate-1 border-b-8 border-purple-300">
-                    <p className="text-5xl font-bold leading-tight uppercase">
+                <div className="bg-white text-purple-900 p-8 md:p-12 rounded-[2rem] shadow-2xl transform rotate-1 border-b-[8px] border-r-[8px] border-purple-200/50 relative overflow-hidden">
+                    <div className="absolute top-0 right-0 p-6 opacity-5">
+                        <Quote size={80} />
+                    </div>
+                    <p className="text-3xl md:text-5xl font-black leading-tight uppercase relative z-10">
                         {state.currentQuestion?.fact.split('<BLANK>').map((part, i, arr) => (
                             <span key={i}>
                                 {part}
                                 {i < arr.length - 1 && (
-                                    <span className="inline-block border-b-4 border-dashed border-purple-900 w-48 mx-2 text-purple-400">
-                                        {state.phase === GamePhase.WRITING ? "???" : "BLANK"}
+                                    <span className="inline-flex items-center justify-center border-b-4 border-dashed border-purple-300 min-w-[80px] mx-2 text-purple-400 px-2 animate-pulse">
+                                        {state.phase === GamePhase.WRITING ? "?" : "BLANK"}
                                     </span>
                                 )}
                             </span>
@@ -112,42 +121,46 @@ export const HostView: React.FC<HostViewProps> = ({ state, actions, onHome, debu
     );
 
     const renderVoting = () => (
-        <div className="flex flex-col items-center h-full pt-8 relative z-20">
-            <div className="text-center mb-12 max-w-4xl z-30 relative">
-                <div className="bg-purple-900/90 backdrop-blur-md p-6 rounded-3xl border-2 border-purple-400/50 shadow-2xl transform hover:scale-105 transition-transform duration-300">
-                    <p className="text-2xl font-bold text-purple-100 leading-snug uppercase">
+        <div className="flex flex-col items-center h-full pt-12 md:pt-16 relative z-20 px-6">
+            <div className="text-center mb-10 max-w-4xl z-30 relative w-full">
+                <div className="bg-purple-900/80 backdrop-blur-xl p-8 rounded-3xl border border-purple-400/30 shadow-2xl skew-x-1 hover:skew-x-0 transition-transform duration-500 mb-8 inline-block relative max-w-full">
+                    <p className="text-xl md:text-3xl font-bold text-purple-100 leading-snug uppercase tracking-wide">
                         {state.currentQuestion?.fact.replace('<BLANK>', '________')}
                     </p>
-                    <div className="absolute -top-6 -left-6 bg-yellow-400 text-purple-900 font-black px-4 py-2 rounded-lg transform -rotate-12 shadow-lg">
-                        FACT
+                    <div className="absolute -top-5 -left-5 bg-yellow-400 text-purple-900 font-black px-6 py-2 rounded-xl transform -rotate-6 shadow-xl text-lg border-2 border-white">
+                        THE FACT
                     </div>
                 </div>
-                <h2 className="text-6xl font-black text-white mt-8 drop-shadow-[0_4px_4px_rgba(0,0,0,0.5)] tracking-tight uppercase">
-                    PICK THE TRUTH
+                <h2 className="text-5xl md:text-7xl font-black text-white mt-4 drop-shadow-xl tracking-tighter uppercase">
+                    SPOT THE <span className="text-green-400">TRUTH</span>
                 </h2>
             </div>
 
-            <div className="grid grid-cols-2 gap-6 w-full max-w-7xl px-8 z-30 relative">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8 w-full max-w-6xl px-4 md:px-8 z-30 relative pb-safe-bottom">
                 {state.roundAnswers.map((ans, idx) => (
                     <motion.div
                         key={ans.id}
-                        initial={{ opacity: 0, y: 20 }}
+                        initial={{ opacity: 0, y: 30 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: idx * 0.1, type: 'spring' }}
                         className="group relative"
                     >
-                        <div className="absolute inset-0 bg-blue-500 rounded-2xl transform translate-y-2 group-hover:translate-y-3 transition-transform" />
-                        <div className="relative bg-white text-indigo-900 p-8 rounded-2xl shadow-xl border-4 border-blue-200 flex items-center justify-center min-h-[120px] transform group-hover:-translate-y-1 transition-transform cursor-pointer">
-                            <span className="text-4xl font-black text-center leading-none uppercase">{ans.text}</span>
+                        <div className="absolute inset-0 bg-blue-600 rounded-[2rem] transform translate-y-2 translate-x-1 group-hover:translate-y-4 group-hover:translate-x-2 transition-transform duration-300" />
+                        <div className="relative bg-white text-indigo-950 p-6 md:p-8 rounded-[2rem] shadow-xl border-4 border-blue-200 flex items-center justify-center min-h-[100px] md:min-h-[140px] transform group-hover:-translate-y-1 group-hover:-translate-x-1 transition-transform cursor-default overflow-hidden">
+                            <span className="text-2xl md:text-4xl font-black text-center leading-none uppercase z-10">{ans.text}</span>
+
+                            {/* Decorative Pattern */}
+                            <div className="absolute inset-0 opacity-5 pointer-events-none bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-blue-500 to-transparent" style={{ backgroundSize: '20px 20px' }}></div>
 
                             {/* Real-time Audience Indicator */}
                             {ans.audienceVotes.length > 0 && (
                                 <motion.div
                                     initial={{ scale: 0 }}
                                     animate={{ scale: 1 }}
-                                    className="absolute -top-4 -right-4 bg-indigo-600 text-white rounded-full w-12 h-12 flex items-center justify-center font-bold border-4 border-white shadow-lg z-10"
+                                    className="absolute -top-3 -right-3 bg-indigo-600 text-white rounded-full w-14 h-14 flex flex-col items-center justify-center font-bold border-4 border-white shadow-lg z-20"
                                 >
-                                    {ans.audienceVotes.length}
+                                    <span className="text-xs uppercase font-black -mb-1 opacity-70">AUD</span>
+                                    <span className="text-xl leading-none">{ans.audienceVotes.length}</span>
                                 </motion.div>
                             )}
                         </div>

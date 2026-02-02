@@ -1302,7 +1302,7 @@ export const QUESTIONS = [
     lies: ["50 games", "200 games", "75 games", "150 games", "250 games"]
   },
   {
-    fact: "Mortal Kombat was released on Mortal Monday but Nintendo completely omitted all the <BLANK>> from their versions.",
+    fact: "Mortal Kombat was released on Mortal Monday but Nintendo completely omitted all the <BLANK> from their versions.",
     answer: "blood from game",
     category: "Gaming",
     lies: ["violence from game", "fatalities from game", "gore from game", "fighting from game", "combat from game"]
@@ -1410,19 +1410,19 @@ export const QUESTIONS = [
     lies: ["Hebrew language", "Yiddish dialect", "German language", "Yiddish script", "Hebrew prayers"]
   },
   {
-    fact: "Therizinosaurus had claws that were longer than a baseball bat at over <BLANK>> in length.",
+    fact: "Therizinosaurus had claws that were longer than a baseball bat at over <BLANK> in length.",
     answer: "one meter long",
     category: "Dinosaurs",
     lies: ["two meters long", "half meter long", "three feet long", "fifty centimeters", "one foot long"]
   },
   {
-    fact: "A Nemicolopterus pterodactyl discovered in 2008 had a wingspan of only <BLANK>>.",
+    fact: "A Nemicolopterus pterodactyl discovered in 2008 had a wingspan of only <BLANK>.",
     answer: "ten inches",
     category: "Dinosaurs",
     lies: ["one foot wide", "two feet wide", "six inches", "three inches wide", "five feet wide"]
   },
   {
-    fact: "Dinosaurs like Velociraptors were actually roughly the size of <BLANK>>.",
+    fact: "Dinosaurs like Velociraptors were actually roughly the size of <BLANK>.",
     answer: "turkeys",
     category: "Dinosaurs",
     lies: ["chickens", "eagles", "ostriches", "geese", "hawks"]
@@ -1488,7 +1488,7 @@ export const QUESTIONS = [
     lies: ["South America", "Africa", "Southeast Asia", "Central America", "Pacific Islands"]
   },
   {
-    fact: "Julia Roberts wore a DIY shirt that said '<BLANK>>' in obvious reference to her boyfriend's wife.",
+    fact: "Julia Roberts wore a DIY shirt that said '<BLANK>' in obvious reference to her boyfriend's wife.",
     answer: "A Low Vera",
     category: "Traveling Mistakes",
     lies: ["A Hate Vera", "Bye Vera", "Vera Sucks", "Leave Vera", "Forget Vera"]

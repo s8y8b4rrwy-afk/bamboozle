@@ -1074,7 +1074,7 @@ export const useGameService = (role: 'HOST' | 'PLAYER' | 'AUDIENCE', playerName?
 
     const isTruth = currentAnswer.authorIds.includes('SYSTEM');
     const voters = currentAnswer.votes.map(vid => state.players[vid]).filter(Boolean);
-    const voterNames = voters.map(v => v.name).join(', '); // Simplified join
+    const voterNames = voters.map(v => v.name).join(' and '); // Natural join
     // const authors = currentAnswer.authorIds.map(id => state.players[id]).filter(Boolean);
 
     // Helper to advance after delay

@@ -14,8 +14,6 @@ interface OnlinePlayerViewProps {
     isSpeaking: boolean;
 }
 
-const MOBILE_SCALE = 0.66; // <--- CHANGE THIS to scale mobile view (0.5 = 50% size, 1.0 = Normal)
-
 export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actions, playerId, isSpeaking }) => {
     const me = state.players[playerId];
     const amAudience = state.audience[playerId];
@@ -26,22 +24,6 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
     const audienceCount = Object.keys(state.audience).length;
     const showTimer = (state.phase === GamePhase.WRITING || state.phase === GamePhase.VOTING || state.phase === GamePhase.CATEGORY_SELECT) && state.timeLeft > 0;
     const isFinalRound = state.currentRound === state.totalRounds;
-
-    // Mobile Scale Logic
-    const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
-
-    useEffect(() => {
-        const handleResize = () => setIsMobile(window.innerWidth < 768);
-        window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
-    }, []);
-
-    const mobileStyle = isMobile ? {
-        transform: `scale(${MOBILE_SCALE})`,
-        width: `${100 / MOBILE_SCALE}%`,
-        height: `${100 / MOBILE_SCALE}%`,
-        transformOrigin: 'top left'
-    } : {};
 
     // Local interaction state
     const [lieText, setLieText] = useState('');
@@ -97,8 +79,9 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
     // --- SUB-COMPONENTS ---
 
     const TopBar = () => (
-        <div className="flex items-center justify-start w-full px-4 py-2 bg-transparent z-50 shrink-0 absolute top-0 left-0 right-0">
-            <span className="text-yellow-400 font-black uppercase text-lg drop-shadow-md tracking-wider">ROOM: {state.roomCode}</span>
+        <div className="flex items-center justify-between w-full px-6 pt-safe-top pb-2 z-50 shrink-0">
+            <span className="text-white/30 font-bold text-[10px] uppercase tracking-widest">Bamboozle</span>
+            <span className="text-white/30 font-bold uppercase text-sm tracking-wider">ROOM: {state.roomCode}</span>
         </div>
     );
 
@@ -108,9 +91,7 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
         if (state.phase === GamePhase.LOBBY) return null;
 
         return (
-            <div className="w-full p-2 overflow-x-auto flex items-center justify-center gap-2 z-40 shrink-0 no-scrollbar relative min-h-[60px]">
-                {/* Clean background as requested */}
-
+            <div className="w-full py-3 px-2 overflow-x-auto flex items-center justify-center gap-3 z-40 shrink-0 no-scrollbar relative min-h-[70px]">
                 {players.map(p => {
                     const isDone = (state.phase === GamePhase.WRITING && !!state.submittedLies[p.id]) ||
                         (state.phase === GamePhase.VOTING && !!p.currentVote);
@@ -118,7 +99,7 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
                         <div key={p.id} className="relative flex-shrink-0 flex flex-col items-center min-w-[50px] z-10">
                             {isDone && <div className="absolute top-0 right-0 bg-green-500 w-3 h-3 rounded-full border border-white z-10" />}
                             <Avatar seed={p.avatarSeed} size={40} expression={p.expression} className="filter drop-shadow-lg" />
-                            <span className="text-[10px] text-white/90 truncate max-w-[50px] uppercase font-bold mt-1 shadow-black/50 drop-shadow-md">{p.name}</span>
+                            <span className="text-[10px] text-white/90 truncate max-w-[60px] uppercase font-bold mt-1 shadow-black/50 drop-shadow-md">{p.name}</span>
                         </div>
                     );
                 })}
@@ -129,11 +110,12 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
     // --- JOIN FLOW ---
     if (!isJoined) {
         return (
-            <div className="h-full bg-purple-900 flex flex-col overflow-y-auto">
-                <div className="flex-1 flex flex-col items-center justify-center p-6 relative">
+            <div className="h-full bg-purple-900 flex flex-col overflow-y-auto pb-safe-bottom">
+                <TopBar />
+                <div className="flex-1 flex flex-col items-center justify-center p-6 relative min-h-[500px]">
                     <EmotePopupLayer emotes={state.emotes} />
                     <div className="w-full max-w-sm space-y-6 relative z-10">
-                        <h1 className="text-5xl font-display text-center text-yellow-400 mb-8 drop-shadow-lg">Bamboozle</h1>
+                        <h1 className="text-4xl md:text-5xl font-display text-center text-yellow-400 mb-8 drop-shadow-lg">Bamboozle</h1>
 
                         {joinStep === 'CODE' && (
                             <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="space-y-6">
@@ -141,7 +123,7 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
                                 <input
                                     type="text"
                                     placeholder="ABCD"
-                                    className="w-full p-6 text-center text-5xl font-black rounded-2xl uppercase tracking-[0.5em] bg-white text-black placeholder-gray-300 border-4 border-transparent focus:border-yellow-400 outline-none shadow-xl"
+                                    className="w-full p-6 text-center text-4xl md:text-5xl font-black rounded-2xl uppercase tracking-[0.2em] bg-white text-black placeholder-gray-300 border-4 border-transparent focus:border-yellow-400 outline-none shadow-xl"
                                     maxLength={4}
                                     value={inputCode}
                                     onChange={(e) => {
@@ -166,7 +148,7 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
                                             }
                                         });
                                     }}
-                                    className="w-full bg-yellow-400 hover:bg-yellow-300 text-black py-4 rounded-xl font-black text-2xl shadow-lg uppercase"
+                                    className="w-full bg-yellow-400 hover:bg-yellow-300 text-black py-4 rounded-xl font-black text-2xl shadow-lg uppercase active:scale-95 transition-transform"
                                 >
                                     ENTER
                                 </button>
@@ -224,7 +206,7 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
                                     )}
                                 </div>
 
-                                <button onClick={() => setJoinStep('CODE')} className="w-full text-center text-white/40 text-xs hover:text-white uppercase mt-6 font-bold">
+                                <button onClick={() => setJoinStep('CODE')} className="w-full text-center text-white/40 text-xs hover:text-white uppercase mt-6 font-bold py-4">
                                     Cancel
                                 </button>
                             </motion.div>
@@ -238,51 +220,52 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
     // --- MAIN GAME RENDER ---
 
     return (
-        <div
-            className="bg-gradient-to-b from-indigo-900 to-purple-900 flex flex-col overflow-hidden relative"
-            style={mobileStyle}
-        >
+        <div className="bg-gradient-to-b from-indigo-900 to-purple-900 flex flex-col h-full w-full overflow-hidden relative">
             <EmotePopupLayer emotes={state.emotes} />
             <TopBar />
 
-            {/* GLOBAL NARRATOR - Better positioning & Larger Size */}
-            <div className={`absolute top-12 left-0 right-0 flex justify-center z-10 pointer-events-none transform transition-all duration-500
-                ${state.phase === GamePhase.WRITING ? 'scale-100 translate-y-2' : 'scale-110 translate-y-0'}
-            `}>
+            {/* GLOBAL NARRATOR - Static Flow */}
+            <div
+                className={`w-full flex justify-center mt-2 z-10 shrink-0 transform transition-all duration-500 relative
+                    ${state.phase === GamePhase.WRITING ? 'scale-90' : 'scale-100'}
+                `}
+            >
                 <Narrator isSpeaking={isSpeaking} />
             </div>
 
-            {/* MAIN CONTENT */}
+            {/* MAIN CONTENT AREA - FlexGrow to fill space */}
             <div className={`
-                flex-1 relative flex flex-col pt-16
+                flex-1 relative flex flex-col w-full max-w-4xl mx-auto
                 ${(state.phase === GamePhase.LOBBY || state.phase === GamePhase.REVEAL || state.phase === GamePhase.VOTING) ? 'overflow-hidden' : 'overflow-y-auto no-scrollbar'}
             `}>
 
                 {/* 1. LOBBY */}
-                {/* 1. LOBBY */}
                 {state.phase === GamePhase.LOBBY && (
-                    <div className="flex-1 p-4 flex flex-col items-center mt-32 md:mt-40">
-                        <h2 className="text-white text-center font-bold uppercase tracking-widest text-sm mb-4 opacity-70">Waiting for players...</h2>
+                    <div className="flex-1 flex flex-col items-center justify-center p-4">
+                        {/* Centered Content */}
+                        <div className="flex-1 flex flex-col items-center justify-center w-full max-w-md gap-4 pb-32"> {/* Added padding bottom for fixed footer */}
+                            <h2 className="text-white text-center font-bold uppercase tracking-widest text-sm mb-4 opacity-70">Waiting for players...</h2>
 
-                        <div className="grid grid-cols-2 gap-4 w-full max-w-md pb-64">
-                            {Object.values(state.players).map((p) => (
-                                <div key={p.id} className={`flex flex-col items-center bg-black/20 p-3 rounded-2xl border-2 ${p.isReady ? 'border-green-400 bg-green-900/20' : 'border-white/10'}`}>
-                                    {p.id === state.vipId && <Crown size={16} className="text-yellow-400 mb-1" fill="currentColor" />}
-                                    <Avatar seed={p.avatarSeed} size={60} expression={p.expression} />
-                                    <div className="font-bold text-white uppercase mt-2 text-sm">{p.name}</div>
-                                    <div className="text-[10px] font-bold uppercase text-white/50">{p.isReady ? 'READY' : '...'}</div>
-                                </div>
-                            ))}
-                            {Array.from({ length: Math.max(0, 6 - Object.values(state.players).length) }).map((_, i) => (
-                                <div key={`empty-${i}`} className="flex items-center justify-center border-2 border-dashed border-white/5 rounded-2xl min-h-[120px]">
-                                    <span className="text-white/10 font-bold uppercase text-sm">Empty</span>
-                                </div>
-                            ))}
+                            <div className="grid grid-cols-2 gap-3 w-full">
+                                {Object.values(state.players).map((p) => (
+                                    <div key={p.id} className={`flex flex-col items-center bg-black/20 p-2 py-4 rounded-2xl border-2 ${p.isReady ? 'border-green-400 bg-green-900/20' : 'border-white/10'}`}>
+                                        {p.id === state.vipId && <Crown size={14} className="text-yellow-400 mb-1" fill="currentColor" />}
+                                        <Avatar seed={p.avatarSeed} size={50} expression={p.expression} />
+                                        <div className="font-bold text-white uppercase mt-2 text-xs truncate max-w-full px-2">{p.name}</div>
+                                        <div className="text-[10px] font-bold uppercase text-white/50">{p.isReady ? 'READY' : '...'}</div>
+                                    </div>
+                                ))}
+                                {Array.from({ length: Math.max(0, 6 - Object.values(state.players).length) }).map((_, i) => (
+                                    <div key={`empty-${i}`} className="flex items-center justify-center border-2 border-dashed border-white/5 rounded-2xl min-h-[100px]">
+                                        <span className="text-white/10 font-bold uppercase text-xs">Empty</span>
+                                    </div>
+                                ))}
+                            </div>
                         </div>
 
-                        {/* Lobby Controls Fixed Bottom - Moved up for URL Bar */}
+                        {/* Lobby Controls Fixed Bottom */}
                         {me && (
-                            <div className="fixed bottom-12 left-0 right-0 p-4 z-50 flex flex-col gap-3">
+                            <div className="absolute bottom-4 left-0 right-0 p-4 z-50 flex flex-col gap-3 pb-safe-bottom">
                                 <button
                                     onClick={actions.sendToggleReady}
                                     className={`w-full py-4 rounded-xl font-black text-xl shadow-lg uppercase transition-all transform active:scale-95 ${me?.isReady ? 'bg-gray-700 text-gray-400' : 'bg-green-500 text-white'}`}
@@ -300,18 +283,18 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
                                 )}
                             </div>
                         )}
-                        {amAudience && <div className="fixed bottom-0 w-full p-4 text-center text-white/50 font-bold uppercase">Audience Mode</div>}
+                        {amAudience && <div className="absolute bottom-4 w-full text-center text-white/50 font-bold uppercase pb-safe-bottom">Audience Mode</div>}
                     </div>
                 )}
 
                 {/* 2. CATEGORY SELECT */}
                 {state.phase === GamePhase.CATEGORY_SELECT && (
-                    <div className="flex-1 flex flex-col items-center justify-center transform scale-90 origin-center relative">
-                        {/* Timer moved to corner to avoid Presenter */}
-                        <div className="absolute top-4 right-4 bg-black/50 px-4 py-2 rounded-full border border-white/20 backdrop-blur-md z-50">
+                    <div className="flex-1 flex flex-col items-center justify-center relative p-4">
+                        {/* Timer moved safely away from content */}
+                        <div className="absolute top-2 right-2 bg-black/50 px-3 py-1 rounded-full border border-white/20 backdrop-blur-md z-50">
                             <div className="flex items-center gap-2">
-                                <Clock size={20} className="text-yellow-400 animate-pulse" />
-                                <span className="font-mono font-bold text-2xl text-white">{state.timeLeft}</span>
+                                <Clock size={16} className="text-yellow-400 animate-pulse" />
+                                <span className="font-mono font-bold text-lg text-white">{state.timeLeft}</span>
                             </div>
                         </div>
                         <CategoryRoulette
@@ -323,24 +306,18 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
 
                 {/* 3. WRITING (And INTRO) */}
                 {(state.phase === GamePhase.WRITING || state.phase === GamePhase.INTRO) && (
-                    <div className="flex-1 flex flex-col items-center p-4">
-                        <div className="w-full max-w-sm flex flex-col items-center gap-4 mt-20">
+                    <div className="flex-1 flex flex-col items-center p-4"> {/* Removed pt-12 md:pt-20 */}
+                        <div className="w-full max-w-md flex flex-col items-center gap-4">
 
-
-                            {/* Stats Header (Round, Audience, Multiplier) - GAME STYLE BADGES */}
-                            <div className="w-full flex items-center justify-between px-2 pb-2 relative z-20">
+                            {/* Stats Header */}
+                            <div className="w-full flex items-center justify-between px-1 pb-1 relative z-20">
                                 <div className="flex items-center gap-2">
-                                    <div className="bg-purple-600/90 text-white text-[10px] font-black uppercase px-3 py-1 rounded-lg border-2 border-purple-400 shadow-[0_2px_0_rgba(0,0,0,0.5)]">
+                                    <div className="bg-purple-600/90 text-white text-[10px] font-black uppercase px-2 py-1 rounded-lg border-2 border-purple-400 shadow-sm">
                                         {isFinalRound ? 'FINAL ROUND' : `ROUND ${state.currentRound}/${state.totalRounds}`}
                                     </div>
                                     {(state.currentRound === state.totalRounds) && (
-                                        <div className="bg-yellow-400 text-black text-[10px] font-black uppercase px-3 py-1 rounded-lg border-2 border-white shadow-[0_2px_0_rgba(0,0,0,0.5)] animate-pulse">
-                                            TRIPLE POINTS
-                                        </div>
-                                    )}
-                                    {(state.currentRound === state.totalRounds - 1) && (
-                                        <div className="bg-blue-400 text-black text-[10px] font-black uppercase px-3 py-1 rounded-lg border-2 border-white shadow-[0_2px_0_rgba(0,0,0,0.5)] animate-pulse">
-                                            DOUBLE POINTS
+                                        <div className="bg-yellow-400 text-black text-[10px] font-black uppercase px-2 py-1 rounded-lg border-2 border-white shadow-sm animate-pulse">
+                                            TRIPLE PTS
                                         </div>
                                     )}
                                 </div>
@@ -351,8 +328,8 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
                             </div>
 
                             {/* Fact Card */}
-                            <div className="w-full bg-white text-purple-900 p-6 rounded-3xl shadow-xl border-b-8 border-purple-300 relative z-10">
-                                <p className="text-2xl md:text-3xl font-black leading-tight uppercase text-center break-words">
+                            <div className="w-full bg-white text-purple-900 p-6 rounded-3xl shadow-xl border-b-8 border-purple-300 relative z-10 min-h-[160px] flex items-center justify-center">
+                                <p className="text-xl md:text-2xl font-black leading-tight uppercase text-center break-words">
                                     {state.currentQuestion?.fact.replace('<BLANK>', '________')}
                                 </p>
                             </div>
@@ -365,53 +342,53 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
                                 )}
                             </AnimatePresence>
 
-                            {/* Input Area (Only in WRITING phase) */}
+                            {/* Input Area */}
                             {state.phase === GamePhase.WRITING && (
-                                <>
+                                <div className="w-full mt-2 flex flex-col gap-3">
                                     {me && !state.submittedLies[playerId] ? (
-                                        <div className="w-full space-y-3 mt-2">
+                                        <>
                                             <input
                                                 type="text"
-                                                className="w-full bg-black/20 text-white p-4 rounded-xl text-lg font-bold uppercase outline-none focus:ring-2 focus:ring-yellow-400 placeholder-white/30 text-center"
+                                                className="w-full bg-black/20 text-white p-4 rounded-xl text-lg font-bold uppercase outline-none focus:ring-2 focus:ring-yellow-400 placeholder-white/30 text-center shadow-inner"
                                                 placeholder="LIE HERE..."
                                                 value={lieText}
                                                 onChange={e => setLieText(e.target.value.toUpperCase())}
                                                 maxLength={50}
                                             />
 
-                                            {/* Timer between Input and Button */}
-                                            <div className="w-full flex justify-center py-2">
-                                                <div className="flex items-center gap-2 bg-black/20 px-4 py-2 rounded-full border border-white/10">
-                                                    <Clock size={20} className="text-yellow-400 animate-pulse" />
-                                                    <span className="font-mono font-bold text-2xl text-white">{state.timeLeft}s</span>
+                                            <div className="flex justify-center py-2">
+                                                <div className="flex items-center gap-2 bg-black/20 px-3 py-1 rounded-full border border-white/10">
+                                                    <Clock size={16} className="text-yellow-400 animate-pulse" />
+                                                    <span className="font-mono font-bold text-xl text-white">{state.timeLeft}s</span>
                                                 </div>
                                             </div>
 
                                             <button
                                                 onClick={submitLie}
                                                 disabled={!lieText.trim()}
-                                                className="w-full bg-yellow-400 hover:bg-yellow-300 text-black py-4 rounded-xl font-black text-xl uppercase shadow-lg active:scale-95 disabled:opacity-50"
+                                                className="w-full bg-yellow-400 hover:bg-yellow-300 text-black py-4 rounded-xl font-black text-xl uppercase shadow-lg active:scale-95 disabled:opacity-50 transition-transform"
                                             >
                                                 SUBMIT
                                             </button>
-                                        </div>
+                                        </>
                                     ) : me && (
-                                        <div className="mt-8 bg-green-500/20 text-green-400 px-6 py-3 rounded-xl font-black uppercase flex items-center gap-2 border border-green-500/50">
-                                            <CheckCircle /> LIE SENT
+                                        <div className="mt-4 bg-green-500/20 text-green-400 px-6 py-8 rounded-xl font-black uppercase flex flex-col items-center gap-2 border border-green-500/50">
+                                            <CheckCircle size={40} />
+                                            LIE SENT
                                         </div>
                                     )}
-                                    {amAudience && <div className="mt-8 text-white/50 font-bold uppercase">Waiting for players...</div>}
-                                </>
+                                    {amAudience && <div className="mt-8 text-white/50 font-bold uppercase text-center">Waiting for players...</div>}
+                                </div>
                             )}
                         </div>
                     </div>
                 )}
 
+                {/* 4. VOTING */}
                 {state.phase === GamePhase.VOTING && (
-                    <div className="flex-1 flex flex-col items-center p-4">
-                        {/* Mini Fact Header */}
-                        <div className="w-full max-w-md mb-2 text-center mt-20">
-                            {/* Timer in Voting Phase - Contextual */}
+                    <div className="flex-1 flex flex-col items-center p-4 pt-12 md:pt-20">
+                        <div className="w-full max-w-md mb-4 text-center">
+                            {/* Timer */}
                             <div className="flex justify-center mb-4 relative z-30">
                                 <div className="flex items-center gap-2 bg-black/60 backdrop-blur-md px-4 py-1 rounded-full border border-white/20 shadow-lg">
                                     <Clock size={16} className="text-yellow-400 animate-pulse" />
@@ -419,16 +396,15 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
                                 </div>
                             </div>
 
-                            <p className="text-white/70 text-sm font-bold uppercase mb-1">Find the Truth</p>
-                            <div className="bg-purple-800/50 p-3 rounded-xl border border-white/10 backdrop-blur-sm">
+                            <div className="bg-purple-800/50 p-4 rounded-xl border border-white/10 backdrop-blur-sm shadow-md">
                                 <p className="text-lg font-bold text-white leading-tight uppercase">
                                     {state.currentQuestion?.fact.replace('<BLANK>', '________')}
                                 </p>
                             </div>
                         </div>
 
-                        {/* Answers Grid */}
-                        <div className="grid grid-cols-1 gap-3 w-full max-w-md pb-24">
+                        {/* Answers Grid - Scrollable if needed */}
+                        <div className="grid grid-cols-1 gap-3 w-full max-w-md pb-8">
                             {state.roundAnswers.filter(a => !a.authorIds.includes(playerId)).map((ans, idx) => {
                                 const iVoted = amAudience ? ans.audienceVotes.includes(playerId) : me?.currentVote === ans.id;
                                 return (
@@ -446,7 +422,7 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
                                         }}
                                         disabled={iVoted && !amAudience}
                                         className={`
-                                              w-full p-4 rounded-xl border-l-8 text-left font-bold text-lg shadow-md transition-all active:scale-95 uppercase relative overflow-hidden
+                                              w-full p-4 rounded-xl border-l-8 text-left font-bold text-lg shadow-md transition-all active:scale-95 uppercase relative overflow-hidden min-h-[60px] flex items-center
                                               ${iVoted
                                                 ? 'bg-indigo-600 border-indigo-400 text-white'
                                                 : 'bg-white border-transparent text-indigo-900'
@@ -454,19 +430,19 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
                                               ${(me?.currentVote && !iVoted) ? 'opacity-50 grayscale' : ''}
                                           `}
                                     >
-                                        <span className="relative z-10 flex flex-col">
-                                            <span>{ans.text}</span>
+                                        <div className="relative z-10 flex flex-col w-full">
+                                            <span className="leading-tight">{ans.text}</span>
                                             {/* Audience Indicator */}
                                             {ans.audienceVotes.length > 0 && (
-                                                <div className="flex items-center gap-1 mt-1 opacity-70 scale-90 origin-left">
-                                                    <Users size={14} className={iVoted ? 'text-black' : 'text-purple-500'} />
-                                                    <span className={`text-xs font-black ${iVoted ? 'text-black' : 'text-purple-500'}`}>
-                                                        {ans.audienceVotes.length} AUDIENCE
+                                                <div className="flex items-center gap-1 mt-1 opacity-70">
+                                                    <Users size={12} className={iVoted ? 'text-black' : 'text-purple-500'} />
+                                                    <span className={`text-[10px] font-black ${iVoted ? 'text-black' : 'text-purple-500'}`}>
+                                                        {ans.audienceVotes.length}
                                                     </span>
                                                 </div>
                                             )}
-                                        </span>
-                                        {iVoted && <motion.div layoutId="voted-check" className="absolute right-4 top-1/2 -translate-y-1/2"><CheckCircle size={24} /></motion.div>}
+                                        </div>
+                                        {iVoted && <motion.div layoutId="voted-check" className="absolute right-4"><CheckCircle size={24} /></motion.div>}
                                     </motion.button>
                                 )
                             })}
@@ -476,22 +452,22 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
 
                 {/* 5. REVEAL & LEADERBOARD (Shared) */}
                 {state.phase === GamePhase.REVEAL && (
-                    <div className="mt-20 transform scale-90 origin-top">
+                    <div className="flex-1 flex items-center justify-center p-4">
                         <RevealSequence state={state} actions={actions} setGalleryOverrides={() => { }} isHost={isVip} />
                     </div>
                 )}
 
                 {state.phase === GamePhase.LEADERBOARD && (
-                    <div className="mt-20 transform scale-90 origin-top">
+                    <div className="flex-1 flex items-center justify-center p-4">
                         <LeaderboardSequence state={state} actions={actions} onHome={() => { }} isHost={isVip} />
                     </div>
                 )}
 
                 {state.phase === GamePhase.GAME_OVER && (
-                    <div className="flex-1 flex flex-col items-center justify-center p-4 mt-20 transform scale-90 origin-top">
+                    <div className="flex-1 flex flex-col items-center justify-center p-4 overflow-y-auto">
                         <LeaderboardSequence state={state} actions={actions} onHome={() => { }} isHost={isVip} />
                         {isVip && (
-                            <div className="flex flex-col gap-4 mt-8 w-full max-w-sm">
+                            <div className="flex flex-col gap-4 mt-8 w-full max-w-sm pb-12">
                                 <button onClick={() => actions.sendRestart()} className="bg-green-500 hover:bg-green-600 text-white px-8 py-4 rounded-xl font-black text-xl shadow-lg uppercase w-full">
                                     PLAY AGAIN
                                 </button>
@@ -504,15 +480,15 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
                 )}
             </div>
 
-            {/* PERSISTENT BOTTOM BAR (Avatar Strip + Emotes) - Transparent */}
+            {/* PERSISTENT BOTTOM BAR (Avatar Strip + Emotes) - With Safe Area support */}
             {state.phase !== GamePhase.LOBBY && state.phase !== GamePhase.LEADERBOARD && state.phase !== GamePhase.GAME_OVER && (
-                <div className={`border-t border-white/5 relative ${isMobile ? 'pb-10' : ''}`}>
+                <div className="border-t border-white/5 bg-indigo-900/50 backdrop-blur-sm pb-safe-bottom z-50">
                     <AvatarStrip />
-                    <div className="grid grid-cols-4 gap-2 px-4 pb-4 pt-2 w-full max-w-sm mx-auto z-20 relative">
-                        <button onClick={() => handleEmote('LAUGH')} className="bg-white/10 p-3 rounded-xl hover:bg-white/20 text-2xl active:scale-95 transition border border-white/5">😂</button>
-                        <button onClick={() => handleEmote('SHOCK')} className="bg-white/10 p-3 rounded-xl hover:bg-white/20 text-2xl active:scale-95 transition border border-white/5">😮</button>
-                        <button onClick={() => handleEmote('LOVE')} className="bg-white/10 p-3 rounded-xl hover:bg-white/20 text-2xl active:scale-95 transition border border-white/5">❤️</button>
-                        <button onClick={() => handleEmote('TOMATO')} className="bg-white/10 p-3 rounded-xl hover:bg-white/20 text-2xl active:scale-95 transition border border-white/5">🍅</button>
+                    <div className="grid grid-cols-4 gap-2 px-4 pb-2 w-full max-w-sm mx-auto z-20 relative">
+                        <button onClick={() => handleEmote('LAUGH')} className="bg-white/10 p-3 rounded-xl hover:bg-white/20 text-2xl active:scale-95 transition border border-white/5 h-14 flex items-center justify-center">😂</button>
+                        <button onClick={() => handleEmote('SHOCK')} className="bg-white/10 p-3 rounded-xl hover:bg-white/20 text-2xl active:scale-95 transition border border-white/5 h-14 flex items-center justify-center">😮</button>
+                        <button onClick={() => handleEmote('LOVE')} className="bg-white/10 p-3 rounded-xl hover:bg-white/20 text-2xl active:scale-95 transition border border-white/5 h-14 flex items-center justify-center">❤️</button>
+                        <button onClick={() => handleEmote('TOMATO')} className="bg-white/10 p-3 rounded-xl hover:bg-white/20 text-2xl active:scale-95 transition border border-white/5 h-14 flex items-center justify-center">🍅</button>
                     </div>
                 </div>
             )}

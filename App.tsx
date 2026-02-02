@@ -22,43 +22,53 @@ const App: React.FC = () => {
 };
 
 const HomeSelector = ({ onSelect }: { onSelect: (v: 'HOST' | 'PLAYER' | 'TEST') => void }) => (
-  <div className="min-h-screen bg-gray-900 text-white flex flex-col items-center justify-center p-4 overflow-y-auto">
-    <h1 className="text-4xl md:text-6xl font-display text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-600 mb-8 md:mb-12 animate-bounce text-center">
-      Bamboozle
-    </h1>
+  <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-black text-white flex flex-col items-center justify-center p-6 relative overflow-hidden">
+    <div className="absolute inset-0 z-0 opacity-20 pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle, #ffffff 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
 
-    <div className="flex flex-col md:grid md:grid-cols-3 gap-4 md:gap-8 w-full max-w-sm md:max-w-6xl">
-      <button
-        onClick={() => onSelect('HOST')}
-        className="group relative bg-purple-800 p-6 md:p-8 rounded-3xl border-4 border-purple-600 hover:border-yellow-400 transition-all transform hover:-translate-y-2 hover:shadow-2xl flex flex-col items-center"
-      >
-        <Monitor size={48} className="mb-4 text-purple-300 group-hover:text-yellow-400 md:w-16 md:h-16" />
-        <h2 className="text-2xl md:text-3xl font-bold mb-1">HOST GAME</h2>
-        <p className="text-sm md:text-base opacity-70">Big Screen</p>
-      </button>
+    <div className="relative z-10 w-full max-w-6xl flex flex-col items-center">
+      <h1 className="text-5xl md:text-8xl font-black text-transparent bg-clip-text bg-gradient-to-b from-yellow-300 to-yellow-600 mb-12 drop-shadow-2xl tracking-tighter uppercase transform -rotate-2">
+        Bamboozle
+      </h1>
 
-      <button
-        onClick={() => onSelect('PLAYER')}
-        className="group relative bg-blue-800 p-6 md:p-8 rounded-3xl border-4 border-blue-600 hover:border-green-400 transition-all transform hover:-translate-y-2 hover:shadow-2xl flex flex-col items-center"
-      >
-        <Smartphone size={48} className="mb-4 text-blue-300 group-hover:text-green-400 md:w-16 md:h-16" />
-        <h2 className="text-2xl md:text-3xl font-bold mb-1">JOIN GAME</h2>
-        <p className="text-sm md:text-base opacity-70">Your Phone</p>
-      </button>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-lg md:max-w-none">
+        <button
+          onClick={() => onSelect('HOST')}
+          className="group relative bg-white/10 backdrop-blur-md p-8 rounded-[2.5rem] border border-white/20 hover:bg-purple-600/40 hover:border-purple-400 transition-all duration-300 flex flex-col items-center shadow-xl hover:shadow-purple-500/30 hover:-translate-y-2 active:scale-95"
+        >
+          <div className="bg-purple-500/20 p-6 rounded-full mb-6 group-hover:bg-purple-500 group-hover:text-white transition-colors">
+            <Monitor size={40} className="text-purple-300 group-hover:text-white" />
+          </div>
+          <h2 className="text-3xl font-black mb-2 uppercase tracking-wide">Host Game</h2>
+          <p className="text-sm font-bold opacity-60 uppercase tracking-widest">Big Screen / TV</p>
+        </button>
 
-      <button
-        onClick={() => onSelect('TEST')}
-        className="group relative bg-gray-800 p-6 md:p-8 rounded-3xl border-4 border-gray-600 hover:border-orange-400 transition-all transform hover:-translate-y-2 hover:shadow-2xl flex flex-col items-center"
-      >
-        <SplitSquareHorizontal size={48} className="mb-4 text-gray-300 group-hover:text-orange-400 md:w-16 md:h-16" />
-        <h2 className="text-2xl md:text-3xl font-bold mb-1">TEST MODE</h2>
-        <p className="text-sm md:text-base opacity-70">Debug Split</p>
-      </button>
+        <button
+          onClick={() => onSelect('PLAYER')}
+          className="group relative bg-white/10 backdrop-blur-md p-8 rounded-[2.5rem] border border-white/20 hover:bg-blue-600/40 hover:border-blue-400 transition-all duration-300 flex flex-col items-center shadow-xl hover:shadow-blue-500/30 hover:-translate-y-2 active:scale-95"
+        >
+          <div className="bg-blue-500/20 p-6 rounded-full mb-6 group-hover:bg-blue-500 group-hover:text-white transition-colors">
+            <Smartphone size={40} className="text-blue-300 group-hover:text-white" />
+          </div>
+          <h2 className="text-3xl font-black mb-2 uppercase tracking-wide">Join Game</h2>
+          <p className="text-sm font-bold opacity-60 uppercase tracking-widest">Your Phone</p>
+        </button>
+
+        <button
+          onClick={() => onSelect('TEST')}
+          className="group relative bg-white/10 backdrop-blur-md p-8 rounded-[2.5rem] border border-white/20 hover:bg-orange-600/40 hover:border-orange-400 transition-all duration-300 flex flex-col items-center shadow-xl hover:shadow-orange-500/30 hover:-translate-y-2 active:scale-95"
+        >
+          <div className="bg-orange-500/20 p-6 rounded-full mb-6 group-hover:bg-orange-500 group-hover:text-white transition-colors">
+            <SplitSquareHorizontal size={40} className="text-orange-300 group-hover:text-white" />
+          </div>
+          <h2 className="text-3xl font-black mb-2 uppercase tracking-wide">Test Mode</h2>
+          <p className="text-sm font-bold opacity-60 uppercase tracking-widest">Debug Split</p>
+        </button>
+      </div>
+
+      <p className="mt-12 text-white/40 text-sm font-bold uppercase tracking-[0.2em]">
+        Multiplayer Party Game
+      </p>
     </div>
-
-    <p className="mt-8 text-gray-500 text-xs md:text-base max-w-xs md:max-w-lg text-center">
-      Multiplayer Party Game. Open on multiple devices to play!
-    </p>
   </div>
 );
 

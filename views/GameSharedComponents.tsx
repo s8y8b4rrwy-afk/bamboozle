@@ -127,15 +127,16 @@ export const CategoryRoulette = ({ state, onSelect }: { state: GameState, onSele
     const selected = state.categorySelection?.selected;
 
     return (
-        <div className="flex flex-col items-center justify-center h-full w-full z-30 relative px-4 md:px-12">
-            <div className="mb-4 md:mb-12 text-center">
-                <h2 className="text-2xl md:text-4xl text-purple-200 uppercase tracking-widest font-black drop-shadow-md">Category Selection</h2>
-                <p className="text-lg md:text-2xl text-white mt-2 font-bold bg-black/30 px-6 py-2 rounded-full inline-block border border-white/10 uppercase">
-                    <span className="text-yellow-400">{selectorName}</span> {onSelect ? 'pick one!' : 'is choosing...'}
-                </p>
+        <div className="flex flex-col items-center justify-center h-full w-full z-30 relative px-6 md:px-12 py-safe">
+            <div className="mb-8 md:mb-12 text-center max-w-2xl mx-auto">
+                <h2 className="text-xl md:text-3xl text-purple-200 uppercase tracking-widest font-black drop-shadow-sm mb-4">Category Selection</h2>
+                <div className="bg-white/10 backdrop-blur-xl border border-white/20 px-8 py-4 rounded-3xl inline-flex flex-col items-center shadow-2xl">
+                    <span className="text-yellow-400 font-black text-2xl md:text-4xl uppercase mb-1">{selectorName}</span>
+                    <span className="text-white/80 text-sm md:text-lg font-bold uppercase tracking-wider">{onSelect ? 'PICK A CATEGORY' : 'IS CHOOSING...'}</span>
+                </div>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-2 md:gap-6 w-full max-w-6xl">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6 w-full max-w-5xl px-2">
                 {options.map((opt, idx) => {
                     const isSelected = selected === opt;
                     const isDimmed = selected && !isSelected;
@@ -147,22 +148,22 @@ export const CategoryRoulette = ({ state, onSelect }: { state: GameState, onSele
                             layout
                             onClick={() => onSelect && onSelect(opt)}
                             disabled={!onSelect || !!selected}
-                            initial={{ scale: 0.8, opacity: 0 }}
+                            initial={{ scale: 0.9, opacity: 0 }}
                             animate={{
-                                scale: isSelected ? 1.15 : 1,
-                                opacity: isDimmed ? 0.2 : 1,
-                                backgroundColor: isSelected ? '#FBBF24' : (isHighlight ? '#6D28D9' : '#1F2937'),
+                                scale: isSelected ? 1.05 : 1,
+                                opacity: isDimmed ? 0.3 : 1,
+                                backgroundColor: isSelected ? '#FBBF24' : (isHighlight ? '#7C3AED' : 'rgba(30, 41, 59, 0.6)'),
                                 color: isSelected ? '#000' : '#FFF',
                                 borderColor: isSelected ? '#FFF' : 'rgba(255,255,255,0.1)'
                             }}
                             className={`
-                                p-4 md:p-8 rounded-3xl border-4 text-center font-black text-xl md:text-3xl shadow-2xl flex items-center justify-center h-24 md:h-40 relative overflow-hidden uppercase
-                                ${isSelected ? 'z-50 ring-8 ring-yellow-400/50' : ''}
-                                ${onSelect && !selected ? 'hover:scale-105 active:scale-95 cursor-pointer hover:bg-purple-800' : ''}
+                                p-4 md:p-6 rounded-[2rem] border-2 backdrop-blur-md text-center font-black text-lg md:text-2xl shadow-lg flex items-center justify-center h-28 md:h-40 relative overflow-hidden uppercase transition-all
+                                ${isSelected ? 'z-50 ring-4 ring-yellow-400/50 shadow-2xl' : ''}
+                                ${onSelect && !selected ? 'hover:scale-[1.02] active:scale-95 cursor-pointer hover:bg-purple-800/80 hover:border-purple-400' : ''}
                             `}
                         >
                             <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent pointer-events-none" />
-                            <span className="relative z-10">{opt}</span>
+                            <span className="relative z-10 leading-tight drop-shadow-md">{opt}</span>
                         </motion.button>
                     );
                 })}
@@ -177,7 +178,7 @@ export const RevealSequence = ({ state, actions, setGalleryOverrides, isHost }: 
 
     // Safety check - if data is missing or out of sync
     if (!state.revealOrder || state.revealOrder.length === 0) {
-        return <div className="flex h-full items-center justify-center text-4xl">Waiting for Host...</div>;
+        return <div className="flex h-full items-center justify-center text-4xl font-black text-white/20 uppercase">Waiting for Host...</div>;
     }
 
     const currentAnswerId = state.revealOrder[state.revealStep];
@@ -222,7 +223,7 @@ export const RevealSequence = ({ state, actions, setGalleryOverrides, isHost }: 
         setGalleryOverrides(overrides);
     }, [currentAnswer, phase, setGalleryOverrides]);
 
-    if (!currentAnswer) return <div className="flex h-full items-center justify-center text-4xl">Loading...</div>;
+    if (!currentAnswer) return <div className="flex h-full items-center justify-center text-4xl font-black text-white/50">Loading...</div>;
 
 
 
@@ -236,9 +237,9 @@ export const RevealSequence = ({ state, actions, setGalleryOverrides, isHost }: 
     const audienceVoters = currentAnswer.audienceVotes.map(id => state.audience[id]).filter(Boolean);
 
     return (
-        <div className="flex flex-col items-center justify-center h-full w-full max-w-5xl mx-auto relative z-20">
-            <div className="mb-4 md:mb-8 text-center bg-black/40 px-4 md:px-8 py-2 md:py-4 rounded-xl backdrop-blur-md border border-white/10 w-full uppercase">
-                <p className="text-sm md:text-xl font-bold text-gray-200 leading-relaxed">
+        <div className="flex flex-col items-center justify-center h-full w-full max-w-6xl mx-auto relative z-20 px-6 py-safe">
+            <div className="mb-6 md:mb-10 text-center bg-black/40 px-6 md:px-10 py-4 md:py-6 rounded-3xl backdrop-blur-xl border border-white/10 w-full shadow-2xl skew-y-1">
+                <p className="text-xl md:text-3xl font-bold text-gray-100 leading-relaxed uppercase tracking-wide">
                     {factParts[0]}
                     <AnimatePresence mode="wait">
                         {showFilledFact ? (
@@ -246,7 +247,7 @@ export const RevealSequence = ({ state, actions, setGalleryOverrides, isHost }: 
                                 key="filled"
                                 initial={{ opacity: 0, y: 10, scale: 1.5, color: '#FBBF24' }}
                                 animate={{ opacity: 1, y: 0, scale: 1, color: '#FBBF24' }}
-                                className="inline-block px-2 font-black"
+                                className="inline-block px-3 font-black underline decoration-4 decoration-yellow-400 underline-offset-4"
                             >
                                 {currentAnswer.text}
                             </motion.span>
@@ -256,7 +257,7 @@ export const RevealSequence = ({ state, actions, setGalleryOverrides, isHost }: 
                                 initial={{ opacity: 0 }}
                                 animate={{ opacity: 1 }}
                                 exit={{ opacity: 0 }}
-                                className="inline-block px-1"
+                                className="inline-block px-2 text-white/30 tracking-widest"
                             >
                                 ________
                             </motion.span>
@@ -269,18 +270,20 @@ export const RevealSequence = ({ state, actions, setGalleryOverrides, isHost }: 
             <AnimatePresence mode="wait">
                 <motion.div
                     key={currentAnswer.id}
-                    initial={{ scale: 0.5, opacity: 0, rotate: -5 }}
+                    initial={{ scale: 0.8, opacity: 0, rotate: -2 }}
                     animate={{ scale: 1, opacity: 1, rotate: 0 }}
-                    exit={{ scale: 1.5, opacity: 0 }}
-                    transition={{ type: 'spring', bounce: 0.5 }}
-                    className={`relative w-full p-4 md:p-12 rounded-3xl border-4 md:border-8 shadow-2xl flex flex-col items-center text-center transition-colors duration-500 uppercase
-                      ${isTruth && phase === 'AUTHOR' ? 'bg-green-600 border-green-300 text-white' : 'bg-white border-gray-300 text-black'}
+                    exit={{ scale: 1.2, opacity: 0 }}
+                    transition={{ type: 'spring', bounce: 0.4 }}
+                    className={`relative w-full p-6 md:p-14 rounded-[2.5rem] border-[6px] shadow-2xl flex flex-col items-center text-center transition-colors duration-500 uppercase min-h-[400px] justify-center
+                      ${isTruth && phase === 'AUTHOR'
+                            ? 'bg-green-600 border-green-300 text-white shadow-[0_20px_60px_-15px_rgba(22,163,74,0.6)]'
+                            : 'bg-white border-gray-200 text-black shadow-[0_20px_60px_-15px_rgba(255,255,255,0.4)]'}
                   `}
                 >
-                    <h2 className="text-2xl md:text-6xl font-black mb-4 md:mb-8 leading-tight">{currentAnswer.text}</h2>
+                    <h2 className="text-4xl md:text-7xl font-black mb-8 md:mb-12 leading-none drop-shadow-sm">{currentAnswer.text}</h2>
 
                     {/* Voters Container */}
-                    <div className="h-40 w-full flex flex-wrap items-center justify-center gap-4 mb-4 relative">
+                    <div className="w-full flex flex-wrap items-center justify-center gap-6 mb-8 min-h-[100px] relative">
                         {phase !== 'CARD' && (
                             <>
                                 {/* Player Voters */}
@@ -293,10 +296,10 @@ export const RevealSequence = ({ state, actions, setGalleryOverrides, isHost }: 
                                     return (
                                         <motion.div
                                             key={vid}
-                                            initial={{ y: -50, opacity: 0 }}
-                                            animate={{ y: 0, opacity: 1 }}
-                                            transition={{ delay: idx * 0.2, type: 'spring' }}
-                                            className="flex flex-col items-center relative"
+                                            initial={{ y: -40, opacity: 0, scale: 0.5 }}
+                                            animate={{ y: 0, opacity: 1, scale: 1 }}
+                                            transition={{ delay: idx * 0.15, type: 'spring' }}
+                                            className="flex flex-col items-center relative group"
                                         >
                                             {/* Points Animation for Voters */}
                                             <AnimatePresence>
@@ -305,11 +308,16 @@ export const RevealSequence = ({ state, actions, setGalleryOverrides, isHost }: 
                                                 )}
                                             </AnimatePresence>
 
-                                            <Avatar seed={voter.avatarSeed} size={80} expression={voterExpression} className="filter drop-shadow-md" />
-                                            <div className={`${isTruth ? 'bg-green-600' : 'bg-red-600'} text-white font-bold px-2 rounded mt-1 text-sm uppercase`}>
-                                                {isTruth ? 'SMART' : 'VICTIM'}
+                                            <div className="relative transform hover:scale-110 transition-transform duration-200 flex flex-col items-center">
+                                                <Avatar seed={voter.avatarSeed} size={90} expression={voterExpression} className="filter drop-shadow-lg mb-2" />
+                                                <motion.div
+                                                    initial={{ scale: 0 }} animate={{ scale: 1 }}
+                                                    className={`${isTruth ? 'bg-green-600' : 'bg-red-600'} text-white font-black px-3 py-0.5 rounded-full text-xs uppercase shadow-md border-2 border-white whitespace-nowrap z-10`}
+                                                >
+                                                    {isTruth ? 'SMART' : 'FOOLED'}
+                                                </motion.div>
                                             </div>
-                                            <div className="font-bold">{voter.name}</div>
+                                            <div className="font-bold mt-2 text-sm md:text-base opacity-90">{voter.name}</div>
                                         </motion.div>
                                     )
                                 })}
@@ -318,13 +326,13 @@ export const RevealSequence = ({ state, actions, setGalleryOverrides, isHost }: 
                                 {audienceVoters.map((av, idx) => (
                                     <motion.div
                                         key={av.id}
-                                        initial={{ y: -50, opacity: 0 }}
-                                        animate={{ y: 0, opacity: 0.5 }}
-                                        transition={{ delay: (currentAnswer.votes.length * 0.2) + (idx * 0.1), type: 'spring' }}
-                                        className="flex flex-col items-center grayscale"
+                                        initial={{ y: -40, opacity: 0 }}
+                                        animate={{ y: 0, opacity: 0.6 }}
+                                        transition={{ delay: (currentAnswer.votes.length * 0.15) + (idx * 0.1), type: 'spring' }}
+                                        className="flex flex-col items-center grayscale mix-blend-multiply"
                                     >
-                                        <Avatar seed={av.avatarSeed} size={60} expression={isTruth ? 'HAPPY' : 'SHOCKED'} className="filter drop-shadow-sm" />
-                                        <div className="bg-blue-500/50 text-white font-bold px-2 rounded mt-1 text-xs uppercase mb-1">
+                                        <Avatar seed={av.avatarSeed} size={70} expression={isTruth ? 'HAPPY' : 'SHOCKED'} className="filter drop-shadow-sm" />
+                                        <div className="bg-blue-500 text-white font-black px-2 py-0.5 rounded-full mt-1 text-[10px] uppercase mb-1">
                                             Audience
                                         </div>
                                         <div className="text-gray-500 font-bold text-xs">{av.name}</div>
@@ -334,20 +342,20 @@ export const RevealSequence = ({ state, actions, setGalleryOverrides, isHost }: 
                         )}
 
                         {phase !== 'CARD' && currentAnswer.votes.length === 0 && audienceVoters.length === 0 && (
-                            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-gray-400 font-bold italic text-2xl uppercase">
-                                (No one picked this)
+                            <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} className="text-gray-400 font-black italic text-3xl md:text-4xl uppercase tracking-tighter opacity-30 select-none">
+                                (No Takers)
                             </motion.div>
                         )}
                     </div>
 
-                    <div className="h-32 w-full flex items-center justify-center gap-4 relative">
+                    <div className="h-28 w-full flex items-center justify-center gap-6 relative">
                         {phase === 'AUTHOR' && !isTruth && authors.length > 0 && authors.map((author, idx) => (
                             <motion.div
                                 key={author.id}
-                                initial={{ scale: 0 }}
-                                animate={{ scale: 1 }}
-                                transition={{ delay: idx * 0.1 }}
-                                className="flex items-center gap-4 bg-purple-900 text-white p-4 rounded-full pr-8 border-4 border-purple-400 uppercase relative"
+                                initial={{ scale: 0, rotate: 10 }}
+                                animate={{ scale: 1, rotate: 0 }}
+                                transition={{ delay: idx * 0.1, type: "spring" }}
+                                className="flex items-center gap-4 bg-purple-900 text-white pl-4 pr-8 py-3 rounded-full border-4 border-purple-400 uppercase relative shadow-2xl"
                             >
                                 {/* Points Animation for Author */}
                                 <AnimatePresence>
@@ -356,18 +364,20 @@ export const RevealSequence = ({ state, actions, setGalleryOverrides, isHost }: 
                                     )}
                                 </AnimatePresence>
 
-                                <Avatar seed={author.avatarSeed} size={64} expression={'SMUG'} />
-                                <div className="text-left">
-                                    <div className="text-sm font-bold opacity-75">WRITTEN BY</div>
-                                    <div className="text-2xl font-black">{author.name}</div>
+                                <div className="border-4 border-white rounded-full overflow-hidden shadow-lg">
+                                    <Avatar seed={author.avatarSeed} size={70} expression={'SMUG'} />
+                                </div>
+                                <div className="text-left flex flex-col justify-center">
+                                    <span className="text-[10px] font-black tracking-widest text-purple-200 mb-0.5 block">WRITTEN BY</span>
+                                    <span className="text-xl md:text-2xl font-black leading-none block">{author.name}</span>
                                 </div>
                             </motion.div>
                         ))}
                         {phase === 'AUTHOR' && isTruth && (
                             <motion.div
-                                initial={{ scale: 5, opacity: 0 }}
+                                initial={{ scale: 3, opacity: 0 }}
                                 animate={{ scale: 1, opacity: 1 }}
-                                className="text-6xl font-black text-white drop-shadow-lg tracking-widest border-4 border-white px-8 py-2 bg-green-500 rounded-xl transform -rotate-2 uppercase"
+                                className="text-5xl md:text-7xl font-black text-white drop-shadow-xl tracking-widest border-8 border-white px-10 py-4 bg-green-500 rounded-3xl transform -rotate-3 uppercase shadow-2xl"
                             >
                                 THE TRUTH
                             </motion.div>
@@ -402,35 +412,31 @@ export const LeaderboardSequence = ({ state, actions, onHome, isHost }: { state:
     // Timing and Speech are handled by the Host service now
 
     useEffect(() => {
-        // Just sort for display. The "Switch" happens when phase changes to REVEAL/LEADER
-        const initial = Object.values(state.players).sort((a, b) => {
+        // Consolidated logic for sorting players based on phase and leaderboardPhase
+        let players = Object.values(state.players);
+
+        // Default: Sort by old score (before points addition)
+        let initialSort = players.sort((a, b) => {
             const prevA = a.score - a.lastRoundScore;
             const prevB = b.score - b.lastRoundScore;
             return prevB - prevA;
         });
-        setSortedPlayers(initial);
 
         if (state.phase === GamePhase.GAME_OVER) {
-            setSortedPlayers(Object.values(state.players).sort((a, b) => b.score - a.score));
-        }
-    }, [state.phase]);
-
-    // Reactive Updates based on Phase
-    useEffect(() => {
-        if (state.leaderboardPhase === 'REVEAL' || state.leaderboardPhase === 'LEADER') {
             setShowNewScores(true);
-            // Sort by new score
-            setSortedPlayers(Object.values(state.players).sort((a, b) => b.score - a.score));
-        } else if (state.leaderboardPhase === 'INTRO') {
+            // In Game Over, just show final scores sorted
+            setSortedPlayers(players.sort((a, b) => b.score - a.score));
+        } else if (state.leaderboardPhase === 'REVEAL' || state.leaderboardPhase === 'LEADER') {
+            setShowNewScores(true);
+            setSortedPlayers(players.sort((a, b) => b.score - a.score));
+        } else {
+            // Intro phase or default
             setShowNewScores(false);
-            // Sort by old score
-            setSortedPlayers(Object.values(state.players).sort((a, b) => {
-                const prevA = a.score - a.lastRoundScore;
-                const prevB = b.score - b.lastRoundScore;
-                return prevB - prevA;
-            }));
+            setSortedPlayers(initialSort);
         }
-    }, [state.leaderboardPhase, state.players]);
+    }, [state.phase, state.leaderboardPhase, state.players]);
+
+    // Cleanup: Removed the duplicate useEffects that were causing conflicts
 
 
     const getRankEmotion = (p: Player, currentIdx: number): Expression => {
