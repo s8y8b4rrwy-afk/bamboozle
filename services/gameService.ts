@@ -156,6 +156,9 @@ export const useGameService = (role: 'HOST' | 'PLAYER' | 'AUDIENCE', playerName?
   // --- AUDIO / TTS ENGINE ---
   // --- AUDIO / TTS ENGINE ---
   const internalSpeak = (text: string, force: boolean = false, dedupKey?: string) => {
+    // Valid text check
+    if (!text) return;
+
     if ('speechSynthesis' in window) {
       const now = Date.now();
       const key = dedupKey || text;
@@ -166,34 +169,65 @@ export const useGameService = (role: 'HOST' | 'PLAYER' | 'AUDIENCE', playerName?
       }
       speechDedupRef.current[key] = now;
 
-      const randomRate = 0.9 + Math.random() * 0.2;
-      const randomPitch = 0.9 + Math.random() * 0.2;
+      // OPTIMISTIC START: Ensure visuals trigger even if audio is blocked/fails
+      setLocalIsNarrating(true);
 
-      // Ensure we don't cut off previous speech abruptly unless forced
-      // if (force) window.speechSynthesis.cancel();
-      // Actually, for better flow, we probably shouldn't cancel unless forced
+      // Cancel previous speech if forced? (Optional, but good for interruptions)
+      if (force && window.speechSynthesis.speaking) {
+        window.speechSynthesis.cancel();
+      }
+
+      // Fallback Timer: Calculate estimated duration in case onend never fires (blocked audio)
+      // approx 400ms per word + buffer
+      const wordCount = text.split(' ').length;
+      const estimatedDuration = Math.max(2000, wordCount * 500);
+
+      // Clear previous fallback if it exists (using a ref for this would be best, but we'll rely on the dedicated timer below not conflicting too much)
+      // Ideally we'd store `narratorTimeoutRef` but for now we'll set a new one. 
+      // A safety timeout to ensure we don't get stuck talking forever.
+      const safetyTimeout = setTimeout(() => {
+        setLocalIsNarrating(false);
+      }, estimatedDuration + 1000);
 
       const utterance = new SpeechSynthesisUtterance(text);
-      const voices = window.speechSynthesis.getVoices();
+
+      // Voice Selection with Retry Logic
+      let voices = window.speechSynthesis.getVoices();
+      if (voices.length === 0) {
+        // Try to wait for voices? Or just proceed with default
+        // Chrome loads voices async. We might be using default.
+      }
+
       const preferred = voices.find(v => v.name.includes('Google US English')) ||
         voices.find(v => v.lang.includes('en-US')) ||
         voices[0];
 
       if (preferred) utterance.voice = preferred;
-      utterance.pitch = randomPitch;
-      utterance.rate = randomRate;
+      utterance.pitch = 0.9 + Math.random() * 0.2;
+      utterance.rate = 0.9 + Math.random() * 0.2;
 
-      // Update Narrating State
+      // Event Handlers
       utterance.onstart = () => {
         setLocalIsNarrating(true);
       };
+
       utterance.onend = () => {
         setLocalIsNarrating(false);
-      };
-      utterance.onerror = () => {
-        setLocalIsNarrating(false);
+        clearTimeout(safetyTimeout);
       };
 
+      utterance.onerror = (e) => {
+        console.warn('Speech Error:', e);
+        // If not allowed, we KEEP isNarrating true (via optimistic) until safety timeout clears it
+        // so the user still sees the "talking" even if they don't hear it.
+        // Unless it was canceled.
+        if (e.error === 'canceled') {
+          setLocalIsNarrating(false);
+          clearTimeout(safetyTimeout);
+        }
+      };
+
+      console.log('[TTS] Speaking:', text);
       window.speechSynthesis.speak(utterance);
     }
   };
@@ -355,7 +389,20 @@ export const useGameService = (role: 'HOST' | 'PLAYER' | 'AUDIENCE', playerName?
 
     switch (event.type) {
       case 'JOIN_ROOM':
-        // LATE JOIN LOGIC: If game not in LOBBY, divert to Audience
+        // 1. RECONNECT: If ID exists in players, they are re-joining.
+        // We ensure they are NOT in audience and just sync them.
+        if (next.players[event.payload.id]) {
+          next.players[event.payload.id].isConnected = true;
+          // Clean up audience if they somehow got there
+          if (next.audience[event.payload.id]) {
+            const { [event.payload.id]: _, ...rest } = next.audience;
+            next.audience = rest;
+          }
+          changed = true;
+          break;
+        }
+
+        // 2. LATE JOIN: If game not in LOBBY, divert *new* IDs to Audience
         if (next.phase !== GamePhase.LOBBY) {
           if (!next.audience[event.payload.id]) {
             next.audience = {
@@ -657,8 +704,10 @@ export const useGameService = (role: 'HOST' | 'PLAYER' | 'AUDIENCE', playerName?
 
     // Special Handling for Narrator Event (State Independent Broadcast)
     if (event.type === 'PLAY_NARRATION') {
-      // Broadcast via hostEvent channel
-      socketRef.current?.emit('hostEvent', { roomCode: next.roomCode, event });
+      // Broadcast via hostEvent channel ONLY if in Online Mode
+      if (next.isOnlineMode) {
+        socketRef.current?.emit('hostEvent', { roomCode: next.roomCode, event });
+      }
       // Play locally for Host
       internalSpeak(event.payload.text, false, event.payload.key);
     }

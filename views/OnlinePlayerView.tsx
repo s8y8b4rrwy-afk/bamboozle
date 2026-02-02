@@ -189,23 +189,39 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
                                 />
 
                                 <div className="space-y-3 pt-4">
-                                    <button
-                                        disabled={!joinName || Object.keys(state.players).length >= 6}
-                                        onClick={() => { sfx.play('CLICK'); actions.sendJoin(joinName, joinName); }}
-                                        className="w-full bg-green-500 hover:bg-green-400 text-white py-4 rounded-xl font-black text-2xl shadow-lg transform transition active:scale-95 disabled:opacity-50 uppercase flex items-center justify-center gap-2"
-                                    >
-                                        PLAY
-                                    </button>
+                                    {state.phase === GamePhase.LOBBY ? (
+                                        <>
+                                            <button
+                                                disabled={!joinName || Object.keys(state.players).length >= 6}
+                                                onClick={() => { sfx.play('CLICK'); actions.sendJoin(joinName, joinName); }}
+                                                className="w-full bg-green-500 hover:bg-green-400 text-white py-4 rounded-xl font-black text-2xl shadow-lg transform transition active:scale-95 disabled:opacity-50 uppercase flex items-center justify-center gap-2"
+                                            >
+                                                PLAY
+                                            </button>
 
-                                    <div className="text-center text-white/20 font-bold uppercase text-xs my-2">- OR -</div>
+                                            <div className="text-center text-white/20 font-bold uppercase text-xs my-2">- OR -</div>
 
-                                    <button
-                                        disabled={!joinName}
-                                        onClick={() => { sfx.play('CLICK'); actions.sendJoinAudience(joinName, joinName); }}
-                                        className="w-full bg-blue-600 hover:bg-blue-500 text-white py-3 rounded-xl font-bold text-lg shadow-lg flex items-center justify-center gap-2 transform transition active:scale-95 disabled:opacity-50 uppercase"
-                                    >
-                                        <Users size={20} /> WATCH
-                                    </button>
+                                            <button
+                                                disabled={!joinName}
+                                                onClick={() => { sfx.play('CLICK'); actions.sendJoinAudience(joinName, joinName); }}
+                                                className="w-full bg-blue-600 hover:bg-blue-500 text-white py-3 rounded-xl font-bold text-lg shadow-lg flex items-center justify-center gap-2 transform transition active:scale-95 disabled:opacity-50 uppercase"
+                                            >
+                                                <Users size={20} /> WATCH
+                                            </button>
+                                        </>
+                                    ) : (
+                                        <button
+                                            disabled={!joinName}
+                                            onClick={() => {
+                                                // Game in progress -> sendJoin will divert to Audience automatically
+                                                sfx.play('CLICK');
+                                                actions.sendJoin(joinName, joinName);
+                                            }}
+                                            className="w-full bg-blue-600 hover:bg-blue-500 text-white py-4 rounded-xl font-black text-xl shadow-lg transform transition active:scale-95 disabled:opacity-50 uppercase flex items-center justify-center gap-2"
+                                        >
+                                            <Users size={24} /> WATCH (GAME STARTED)
+                                        </button>
+                                    )}
                                 </div>
 
                                 <button onClick={() => setJoinStep('CODE')} className="w-full text-center text-white/40 text-xs hover:text-white uppercase mt-6 font-bold">
