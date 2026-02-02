@@ -3,7 +3,7 @@ import { GameState, GamePhase, Player, Answer, Expression } from '../types';
 import { Avatar } from '../components/Avatar';
 import { Narrator } from '../components/Narrator';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Clock, Users, CheckCircle, Lock, Play, Crown, ArrowUp, Star, Menu, X } from 'lucide-react';
+import { Clock, Users, CheckCircle, Lock, Play, Crown, ArrowUp, Star, Menu, X, ChevronDown } from 'lucide-react';
 import { sfx } from '../services/audioService';
 import { RevealSequence, LeaderboardSequence, CategoryRoulette, PointsPopup, EmotePopupLayer, CountUp } from './GameSharedComponents';
 
@@ -29,6 +29,34 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
     const [lieText, setLieText] = useState('');
     const [showTruthWarning, setShowTruthWarning] = useState(false);
     const [myEmoteExpression, setMyEmoteExpression] = useState<Expression | null>(null);
+
+    // Scroll state for Voting
+    const answersRef = useRef<HTMLDivElement>(null);
+    const [canScrollDown, setCanScrollDown] = useState(false);
+
+    useEffect(() => {
+        const checkScroll = () => {
+            if (answersRef.current) {
+                const { scrollHeight, clientHeight, scrollTop } = answersRef.current;
+                const remaining = scrollHeight - clientHeight - scrollTop;
+                setCanScrollDown(remaining > 10);
+            }
+        };
+
+        const el = answersRef.current;
+        if (el) {
+            checkScroll();
+            el.addEventListener('scroll', checkScroll);
+            window.addEventListener('resize', checkScroll);
+        }
+
+        return () => {
+            if (el) {
+                el.removeEventListener('scroll', checkScroll);
+            }
+            window.removeEventListener('resize', checkScroll);
+        };
+    }, [state.roundAnswers, state.phase]);
 
     // Entry Flow State
     const [joinStep, setJoinStep] = useState<'CODE' | 'NAME'>('CODE');
@@ -456,8 +484,9 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
 
                 {/* 4. VOTING */}
                 {state.phase === GamePhase.VOTING && (
-                    <div className="flex-1 flex flex-col items-center justify-center p-4">
-                        <div className="w-full max-w-md mb-4 text-center">
+                    <div className="flex-1 flex flex-col items-center w-full h-full overflow-hidden relative">
+                        {/* Fixed Header */}
+                        <div className="shrink-0 w-full max-w-md p-4 pb-2 flex flex-col items-center z-10">
                             {/* Timer */}
                             <div className="flex justify-center mb-4 relative z-30">
                                 <div className="flex items-center gap-2 bg-black/60 backdrop-blur-md px-4 py-1 rounded-full border border-white/20 shadow-lg">
@@ -466,57 +495,78 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
                                 </div>
                             </div>
 
-                            <div className="bg-purple-800/50 p-4 rounded-xl border border-white/10 backdrop-blur-sm shadow-md">
+                            <div className="w-full bg-purple-800/50 p-4 rounded-xl border border-white/10 backdrop-blur-sm shadow-md text-center">
                                 <p className="text-lg font-bold text-white leading-tight uppercase">
                                     {state.currentQuestion?.fact.replace('<BLANK>', '________')}
                                 </p>
                             </div>
                         </div>
 
-                        {/* Answers Grid - Scrollable if needed */}
-                        <div className="grid grid-cols-1 gap-3 w-full max-w-md pb-8">
-                            {state.roundAnswers.filter(a => !a.authorIds.includes(playerId)).map((ans, idx) => {
-                                const iVoted = amAudience ? ans.audienceVotes.includes(playerId) : me?.currentVote === ans.id;
-                                return (
-                                    <motion.button
-                                        key={ans.id}
-                                        initial={{ scale: 0.9, opacity: 0 }}
-                                        animate={{ scale: 1, opacity: 1 }}
-                                        transition={{ delay: idx * 0.05 }}
-                                        onClick={() => {
-                                            if (!iVoted) {
-                                                sfx.play('CLICK');
-                                                if (amAudience) actions.sendAudienceVote(ans.id);
-                                                else actions.sendVote(ans.id);
-                                            }
-                                        }}
-                                        disabled={iVoted && !amAudience}
-                                        className={`
-                                              w-full p-3 md:p-4 rounded-xl border-l-4 md:border-l-8 text-left font-bold text-base md:text-lg shadow-md transition-all active:scale-95 uppercase relative overflow-hidden min-h-[2.5rem] flex items-center
-                                              ${iVoted
-                                                ? 'bg-indigo-600 border-indigo-400 text-white'
-                                                : 'bg-white border-transparent text-indigo-900'
-                                            }
-                                              ${(me?.currentVote && !iVoted) ? 'opacity-50 grayscale' : ''}
-                                          `}
-                                    >
-                                        <div className="relative z-10 flex flex-col w-full min-h-[3rem] justify-center">
-                                            <span className="leading-tight text-sm md:text-base">{ans.text}</span>
-                                            {/* Audience Indicator */}
-                                            {ans.audienceVotes.length > 0 && (
-                                                <div className="flex items-center gap-1 mt-1 opacity-70">
-                                                    <Users size={12} className={iVoted ? 'text-black' : 'text-purple-500'} />
-                                                    <span className={`text-[10px] font-black ${iVoted ? 'text-black' : 'text-purple-500'}`}>
-                                                        {ans.audienceVotes.length}
-                                                    </span>
-                                                </div>
-                                            )}
-                                        </div>
-                                        {iVoted && <motion.div layoutId="voted-check" className="absolute right-4"><CheckCircle size={24} /></motion.div>}
-                                    </motion.button>
-                                )
-                            })}
+                        {/* Answers Grid - Scrollable */}
+                        <div
+                            ref={answersRef}
+                            className="flex-1 w-full overflow-y-auto px-4 pb-4 no-scrollbar flex justify-center"
+                        >
+                            <div className="grid grid-cols-1 gap-3 w-full max-w-md pb-8">
+                                {state.roundAnswers.filter(a => !a.authorIds.includes(playerId)).map((ans, idx) => {
+                                    const iVoted = amAudience ? ans.audienceVotes.includes(playerId) : me?.currentVote === ans.id;
+                                    return (
+                                        <motion.button
+                                            key={ans.id}
+                                            initial={{ scale: 0.9, opacity: 0 }}
+                                            animate={{ scale: 1, opacity: 1 }}
+                                            transition={{ delay: idx * 0.05 }}
+                                            onClick={() => {
+                                                if (!iVoted) {
+                                                    sfx.play('CLICK');
+                                                    if (amAudience) actions.sendAudienceVote(ans.id);
+                                                    else actions.sendVote(ans.id);
+                                                }
+                                            }}
+                                            disabled={iVoted && !amAudience}
+                                            className={`
+                                                  w-full p-3 md:p-4 rounded-xl border-l-4 md:border-l-8 text-left font-bold text-base md:text-lg shadow-md transition-all active:scale-95 uppercase relative overflow-hidden min-h-[2.5rem] flex items-center
+                                                  ${iVoted
+                                                    ? 'bg-indigo-600 border-indigo-400 text-white'
+                                                    : 'bg-white border-transparent text-indigo-900'
+                                                }
+                                                  ${(me?.currentVote && !iVoted) ? 'opacity-50 grayscale' : ''}
+                                              `}
+                                        >
+                                            <div className="relative z-10 flex flex-col w-full min-h-[3rem] justify-center">
+                                                <span className="leading-tight text-sm md:text-base">{ans.text}</span>
+                                                {/* Audience Indicator */}
+                                                {ans.audienceVotes.length > 0 && (
+                                                    <div className="flex items-center gap-1 mt-1 opacity-70">
+                                                        <Users size={12} className={iVoted ? 'text-black' : 'text-purple-500'} />
+                                                        <span className={`text-[10px] font-black ${iVoted ? 'text-black' : 'text-purple-500'}`}>
+                                                            {ans.audienceVotes.length}
+                                                        </span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                            {iVoted && <motion.div layoutId="voted-check" className="absolute right-4"><CheckCircle size={24} /></motion.div>}
+                                        </motion.button>
+                                    )
+                                })}
+                            </div>
                         </div>
+
+                        {/* Scroll Indicator */}
+                        <AnimatePresence>
+                            {canScrollDown && (
+                                <motion.div
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: 10 }}
+                                    className="absolute bottom-4 left-0 right-0 flex justify-center pointer-events-none z-20"
+                                >
+                                    <div className="bg-black/80 backdrop-blur-md text-white/90 pl-4 pr-3 py-2 rounded-full text-xs font-bold uppercase flex items-center gap-2 border border-white/20 shadow-xl animate-bounce">
+                                        Scroll for more <ChevronDown size={14} className="animate-pulse" />
+                                    </div>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
                     </div>
                 )}
 
