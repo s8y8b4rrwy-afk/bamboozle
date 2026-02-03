@@ -2,8 +2,8 @@ import { useEffect, useState, useRef } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { GameState, GameEvent, Player, GamePhase, Answer, Question, Expression, AudienceMember, Emote } from '../types';
 import { ROUND_TIMER_SECONDS } from '../constants';
-import { QUESTIONS as RAW_QUESTIONS } from '../data/questions';
-import { PHRASES, getRandomPhrase } from '../data/narratorLines';
+import { getQuestions, Language } from '../i18n/questions';
+import { getNarratorPhrase, getBotNames } from '../i18n/narrator';
 import { sfx } from './audioService';
 
 // Helper to generate IDs
@@ -37,18 +37,50 @@ const generateQuestionId = (str: string) => {
   return `q-${Math.abs(hash).toString(36)}`;
 };
 
-// Hydrate questions with runtime IDs
-const GAME_QUESTIONS: Question[] = RAW_QUESTIONS.map((q) => ({
-  ...q,
-  id: generateQuestionId(q.fact)
-}));
+// Initial Question Load (Default English)
+const loadQuestions = (lang: Language) => {
+  return getQuestions(lang).map((q) => ({
+    ...q,
+    id: generateQuestionId(q.fact)
+  }));
+};
+
+const getUniqueBotName = (usedNames: string[], language: Language): string => {
+  const allBots = getBotNames(language);
+  const available = allBots.filter(name => !usedNames.includes(name));
+
+  if (available.length > 0) {
+    return available[Math.floor(Math.random() * available.length)];
+  }
+
+  // Fallback: Pick random name + number
+  let suffix = 1;
+  let candidate = '';
+  do {
+    const base = allBots[Math.floor(Math.random() * allBots.length)];
+    candidate = `${base} ${suffix}`;
+    suffix++;
+  } while (usedNames.includes(candidate) && suffix < 100);
+
+  return candidate;
+};
+
+const joinNames = (names: string[], language: Language): string => {
+  if (names.length === 0) return '';
+  if (names.length === 1) return names[0];
+  const andWord = getNarratorPhrase(language, 'AND_CONNECTIVE', {}) || ' and ';
+  const last = names[names.length - 1];
+  const others = names.slice(0, -1).join(', ');
+  return `${others}${andWord}${last}`;
+};
+
 
 const STORAGE_KEY = 'bamboozle_used_questions';
 const MAX_PLAYERS = 6;
 const SOCKET_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:3001';
 
 // Bot Data
-const BOT_NAMES = ['Hal 9000', 'GLaDOS', 'Wall-E', 'R2-D2', 'Data', 'Bender', 'Marvin', 'Cortana', 'Maria', 'Optimus', 'Megatron', 'T-800'];
+// BOT_NAMES removed - using localized getBotNames()
 // Fallback lies just in case
 const FALLBACK_BOT_LIES = [
   "A bag of hammers", "Radioactive cheese", "The 1989 Denver Broncos",
@@ -79,10 +111,11 @@ const INITIAL_STATE: GameState = {
   revealOrder: [],
   revealStep: 0,
   revealSubPhase: 'CARD',
-  leaderboardPhase: 'INTRO'
+  leaderboardPhase: 'INTRO',
+  language: 'en'
 };
 
-export const useGameService = (role: 'HOST' | 'PLAYER' | 'AUDIENCE', playerName?: string) => {
+export const useGameService = (role: 'HOST' | 'PLAYER' | 'AUDIENCE', playerName?: string, initialLanguage?: 'en' | 'el') => {
   const [playerId] = useState(() => {
     // Persist Player ID to allow reconnection on refresh
     const stored = localStorage.getItem('bamboozle_player_id');
@@ -92,17 +125,27 @@ export const useGameService = (role: 'HOST' | 'PLAYER' | 'AUDIENCE', playerName?
     return newId;
   });
 
+  // Store questions in a Ref to avoid global state issues
+  const questionsRef = useRef(loadQuestions(initialLanguage || 'en'));
+
   // Initialize state with persistence check for HOST
   const [state, setState] = useState<GameState>(() => {
     const baseState = { ...INITIAL_STATE };
+    if (initialLanguage) {
+      baseState.language = initialLanguage;
+    }
     if (role === 'HOST') {
+      // Reload global questions if language is set
+      if (initialLanguage) {
+        questionsRef.current = loadQuestions(initialLanguage);
+      }
       try {
         const stored = localStorage.getItem(STORAGE_KEY);
         if (stored) {
           const usedIds = JSON.parse(stored);
           if (Array.isArray(usedIds)) {
             // Validate IDs exist in current version
-            const validIds = usedIds.filter((uid: string) => GAME_QUESTIONS.some(q => q.id === uid));
+            const validIds = usedIds.filter((uid: string) => questionsRef.current.some(q => q.id === uid));
             baseState.usedQuestionIds = validIds;
           }
         }
@@ -131,6 +174,13 @@ export const useGameService = (role: 'HOST' | 'PLAYER' | 'AUDIENCE', playerName?
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state.usedQuestionIds));
     }
   }, [state.usedQuestionIds, role]);
+
+  // Sync questions ref if language changes (for Host)
+  useEffect(() => {
+    if (role === 'HOST' && state.language) {
+      questionsRef.current = loadQuestions(state.language);
+    }
+  }, [state.language, role]);
 
   // Emote Cleanup Loop (Host Only)
   useEffect(() => {
@@ -202,7 +252,14 @@ export const useGameService = (role: 'HOST' | 'PLAYER' | 'AUDIENCE', playerName?
         voices.find(v => v.lang.includes('en-US')) ||
         voices[0];
 
-      if (preferred) utterance.voice = preferred;
+      // Greek Voice Support
+      if (stateRef.current.language === 'el') {
+        const greekVoice = voices.find(v => v.lang.includes('el') || v.name.includes('Greek'));
+        if (greekVoice) utterance.voice = greekVoice;
+      } else {
+        if (preferred) utterance.voice = preferred;
+      }
+
       utterance.pitch = 0.9 + Math.random() * 0.2;
       utterance.rate = 0.9 + Math.random() * 0.2;
 
@@ -454,7 +511,7 @@ export const useGameService = (role: 'HOST' | 'PLAYER' | 'AUDIENCE', playerName?
             }
 
             sfx.play('JOIN'); // SFX
-            speak(getRandomPhrase('JOIN', { name: event.payload.name }), false, `JOIN_${event.payload.id}`);
+            speak(getNarratorPhrase(next.language, 'JOIN', { name: event.payload.name }), false, `JOIN_${event.payload.id}`);
 
             // Revert to Neutral after 3 seconds
             const pid = event.payload.id;
@@ -488,7 +545,7 @@ export const useGameService = (role: 'HOST' | 'PLAYER' | 'AUDIENCE', playerName?
           };
           sfx.play('JOIN');
           if (Math.random() < 0.3) {
-            speak(getRandomPhrase('AUDIENCE_JOIN'), false, `JOIN_AUDIENCE_${event.payload.id}`);
+            speak(getNarratorPhrase(next.language, 'AUDIENCE_JOIN', {}), false, `JOIN_AUDIENCE_${event.payload.id}`);
           }
 
           changed = true;
@@ -532,7 +589,8 @@ export const useGameService = (role: 'HOST' | 'PLAYER' | 'AUDIENCE', playerName?
             const needed = 2 - currentPlayers.length;
             for (let i = 0; i < needed; i++) {
               const botId = generateId();
-              const botName = BOT_NAMES[Math.floor(Math.random() * BOT_NAMES.length)] + ` ${Math.floor(Math.random() * 100)}`;
+              const usedNames = Object.values(next.players).map(p => p.name);
+              const botName = getUniqueBotName(usedNames, next.language);
               next.players[botId] = {
                 id: botId,
                 name: botName,
@@ -545,17 +603,17 @@ export const useGameService = (role: 'HOST' | 'PLAYER' | 'AUDIENCE', playerName?
                 expression: 'NEUTRAL',
                 previousRank: Object.keys(next.players).length
               };
-            }
-            speak("Adding some bots so you don't play alone.", false, 'ADD_BOTS');
+            };
           }
-
-          next.totalRounds = event.payload.rounds;
-          next.currentRound = 1;
-          next.playersWhoPicked = [];
-          sfx.play('START');
-          startCategorySelectionPhase(next);
-          changed = true;
+          speak(getNarratorPhrase(next.language, 'RESTART', {}), false, 'ADD_BOTS'); // Using Restart line as generic filler or create new Add Bots line
         }
+
+        next.totalRounds = event.payload.rounds;
+        next.currentRound = 1;
+        next.playersWhoPicked = [];
+        sfx.play('START');
+        startCategorySelectionPhase(next);
+        changed = true;
         break;
 
       case 'SELECT_CATEGORY':
@@ -564,7 +622,7 @@ export const useGameService = (role: 'HOST' | 'PLAYER' | 'AUDIENCE', playerName?
           next.playersWhoPicked = [...next.playersWhoPicked, next.categorySelection.selectorId];
 
           sfx.play('SUCCESS');
-          speak(getRandomPhrase('CATEGORY_CHOSEN', { category: event.payload.category }), false, `CAT_CHOSEN_${event.payload.category}`);
+          speak(getNarratorPhrase(next.language, 'CATEGORY_CHOSEN', { category: event.payload.category }), false, `CAT_CHOSEN_${event.payload.category}`);
 
           // Reset expressions
           if (next.players[next.categorySelection.selectorId]) {
@@ -683,13 +741,30 @@ export const useGameService = (role: 'HOST' | 'PLAYER' | 'AUDIENCE', playerName?
           // Auto-ready bots, unready humans
           p.isReady = !!p.isBot;
         });
-        speak(getRandomPhrase('RESTART'), false, 'RESTART');
+        speak(getNarratorPhrase(next.language, 'RESTART', {}), false, 'RESTART');
         changed = true;
         break;
 
       case 'TOGGLE_ONLINE_MODE':
-        if (next.phase === GamePhase.LOBBY) {
+        if (role === 'HOST') {
+          // Handled by dispatch but if we need local state change?
+          // Actually TOGGLE_ONLINE_MODE logic was:
+          // next.isOnlineMode = !next.isOnlineMode
+          // But simpler here:
           next.isOnlineMode = !next.isOnlineMode;
+          sfx.play('CLICK');
+          changed = true;
+        }
+        break;
+
+      case 'TOGGLE_LANGUAGE':
+        if (next.phase === GamePhase.LOBBY) {
+          next.language = next.language === 'en' ? 'el' : 'en';
+          // Reload questions
+          questionsRef.current = loadQuestions(next.language);
+          // Reset used questions
+          next.usedQuestionIds = [];
+
           sfx.play('CLICK');
           changed = true;
         }
@@ -735,10 +810,10 @@ export const useGameService = (role: 'HOST' | 'PLAYER' | 'AUDIENCE', playerName?
     state.phase = GamePhase.CATEGORY_SELECT;
     sfx.play('SWOOSH');
 
-    let availableQuestions = GAME_QUESTIONS.filter(q => !state.usedQuestionIds.includes(q.id));
+    let availableQuestions = questionsRef.current.filter(q => !state.usedQuestionIds.includes(q.id));
     if (availableQuestions.length < 5) {
       state.usedQuestionIds = [];
-      availableQuestions = GAME_QUESTIONS;
+      availableQuestions = questionsRef.current;
     }
 
     // --- SMART CATEGORY SELECTION ---
@@ -790,7 +865,7 @@ export const useGameService = (role: 'HOST' | 'PLAYER' | 'AUDIENCE', playerName?
       else p.expression = 'NEUTRAL';
     });
 
-    speak(getRandomPhrase('CATEGORY_INIT', { name: selectorName }), false, `CAT_INIT_${selectorName}_${state.currentRound}`);
+    speak(getNarratorPhrase(state.language, 'CATEGORY_INIT', { name: selectorName }), false, `CAT_INIT_${selectorName}_${state.currentRound}`);
 
     state.timeLeft = 20;
     startTimer(20, () => {
@@ -806,9 +881,9 @@ export const useGameService = (role: 'HOST' | 'PLAYER' | 'AUDIENCE', playerName?
     state.phase = GamePhase.INTRO;
     sfx.play('SWOOSH');
 
-    let availableQuestions = GAME_QUESTIONS.filter(q => !state.usedQuestionIds.includes(q.id) && q.category === category);
-    if (availableQuestions.length === 0) availableQuestions = GAME_QUESTIONS.filter(q => !state.usedQuestionIds.includes(q.id));
-    if (availableQuestions.length === 0) { availableQuestions = GAME_QUESTIONS; state.usedQuestionIds = []; }
+    let availableQuestions = questionsRef.current.filter(q => !state.usedQuestionIds.includes(q.id) && q.category === category);
+    if (availableQuestions.length === 0) availableQuestions = questionsRef.current.filter(q => !state.usedQuestionIds.includes(q.id));
+    if (availableQuestions.length === 0) { availableQuestions = questionsRef.current; state.usedQuestionIds = []; }
 
     const selectedQuestion = availableQuestions[Math.floor(Math.random() * availableQuestions.length)];
     state.currentQuestion = selectedQuestion;
@@ -831,13 +906,13 @@ export const useGameService = (role: 'HOST' | 'PLAYER' | 'AUDIENCE', playerName?
     });
 
     let multiplierText = "";
-    let roundPhrase = getRandomPhrase('ROUND_INTRO', { round: state.currentRound });
+    let roundPhrase = getNarratorPhrase(state.language, 'ROUND_INTRO', { round: state.currentRound });
 
     if (state.currentRound === state.totalRounds) {
-      multiplierText = getRandomPhrase('MULTIPLIER_3');
-      roundPhrase = getRandomPhrase('FINAL_ROUND');
+      multiplierText = getNarratorPhrase(state.language, 'MULTIPLIER_3', {});
+      roundPhrase = getNarratorPhrase(state.language, 'FINAL_ROUND', {});
     } else if (state.currentRound === state.totalRounds - 1) {
-      multiplierText = getRandomPhrase('MULTIPLIER_2');
+      multiplierText = getNarratorPhrase(state.language, 'MULTIPLIER_2', {});
       roundPhrase += multiplierText;
     }
 
@@ -846,7 +921,8 @@ export const useGameService = (role: 'HOST' | 'PLAYER' | 'AUDIENCE', playerName?
     const introDuration = Math.max(3000, roundPhrase.split(' ').length * 400 + 1000);
 
     setTimeout(() => {
-      const questionText = state.currentQuestion!.fact.replace('<BLANK>', 'blank');
+      const blankWord = getNarratorPhrase(state.language, 'BLANK_WORD', {}) || 'blank';
+      const questionText = state.currentQuestion!.fact.replace('<BLANK>', blankWord);
       speak(questionText, false, `QUESTION_${state.currentQuestion!.id}`);
       const readingDuration = Math.max(3000, questionText.split(' ').length * 350 + 2000);
 
@@ -871,7 +947,7 @@ export const useGameService = (role: 'HOST' | 'PLAYER' | 'AUDIENCE', playerName?
 
     const players = Object.values(state.players);
     const randomP = players.length > 0 ? players[Math.floor(Math.random() * players.length)].name : 'someone';
-    speak(getRandomPhrase('WRITING', { randomPlayer: randomP, seconds: ROUND_TIMER_SECONDS.WRITING }), false, `WRITING_${state.currentRound}`);
+    speak(getNarratorPhrase(state.language, 'WRITING', { randomPlayer: randomP, seconds: ROUND_TIMER_SECONDS.WRITING }), false, `WRITING_${state.currentRound}`);
 
     startTimer(ROUND_TIMER_SECONDS.WRITING, () => {
       const s = stateRef.current;
@@ -937,7 +1013,7 @@ export const useGameService = (role: 'HOST' | 'PLAYER' | 'AUDIENCE', playerName?
 
     const players = Object.values(state.players);
     const randomP = players.length > 0 ? players[Math.floor(Math.random() * players.length)].name : 'someone';
-    speak(getRandomPhrase('VOTING', { randomPlayer: randomP }), false, `VOTING_${state.currentRound}`);
+    speak(getNarratorPhrase(state.language, 'VOTING', { randomPlayer: randomP }), false, `VOTING_${state.currentRound}`);
 
     startTimer(ROUND_TIMER_SECONDS.VOTING, () => {
       const s = stateRef.current;
@@ -961,7 +1037,7 @@ export const useGameService = (role: 'HOST' | 'PLAYER' | 'AUDIENCE', playerName?
       const allPlayers = Object.values(n.players);
       const winner = allPlayers.length > 0 ? allPlayers.sort((a: any, b: any) => b.score - a.score)[0] : null;
       if (winner) {
-        speak(getRandomPhrase('GAME_OVER', { winner: winner.name }), false, 'GAME_OVER');
+        speak(getNarratorPhrase(n.language, 'GAME_OVER', { winner: winner.name }), false, 'GAME_OVER');
         if (n.players[winner.id]) {
           n.players[winner.id].expression = 'HAPPY';
         }
@@ -994,7 +1070,7 @@ export const useGameService = (role: 'HOST' | 'PLAYER' | 'AUDIENCE', playerName?
 
     // Timeline:
     // 0s: INTRO (Old Scores) -> Speak Intro
-    const intro = getRandomPhrase('LEADERBOARD_INTRO');
+    const intro = getNarratorPhrase(n.language, 'LEADERBOARD_INTRO', {});
     speak(intro, false, `LEADERBOARD_INTRO_${n.currentRound}`);
 
     // 2.5s: REVEAL (New Scores animate)
@@ -1012,7 +1088,7 @@ export const useGameService = (role: 'HOST' | 'PLAYER' | 'AUDIENCE', playerName?
         const leader = Object.values(s3.players).sort((a, b) => b.score - a.score)[0];
 
         if (leader) {
-          const text = getRandomPhrase('LEADERBOARD_LEADER', { name: leader.name });
+          const text = getNarratorPhrase(n.language, 'LEADERBOARD_LEADER', { name: leader.name });
           speak(text, false, `LEADERBOARD_LEADER_${n.currentRound}`);
         }
 
@@ -1103,7 +1179,7 @@ export const useGameService = (role: 'HOST' | 'PLAYER' | 'AUDIENCE', playerName?
 
     const isTruth = currentAnswer.authorIds.includes('SYSTEM');
     const voters = currentAnswer.votes.map(vid => state.players[vid]).filter(Boolean);
-    const voterNames = voters.map(v => v.name).join(' and '); // Natural join
+    const voterNames = joinNames(voters.map(v => v.name), state.language);
     // const authors = currentAnswer.authorIds.map(id => state.players[id]).filter(Boolean);
 
     // Helper to advance after delay
@@ -1121,7 +1197,7 @@ export const useGameService = (role: 'HOST' | 'PLAYER' | 'AUDIENCE', playerName?
     // 1. CARD Display (Already set before calling this or at end of previous)
     // - Speak Lie/Truth Text
     sfx.play('POP');
-    speak(getRandomPhrase('REVEAL_CARD_INTRO', { text: currentAnswer.text }), false, `REVEAL_CARD_${currentAnswerId}`);
+    speak(getNarratorPhrase(state.language, 'REVEAL_CARD_INTRO', { text: currentAnswer.text }), false, `REVEAL_CARD_${currentAnswerId}`);
 
     // Wait for text read (approx 2s) + delay -> Go to VOTERS
     advance(2500, () => {
@@ -1133,17 +1209,17 @@ export const useGameService = (role: 'HOST' | 'PLAYER' | 'AUDIENCE', playerName?
       if (voters.length > 0) {
         if (isTruth) {
           sfx.play('SUCCESS');
-          speak(getRandomPhrase('REVEAL_CORRECT_GROUP', { names: voterNames }), false, `CORRECT_${currentAnswerId}`);
+          speak(getNarratorPhrase(state.language, 'REVEAL_CORRECT_GROUP', { names: voterNames }), false, `CORRECT_${currentAnswerId}`);
         } else {
           sfx.play('FAILURE');
           if (currentAnswer.audienceVotes.length > 2) {
-            speak(getRandomPhrase('PLAYER_FOOLED_BY_AUDIENCE', { names: voterNames }), false, `FOOLED_AUD_${currentAnswerId}`);
+            speak(getNarratorPhrase(state.language, 'PLAYER_FOOLED_BY_AUDIENCE', { names: voterNames }), false, `FOOLED_AUD_${currentAnswerId}`);
           } else {
-            speak(getRandomPhrase('REVEAL_FOOLED_GROUP', { names: voterNames }), false, `FOOLED_${currentAnswerId}`);
+            speak(getNarratorPhrase(state.language, 'REVEAL_FOOLED_GROUP', { names: voterNames }), false, `FOOLED_${currentAnswerId}`);
           }
         }
       } else {
-        if (isTruth) speak(getRandomPhrase('REVEAL_NOBODY'), false, `NOBODY_${currentAnswerId}`);
+        if (isTruth) speak(getNarratorPhrase(state.language, 'REVEAL_NOBODY', {}), false, `NOBODY_${currentAnswerId}`);
       }
 
       // Wait -> Go to AUTHOR
@@ -1157,7 +1233,7 @@ export const useGameService = (role: 'HOST' | 'PLAYER' | 'AUDIENCE', playerName?
 
         if (isTruth) {
           sfx.play('REVEAL');
-          const intro = getRandomPhrase('REVEAL_TRUTH_INTRO');
+          const intro = getNarratorPhrase(state.language, 'REVEAL_TRUTH_INTRO', {});
           const fullFact = state.currentQuestion?.fact.replace('<BLANK>', currentAnswer.text) || currentAnswer.text;
           speechText = `${intro} ${fullFact}`;
           speak(speechText, false, `TRUTH_${currentAnswerId}`);
@@ -1165,18 +1241,17 @@ export const useGameService = (role: 'HOST' | 'PLAYER' | 'AUDIENCE', playerName?
           const authors = currentAnswer.authorIds.map(id => state.players[id]).filter(Boolean);
           if (authors.length > 0) {
             if (authors.length === 1) {
-              speechText = getRandomPhrase('REVEAL_LIAR', { name: authors[0].name });
+              speechText = getNarratorPhrase(state.language, 'REVEAL_LIAR', { name: authors[0].name });
               speak(speechText, false, `LIAR_${currentAnswerId}`);
-            }
-            else {
-              const names = authors.map(a => a.name).join(' and ');
-              speechText = getRandomPhrase('REVEAL_LIAR_JINX', { names: names });
+            } else {
+              const names = joinNames(authors.map(a => a.name), state.language);
+              speechText = getNarratorPhrase(state.language, 'REVEAL_LIAR_JINX', { names: names });
               speak(speechText, false, `LIAR_JINX_${currentAnswerId}`);
             }
           } else if (currentAnswer.authorIds.includes('HOST_BOT')) {
             // HOST LIE REVEAL
             sfx.play('FAILURE');
-            speechText = getRandomPhrase('REVEAL_HOST_LIE', { names: voterNames });
+            speechText = getNarratorPhrase(state.language, 'REVEAL_HOST_LIE', { names: voterNames });
             speak(speechText, false, `HOST_LIE_${currentAnswerId}`);
           }
         }
@@ -1279,13 +1354,14 @@ export const useGameService = (role: 'HOST' | 'PLAYER' | 'AUDIENCE', playerName?
 
   const addBot = () => {
     const botId = generateId();
-    const botName = BOT_NAMES[Math.floor(Math.random() * BOT_NAMES.length)] + ` ${Math.floor(Math.random() * 100)}`;
+    const usedNames = Object.values(state.players).map(p => p.name);
+    const botName = getUniqueBotName(usedNames, state.language);
     dispatch({ type: 'JOIN_ROOM', payload: { id: botId, name: botName, avatarSeed: botName, isBot: true } });
   };
 
   const addAudienceBot = () => {
     const botId = generateId();
-    const botName = "Audience Bot " + Math.floor(Math.random() * 100);
+    const botName = (getNarratorPhrase(state.language, 'AUDIENCE_BOT_NAME', {}) || "Audience Bot") + " " + Math.floor(Math.random() * 100);
     dispatch({ type: 'JOIN_AUDIENCE', payload: { id: botId, name: botName, avatarSeed: botName, isBot: true } });
   };
 
@@ -1351,7 +1427,6 @@ export const useGameService = (role: 'HOST' | 'PLAYER' | 'AUDIENCE', playerName?
       sendCategorySelection,
       speak,
       triggerNextPhase,
-      getRandomPhrase,
       sendToggleOnlineMode: () => {
         if (role === 'HOST') {
           processHostEvent({ type: 'TOGGLE_ONLINE_MODE', payload: null });

@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowUp } from 'lucide-react';
 import { sfx } from '../services/audioService';
 import { NARRATOR_SEED } from '../constants';
+import { getText } from '../i18n';
 
 // Helper: Join names with "and"
 export const joinNames = (names: string[]) => {
@@ -130,10 +131,10 @@ export const CategoryRoulette = ({ state, onSelect }: { state: GameState, onSele
     return (
         <div className="flex flex-col items-center justify-center h-full w-full z-30 relative px-4 md:px-12 py-safe overflow-y-auto">
             <div className="mb-4 md:mb-12 text-center max-w-2xl mx-auto flex-shrink-0 pt-4 md:pt-0">
-                <h2 className="text-sm md:text-3xl text-purple-200 uppercase tracking-widest font-black drop-shadow-sm mb-2 md:mb-4">Category Selection</h2>
+                <h2 className="text-sm md:text-3xl text-purple-200 uppercase tracking-widest font-black drop-shadow-sm mb-2 md:mb-4">{getText(state.language, 'GAME_CATEGORY_SELECTION')}</h2>
                 <div className="flex flex-col items-center">
                     <span className="text-yellow-400 font-black text-2xl md:text-6xl uppercase tracking-tighter drop-shadow-xl">{selectorName}</span>
-                    <span className="text-white text-xs md:text-2xl font-black uppercase tracking-[0.3em] opacity-50">{onSelect ? 'PICK A CATEGORY' : 'IS CHOOSING...'}</span>
+                    <span className="text-white text-xs md:text-2xl font-black uppercase tracking-[0.3em] opacity-50">{onSelect ? getText(state.language, 'GAME_PICK_CATEGORY') : getText(state.language, 'GAME_IS_CHOOSING')}</span>
                 </div>
             </div>
 
@@ -179,7 +180,7 @@ export const RevealSequence = ({ state, actions, setGalleryOverrides, isHost }: 
 
     // Safety check - if data is missing or out of sync
     if (!state.revealOrder || state.revealOrder.length === 0) {
-        return <div className="flex h-full items-center justify-center text-4xl font-black text-white/20 uppercase">Waiting for Host...</div>;
+        return <div className="flex h-full items-center justify-center text-4xl font-black text-white/20 uppercase">{getText(state.language, 'GAME_WAITING_HOST')}</div>;
     }
 
     const currentAnswerId = state.revealOrder[state.revealStep];
@@ -224,7 +225,7 @@ export const RevealSequence = ({ state, actions, setGalleryOverrides, isHost }: 
         setGalleryOverrides(overrides);
     }, [currentAnswer, phase, setGalleryOverrides]);
 
-    if (!currentAnswer) return <div className="flex h-full items-center justify-center text-4xl font-black text-white/50">Loading...</div>;
+    if (!currentAnswer) return <div className="flex h-full items-center justify-center text-4xl font-black text-white/50">{getText(state.language, 'GAME_LOADING')}</div>;
 
 
 
@@ -305,7 +306,7 @@ export const RevealSequence = ({ state, actions, setGalleryOverrides, isHost }: 
                                             {/* Points Animation for Voters */}
                                             <AnimatePresence>
                                                 {phase === 'VOTERS' && isTruth && (
-                                                    <PointsPopup amount={pointsConfig.truth} />
+                                                    <PointsPopup amount={pointsConfig.truth} label={getText(state.language, 'GAME_PTS')} />
                                                 )}
                                             </AnimatePresence>
 
@@ -315,7 +316,7 @@ export const RevealSequence = ({ state, actions, setGalleryOverrides, isHost }: 
                                                     initial={{ scale: 0 }} animate={{ scale: 1 }}
                                                     className={`${isTruth ? 'bg-green-600' : 'bg-red-600'} text-white font-black px-3 py-0.5 rounded-full text-xs uppercase shadow-md border-2 border-white whitespace-nowrap z-10`}
                                                 >
-                                                    {isTruth ? 'SMART' : 'FOOLED'}
+                                                    {isTruth ? getText(state.language, 'GAME_TAG_SMART') : getText(state.language, 'GAME_TAG_FOOLED')}
                                                 </motion.div>
                                             </div>
                                             <div className="font-bold mt-2 text-[10px] md:text-base opacity-90">{voter.name}</div>
@@ -334,7 +335,7 @@ export const RevealSequence = ({ state, actions, setGalleryOverrides, isHost }: 
                                     >
                                         <Avatar seed={av.avatarSeed} size={70} expression={isTruth ? 'HAPPY' : 'SHOCKED'} className="filter drop-shadow-sm !w-8 !h-8 md:!w-[70px] md:!h-[70px]" />
                                         <div className="bg-blue-500 text-white font-black px-2 py-0.5 rounded-full mt-1 text-[10px] uppercase mb-1">
-                                            Audience
+                                            {getText(state.language, 'GAME_TAG_AUDIENCE')}
                                         </div>
                                         <div className="text-gray-500 font-bold text-xs">{av.name}</div>
                                     </motion.div>
@@ -344,7 +345,7 @@ export const RevealSequence = ({ state, actions, setGalleryOverrides, isHost }: 
 
                         {phase !== 'CARD' && currentAnswer.votes.length === 0 && audienceVoters.length === 0 && (
                             <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} className="text-gray-400 font-black italic text-3xl md:text-4xl uppercase tracking-tighter opacity-30 select-none">
-                                (No Takers)
+                                {getText(state.language, 'GAME_NO_TAKERS')}
                             </motion.div>
                         )}
                     </div>
@@ -361,7 +362,7 @@ export const RevealSequence = ({ state, actions, setGalleryOverrides, isHost }: 
                                 {/* Points Animation for Author */}
                                 <AnimatePresence>
                                     {currentAnswer.votes.length > 0 && (
-                                        <PointsPopup amount={pointsConfig.lie * currentAnswer.votes.length} label="LIE BONUS" />
+                                        <PointsPopup amount={pointsConfig.lie * currentAnswer.votes.length} label={getText(state.language, 'GAME_LIE_BONUS')} />
                                     )}
                                 </AnimatePresence>
 
@@ -369,7 +370,7 @@ export const RevealSequence = ({ state, actions, setGalleryOverrides, isHost }: 
                                     <Avatar seed={author.avatarSeed} size={70} expression={'SMUG'} className="!w-10 !h-10 md:!w-[70px] md:!h-[70px]" />
                                 </div>
                                 <div className="text-left flex flex-col justify-center">
-                                    <span className="text-[6px] md:text-[10px] font-black tracking-widest text-purple-200 mb-0.5 block">WRITTEN BY</span>
+                                    <span className="text-[6px] md:text-[10px] font-black tracking-widest text-purple-200 mb-0.5 block">{getText(state.language, 'GAME_WRITTEN_BY')}</span>
                                     <span className="text-sm md:text-2xl font-black leading-none block">{author.name}</span>
                                 </div>
                             </motion.div>
@@ -386,8 +387,8 @@ export const RevealSequence = ({ state, actions, setGalleryOverrides, isHost }: 
                                     <Avatar seed={NARRATOR_SEED} size={70} expression={'SMUG'} className="!w-10 !h-10 md:!w-[70px] md:!h-[70px]" />
                                 </div>
                                 <div className="text-left flex flex-col justify-center">
-                                    <span className="text-[6px] md:text-[10px] font-black tracking-widest text-gray-400 mb-0.5 block">WRITTEN BY</span>
-                                    <span className="text-sm md:text-2xl font-black leading-none block text-gray-200">The Narrator</span>
+                                    <span className="text-[6px] md:text-[10px] font-black tracking-widest text-gray-400 mb-0.5 block">{getText(state.language, 'GAME_WRITTEN_BY')}</span>
+                                    <span className="text-sm md:text-2xl font-black leading-none block text-gray-200">{getText(state.language, 'GAME_NARRATOR_NAME')}</span>
                                 </div>
                             </motion.div>
                         )}
@@ -397,7 +398,7 @@ export const RevealSequence = ({ state, actions, setGalleryOverrides, isHost }: 
                                 animate={{ scale: 1, opacity: 1 }}
                                 className="text-3xl md:text-6xl font-black text-white drop-shadow-xl tracking-widest border-8 border-white px-10 py-4 bg-green-500 rounded-3xl transform -rotate-3 uppercase shadow-2xl"
                             >
-                                THE TRUTH
+                                {getText(state.language, 'GAME_THE_TRUTH')}
                             </motion.div>
                         )}
                     </div>
@@ -453,7 +454,7 @@ export const LeaderboardSequence = ({ state, actions, onHome, isHost }: { state:
     return (
         <div className="flex flex-col items-center justify-center h-full w-full max-w-4xl mx-auto z-20 relative">
             <h2 className="text-3xl md:text-6xl font-black text-yellow-400 mb-8 drop-shadow-lg tracking-wider uppercase">
-                {state.phase === GamePhase.GAME_OVER ? "FINAL SCORES" : "STANDINGS"}
+                {state.phase === GamePhase.GAME_OVER ? getText(state.language, 'GAME_FINAL_SCORES') : getText(state.language, 'GAME_STANDINGS')}
             </h2>
             <div className="w-full space-y-4">
                 <ul className="w-full space-y-4">
@@ -480,7 +481,7 @@ export const LeaderboardSequence = ({ state, actions, onHome, isHost }: { state:
                                         {showNewScores && p.lastRoundScore > 0 && (
                                             <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="text-green-600 font-bold flex items-center gap-1 text-sm md:text-base">
                                                 <ArrowUp size={20} strokeWidth={4} />
-                                                {p.lastRoundScore} PTS
+                                                {p.lastRoundScore} {getText(state.language, 'GAME_PTS')}
                                             </motion.div>
                                         )}
                                     </div>
@@ -498,7 +499,7 @@ export const LeaderboardSequence = ({ state, actions, onHome, isHost }: { state:
             {state.phase === GamePhase.GAME_OVER && (
                 <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 3 }} className="mt-8 flex gap-4 uppercase">
                     <div className="text-2xl text-yellow-400 font-bold animate-pulse">
-                        WAITING FOR VIP TO RESTART...
+                        {getText(state.language, 'GAME_WAITING_VIP')}
                     </div>
                 </motion.div>
             )}

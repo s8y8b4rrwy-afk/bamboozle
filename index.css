@@ -2,6 +2,8 @@
 @tailwind components;
 @tailwind utilities;
 
+@import url('https://fonts.googleapis.com/css2?family=Playpen+Sans:wght@100..800&display=swap');
+
 :root {
   /* Apple Standard Spacing */
   --spacing-safe-top: env(safe-area-inset-top, 20px);
@@ -9,6 +11,20 @@
   --radius-xl: 24px;
   --radius-2xl: 32px;
 }
+
+/* Greek Language Overrides */
+:lang(el) * {
+  font-family: inherit;
+  /* Allow inheritance, or specify a better Greek font if needed */
+}
+
+/* Ensure uppercase Greek removes accents */
+:lang(el) .uppercase,
+.lang-el .uppercase {
+  text-transform: uppercase;
+  /* Font feature settings can sometimes help, but standard correct behavior relies on browser */
+}
+
 
 /* Safe Area Utilities */
 .pt-safe-top {

@@ -5,6 +5,7 @@ import { Narrator } from '../components/Narrator';
 import { motion, AnimatePresence } from 'framer-motion';
 import { QrCode, User, Play, Clock, Trophy, Bot, ArrowUp, CheckCircle, RotateCcw, Home, Disc, Users, Crown, Quote } from 'lucide-react';
 import { sfx } from '../services/audioService';
+import { getText } from '../i18n';
 
 interface HostViewProps {
     state: GameState;
@@ -35,7 +36,7 @@ export const HostView: React.FC<HostViewProps> = ({ state, actions, onHome, debu
     const renderLobby = () => (
         <div className="flex flex-col items-center justify-center h-full space-y-4 md:space-y-10 z-20 relative px-4 md:px-6 w-full">
             <div className="text-center w-full px-4 transform transition-all hover:scale-105 duration-500 cursor-default">
-                <h2 className="text-lg md:text-3xl text-purple-200 font-bold mb-2 md:mb-3 uppercase tracking-[0.2em] drop-shadow-md">Join now at</h2>
+                <h2 className="text-lg md:text-3xl text-purple-200 font-bold mb-2 md:mb-3 uppercase tracking-[0.2em] drop-shadow-md">{getText(state.language, 'HOST_JOIN_URL_LABEL')}</h2>
                 <h1 className="text-4xl md:text-9xl text-yellow-400 font-display tracking-tighter shadow-glow break-all leading-none mb-6">bamboozlegame.netlify.app</h1>
                 <div className="relative inline-block mt-4 group">
                     <div className="absolute -inset-1 bg-gradient-to-r from-yellow-400 to-purple-600 rounded-2xl blur opacity-75 group-hover:opacity-100 transition duration-1000 group-hover:duration-200 animate-tilt"></div>
@@ -48,27 +49,27 @@ export const HostView: React.FC<HostViewProps> = ({ state, actions, onHome, debu
             <div className="flex flex-col md:flex-row items-center gap-4 md:gap-12 mt-4 md:mt-8 w-full justify-center">
                 <div className="bg-black/40 backdrop-blur-md px-4 md:px-8 py-3 md:py-4 rounded-full flex items-center gap-3 md:gap-4 border border-white/10 shadow-lg w-full md:w-auto justify-center">
                     <User className="text-blue-400 w-5 h-5 md:w-8 md:h-8" />
-                    <span className="font-bold text-lg md:text-2xl uppercase tracking-wider">{Object.keys(state.players).length} / 6 PLAYERS</span>
+                    <span className="font-bold text-lg md:text-2xl uppercase tracking-wider">{Object.keys(state.players).length} / 6 {getText(state.language, 'HOST_PLAYERS_LABEL')}</span>
                 </div>
                 <div className="bg-black/40 backdrop-blur-md px-4 md:px-8 py-3 md:py-4 rounded-full flex items-center gap-3 md:gap-4 border border-white/10 shadow-lg w-full md:w-auto justify-center">
                     <Trophy className="text-yellow-400 w-5 h-5 md:w-8 md:h-8" />
-                    <span className="font-bold text-lg md:text-2xl uppercase tracking-wider text-yellow-400">{state.totalRounds} ROUNDS</span>
+                    <span className="font-bold text-lg md:text-2xl uppercase tracking-wider text-yellow-400">{state.totalRounds} {getText(state.language, 'HOST_ROUNDS_LABEL')}</span>
                 </div>
             </div>
 
             <div className="flex gap-4 mt-8 flex-wrap justify-center">
                 <button onClick={() => { sfx.play('CLICK'); actions.addBot(); }} className="px-6 py-3 bg-blue-600/50 hover:bg-blue-600 text-white text-base md:text-xl font-bold rounded-2xl flex items-center gap-2">
-                    <Bot size={24} /> ADD BOT
+                    <Bot size={24} /> {getText(state.language, 'HOST_ADD_BOT')}
                 </button>
                 <button onClick={() => { sfx.play('CLICK'); actions.addAudienceBot(); }} className="px-6 py-3 bg-indigo-600/50 hover:bg-indigo-600 text-white text-base md:text-xl font-bold rounded-2xl flex items-center gap-2">
-                    <Users size={24} /> ADD AUDIENCE BOT
+                    <Users size={24} /> {getText(state.language, 'HOST_ADD_AUDIENCE_BOT')}
                 </button>
             </div>
             {!debugMode && (
                 <div className="flex flex-col items-center gap-6 mt-4 md:mt-12 w-full max-w-md">
                     <div className="text-lg md:text-2xl text-yellow-400 font-bold animate-pulse uppercase tracking-widest flex items-center gap-3 text-center">
                         <div className="w-3 h-3 bg-yellow-400 rounded-full animate-ping flex-shrink-0" />
-                        Waiting for players...
+                        {getText(state.language, 'PROMPT_WAITING')}
                     </div>
 
                     <button
@@ -79,8 +80,8 @@ export const HostView: React.FC<HostViewProps> = ({ state, actions, onHome, debu
                             {state.isOnlineMode && <CheckCircle size={16} className="text-green-600" strokeWidth={4} />}
                         </div>
                         <div className="flex flex-col items-start text-left">
-                            <span className="font-black text-white uppercase tracking-wider text-sm md:text-lg">Online Friends Mode</span>
-                            <span className="text-[10px] md:text-xs text-gray-300 uppercase font-bold tracking-wide opacity-80">Single Device View (No TV needed)</span>
+                            <span className="font-black text-white uppercase tracking-wider text-sm md:text-lg">{getText(state.language, 'HOST_ONLINE_MODE_TITLE')}</span>
+                            <span className="text-[10px] md:text-xs text-gray-300 uppercase font-bold tracking-wide opacity-80">{getText(state.language, 'HOST_ONLINE_MODE_SUBTITLE')}</span>
                         </div>
                     </button>
                 </div>
@@ -94,8 +95,8 @@ export const HostView: React.FC<HostViewProps> = ({ state, actions, onHome, debu
             <div className="mt-4 md:mt-16 max-w-5xl text-center w-full">
                 <h3 className="text-lg md:text-4xl text-purple-200 font-bold mb-4 md:mb-8 uppercase tracking-[0.2em] flex items-center justify-center gap-2 md:gap-4 drop-shadow-md">
                     {state.currentQuestion?.category}
-                    {(state.currentRound === state.totalRounds) && <span className="text-yellow-400 bg-yellow-900/50 px-2 md:px-3 py-1 rounded text-xs md:text-lg animate-pulse border border-yellow-400/50">3X POINTS</span>}
-                    {(state.currentRound === state.totalRounds - 1) && <span className="text-yellow-400 bg-yellow-900/50 px-2 md:px-3 py-1 rounded text-xs md:text-lg animate-pulse border border-yellow-400/50">2X POINTS</span>}
+                    {(state.currentRound === state.totalRounds) && <span className="text-yellow-400 bg-yellow-900/50 px-2 md:px-3 py-1 rounded text-xs md:text-lg animate-pulse border border-yellow-400/50">{getText(state.language, 'GAME_TRIPLE_POINTS')}</span>}
+                    {(state.currentRound === state.totalRounds - 1) && <span className="text-yellow-400 bg-yellow-900/50 px-2 md:px-3 py-1 rounded text-xs md:text-lg animate-pulse border border-yellow-400/50">{getText(state.language, 'GAME_DOUBLE_POINTS')}</span>}
                 </h3>
                 <div className="bg-white text-purple-900 p-6 md:p-12 rounded-[2rem] shadow-2xl transform rotate-1 border-b-[8px] border-r-[8px] border-purple-200/50 relative overflow-hidden">
                     <div className="absolute top-0 right-0 p-6 opacity-5">
@@ -107,7 +108,7 @@ export const HostView: React.FC<HostViewProps> = ({ state, actions, onHome, debu
                                 {part}
                                 {i < arr.length - 1 && (
                                     <span className="inline-flex items-center justify-center border-b-4 border-dashed border-purple-300 min-w-[40px] md:min-w-[80px] mx-1 md:mx-2 text-purple-400 px-1 md:px-2 animate-pulse">
-                                        {state.phase === GamePhase.WRITING ? "?" : "BLANK"}
+                                        {state.phase === GamePhase.WRITING ? getText(state.language, 'GAME_WRITING_INDICATOR') : getText(state.language, 'GAME_BLANK')}
                                     </span>
                                 )}
                             </span>
@@ -126,11 +127,11 @@ export const HostView: React.FC<HostViewProps> = ({ state, actions, onHome, debu
                         {state.currentQuestion?.fact.replace('<BLANK>', '________')}
                     </p>
                     <div className="absolute -top-3 -left-3 md:-top-5 md:-left-5 bg-yellow-400 text-purple-900 font-black px-3 py-1 md:px-6 md:py-2 rounded-xl transform -rotate-6 shadow-xl text-xs md:text-lg border-2 border-white">
-                        THE FACT
+                        {getText(state.language, 'GAME_THE_FACT')}
                     </div>
                 </div>
                 <h2 className="text-3xl md:text-7xl font-black text-white mt-2 md:mt-4 drop-shadow-xl tracking-tighter uppercase">
-                    SPOT THE <span className="text-green-400">TRUTH</span>
+                    {getText(state.language, 'GAME_SPOT_TRUTH')} <span className="text-green-400">{getText(state.language, 'GAME_TRUTH')}</span>
                 </h2>
             </div>
 
@@ -157,7 +158,7 @@ export const HostView: React.FC<HostViewProps> = ({ state, actions, onHome, debu
                                     animate={{ scale: 1 }}
                                     className="absolute -top-2 -right-2 md:-top-3 md:-right-3 bg-indigo-600 text-white rounded-full w-10 h-10 md:w-14 md:h-14 flex flex-col items-center justify-center font-bold border-4 border-white shadow-lg z-20"
                                 >
-                                    <span className="text-[10px] md:text-xs uppercase font-black -mb-1 opacity-70">AUD</span>
+                                    <span className="text-[10px] md:text-xs uppercase font-black -mb-1 opacity-70">{getText(state.language, 'GAME_AUDIENCE_ABBREV')}</span>
                                     <span className="text-sm md:text-xl leading-none">{ans.audienceVotes.length}</span>
                                 </motion.div>
                             )}
@@ -196,12 +197,12 @@ export const HostView: React.FC<HostViewProps> = ({ state, actions, onHome, debu
             <div className="absolute top-6 right-8 z-[50] flex flex-col items-end gap-3 pointer-events-none">
                 {state.phase !== GamePhase.LOBBY && (
                     <div className="bg-purple-600 text-white px-6 py-3 rounded-2xl font-black text-2xl shadow-xl border-4 border-white/20 uppercase transform rotate-2">
-                        CODE: {state.roomCode}
+                        {getText(state.language, 'LOBBY_ROOM_CODE', { code: state.roomCode })}
                     </div>
                 )}
                 <div className="bg-black/60 px-4 py-2 rounded-full flex items-center gap-2 text-white/90 backdrop-blur-sm border border-white/10">
                     <Users size={20} />
-                    <span className="font-bold uppercase">{audienceCount} AUDIENCE</span>
+                    <span className="font-bold uppercase">{audienceCount} {getText(state.language, 'GAME_TAG_AUDIENCE')}</span>
                 </div>
 
                 {/* Timer - MOVED TO TOP RIGHT */}
@@ -227,7 +228,7 @@ export const HostView: React.FC<HostViewProps> = ({ state, actions, onHome, debu
                 <div className="absolute top-6 left-1/2 -translate-x-1/2 z-[50] pointer-events-none">
                     <div className="bg-black/40 backdrop-blur-md px-6 py-2 rounded-2xl border border-white/10 shadow-lg">
                         <span className="font-bold text-white/90 tracking-widest uppercase text-lg">
-                            {isFinalRound ? "FINAL ROUND" : `ROUND ${state.currentRound} / ${state.totalRounds}`}
+                            {isFinalRound ? getText(state.language, 'GAME_FINAL_ROUND') : getText(state.language, 'GAME_ROUND', { current: state.currentRound, total: state.totalRounds })}
                         </span>
                     </div>
                 </div>
@@ -279,7 +280,7 @@ export const HostView: React.FC<HostViewProps> = ({ state, actions, onHome, debu
 
                                     {state.phase === GamePhase.CATEGORY_SELECT && state.categorySelection?.selectorId === p.id && !isDone && (
                                         <motion.div initial={{ y: -10 }} animate={{ y: 0 }} transition={{ repeat: Infinity, repeatType: 'reverse' }} className="absolute -top-10 text-yellow-400 font-bold text-sm bg-black px-2 py-1 rounded uppercase">
-                                            PICKING!
+                                            {getText(state.language, 'GAME_PICKING')}
                                         </motion.div>
                                     )}
 
