@@ -21,6 +21,7 @@ export const I18N_EN = {
     LOBBY_ADD_BOT: "+ BOT",
     LOBBY_ADD_AUDIENCE: "+ AUDIENCE",
     LOBBY_AUDIENCE_MODE: "AUDIENCE MODE",
+    LOBBY_KICK: "KICK",
 
     // Join Screen
     JOIN_ENTER_CODE: "ROOM CODE",
@@ -66,7 +67,7 @@ export const I18N_EN = {
     // Game Constants / Shared
     GAME_DOUBLE_POINTS: "2X POINTS",
     GAME_BLANK: "BLANK",
-    GAME_WRITING_INDICATOR: "?",
+    GAME_WRITING_INDICATOR: "???",
     GAME_THE_FACT: "THE FACT",
     GAME_SPOT_TRUTH: "SPOT THE",
     GAME_TRUTH: "TRUTH",

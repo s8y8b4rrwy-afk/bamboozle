@@ -3,7 +3,7 @@ import { GameState, GamePhase, Player, Answer, Expression, Emote } from '../type
 import { Avatar } from '../components/Avatar';
 import { Narrator } from '../components/Narrator';
 import { motion, AnimatePresence } from 'framer-motion';
-import { QrCode, User, Play, Clock, Trophy, Bot, ArrowUp, CheckCircle, RotateCcw, Home, Disc, Users, Crown, Quote } from 'lucide-react';
+import { QrCode, User, Play, Clock, Trophy, Bot, ArrowUp, CheckCircle, RotateCcw, Home, Disc, Users, Crown, Quote, XCircle, WifiOff } from 'lucide-react';
 import { sfx } from '../services/audioService';
 import { getText } from '../i18n';
 
@@ -271,6 +271,23 @@ export const HostView: React.FC<HostViewProps> = ({ state, actions, onHome, debu
                                     exit={{ scale: 0, opacity: 0 }}
                                     className="flex flex-col items-center relative group p-2 mx-2"
                                 >
+                                    {/* KICK BUTTON (Lobby Only) */}
+                                    {state.phase === GamePhase.LOBBY && (
+                                        <motion.button
+                                            whileHover={{ scale: 1.1 }}
+                                            whileTap={{ scale: 0.9 }}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                sfx.play('FAILURE');
+                                                actions.kickPlayer(p.id);
+                                            }}
+                                            className="absolute -top-2 -right-2 z-[60] bg-red-600 text-white rounded-full p-1 shadow-lg border-2 border-white pointer-events-auto cursor-pointer"
+                                            title={getText(state.language, 'LOBBY_KICK')}
+                                        >
+                                            <XCircle size={20} />
+                                        </motion.button>
+                                    )}
+
                                     {/* VIP CROWN */}
                                     {state.vipId === p.id && (state.phase === GamePhase.LOBBY) && (
                                         <motion.div
@@ -288,6 +305,13 @@ export const HostView: React.FC<HostViewProps> = ({ state, actions, onHome, debu
                                                 <CheckCircle size={24} strokeWidth={3} />
                                             </motion.div>
                                         )}
+                                        {!p.isConnected && (
+                                            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center z-30 backdrop-blur-[2px]">
+                                                <div className="bg-red-500/80 text-white px-2 py-1 rounded text-[10px] font-black flex items-center gap-1">
+                                                    <WifiOff size={10} /> {getText(state.language, 'LOBBY_WAITING')}
+                                                </div>
+                                            </motion.div>
+                                        )}
                                     </AnimatePresence>
 
                                     {state.phase === GamePhase.CATEGORY_SELECT && state.categorySelection?.selectorId === p.id && !isDone && (
@@ -296,7 +320,7 @@ export const HostView: React.FC<HostViewProps> = ({ state, actions, onHome, debu
                                         </motion.div>
                                     )}
 
-                                    <div className="relative hover:scale-110 transition-transform duration-200">
+                                    <div className={`relative transition-transform duration-200 ${(state.phase === GamePhase.LOBBY) ? 'group-hover:scale-110' : 'hover:scale-110'} ${!p.isConnected ? 'grayscale opacity-50' : ''}`}>
                                         <Avatar seed={p.avatarSeed} size={100} expression={effectiveExpression} className="filter drop-shadow-xl" />
                                     </div>
                                     <div className="mt-1 bg-black/50 px-2 py-0.5 rounded text-center min-w-[80px]">

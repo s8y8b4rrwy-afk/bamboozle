@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
-import { QUESTIONS } from './questions';
+import { QUESTIONS_EN as QUESTIONS } from '../../i18n/questions/en';
 import './index.css';
 
 function App() {
@@ -75,7 +75,7 @@ function App() {
     <div className="app-container">
       <header>
         <h1>Bamboozle Question Exporter</h1>
-        <p className="subtitle">Extracted from questions.ts • {allQuestions.length} total questions</p>
+        <p className="subtitle">Extracted from en.ts • {allQuestions.length} total questions</p>
       </header>
 
       <div className="controls">

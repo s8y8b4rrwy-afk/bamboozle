@@ -3,7 +3,7 @@ import { GameState, GamePhase, Player, Answer, Expression } from '../types';
 import { Avatar } from '../components/Avatar';
 import { Narrator } from '../components/Narrator';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Clock, Users, CheckCircle, Lock, Play, Crown, ArrowUp, Star, Menu, X, ChevronDown } from 'lucide-react';
+import { Clock, Users, CheckCircle, Lock, Play, Crown, ArrowUp, Star, Menu, X, ChevronDown, XCircle, WifiOff } from 'lucide-react';
 import { sfx } from '../services/audioService';
 import { getText } from '../i18n';
 import { RevealSequence, LeaderboardSequence, CategoryRoulette, PointsPopup, EmotePopupLayer, CountUp, GameBackground, getAdaptiveTextClass } from './GameSharedComponents';
@@ -42,8 +42,17 @@ const AvatarStrip = React.memo(({ players, phase, submittedLies, isMobile, onTog
                     (phase === GamePhase.VOTING && !!p.currentVote);
                 return (
                     <div key={p.id} className={`relative flex-shrink-0 flex flex-col items-center z-10 ${isMobile ? 'min-w-[50px]' : ''}`}>
-                        {isDone && <div className="absolute top-0 right-0 bg-green-500 w-3 h-3 md:w-5 md:h-5 rounded-full border border-white z-10" />}
-                        <Avatar seed={p.avatarSeed} size={isMobile ? 40 : 50} expression={p.expression} className="filter drop-shadow-lg transition-transform hover:scale-110" />
+                        <AnimatePresence>
+                            {isDone && (
+                                <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }} className="absolute top-0 right-0 bg-green-500 w-3 h-3 md:w-5 md:h-5 rounded-full border border-white z-20" />
+                            )}
+                            {!p.isConnected && (
+                                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center z-20 backdrop-blur-[1px]">
+                                    <WifiOff size={isMobile ? 12 : 16} className="text-red-500" />
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+                        <Avatar seed={p.avatarSeed} size={isMobile ? 40 : 50} expression={p.expression} className={`filter drop-shadow-lg transition-transform hover:scale-110 ${!p.isConnected ? 'grayscale opacity-50' : ''}`} />
                         <span className={`text-white/90 uppercase font-bold mt-1 shadow-black/50 drop-shadow-md text-center leading-tight ${isMobile ? (p.name.length > 10 ? 'text-[8px] max-w-[85px]' : 'text-[10px] max-w-[70px]') : 'text-xs max-w-[100px]'}`}>{p.name}</span>
                     </div>
                 );
@@ -342,14 +351,40 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
                         <div className="flex-1 flex flex-col items-center justify-center p-2">
                             <div className="grid grid-cols-3 gap-y-12 gap-x-2 w-full">
                                 {Object.values(state.players).map((p) => (
-                                    <div key={p.id} className="flex flex-col items-center relative">
+                                    <div key={p.id} className="flex flex-col items-center relative group">
+                                        {/* KICK BUTTON (VIP Only, cannot kick self) */}
+                                        {isVip && p.id !== playerId && (
+                                            <motion.button
+                                                whileHover={{ scale: 1.1 }}
+                                                whileTap={{ scale: 0.9 }}
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    sfx.play('FAILURE');
+                                                    actions.kickPlayer(p.id);
+                                                }}
+                                                className="absolute -top-1 -right-1 z-[60] bg-red-600 text-white rounded-full p-1 shadow-lg border-2 border-white pointer-events-auto cursor-pointer"
+                                                title={getText(state.language, 'LOBBY_KICK')}
+                                            >
+                                                <XCircle size={16} />
+                                            </motion.button>
+                                        )}
+
                                         {p.id === state.vipId && (
                                             <div className="absolute -top-5 z-10">
                                                 <Crown size={16} className="text-yellow-400 filter drop-shadow-md" fill="currentColor" />
                                             </div>
                                         )}
                                         <div className="relative">
-                                            <Avatar seed={p.avatarSeed} size={80} expression={p.expression} className={`filter drop-shadow-xl transition-all ${p.isReady ? 'opacity-100 scale-110' : 'opacity-80'}`} />
+                                            <AnimatePresence>
+                                                {!p.isConnected && (
+                                                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center z-20 backdrop-blur-[2px]">
+                                                        <div className="bg-red-500/80 text-white px-2 py-0.5 rounded text-[8px] font-black flex items-center gap-1">
+                                                            <WifiOff size={8} /> {getText(state.language, 'LOBBY_WAITING')}
+                                                        </div>
+                                                    </motion.div>
+                                                )}
+                                            </AnimatePresence>
+                                            <Avatar seed={p.avatarSeed} size={80} expression={p.expression} className={`filter drop-shadow-xl transition-all ${p.isReady ? 'opacity-100 scale-110' : 'opacity-80'} ${!p.isConnected ? 'grayscale opacity-50' : ''}`} />
                                         </div>
                                         <div className="font-black text-white uppercase mt-4 text-[11px] tracking-wider truncate max-w-full text-center drop-shadow-md">{p.name}</div>
                                         <div className={`text-[9px] font-black uppercase mt-1 tracking-widest ${p.isReady ? 'text-green-400' : 'text-white/30'}`}>

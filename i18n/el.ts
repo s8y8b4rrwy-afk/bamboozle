@@ -21,6 +21,7 @@ export const I18N_EL = {
     LOBBY_ADD_BOT: "+ MΠΟΤ",
     LOBBY_ADD_AUDIENCE: "+ ΚΟΙΝΟ",
     LOBBY_AUDIENCE_MODE: "ΛΕΙΤΟΥΡΓΙΑ ΚΟΙΝΟΥ",
+    LOBBY_KICK: "ΔΙΩΞΙΜΟ",
 
     // Join Screen
     JOIN_ENTER_CODE: "ΚΩΔΙΚΟΣ",

@@ -111,5 +111,7 @@ export type GameEvent =
   | { type: 'SELECT_CATEGORY'; payload: { category: string } }
   | { type: 'TOGGLE_ONLINE_MODE'; payload: null }
   | { type: 'TOGGLE_LANGUAGE'; payload: null } // New event
+  | { type: 'PLAYER_DISCONNECTED'; payload: { userId: string } }
+  | { type: 'KICK_PLAYER'; payload: { playerId: string } }
   | { type: 'PLAY_NARRATION'; payload: { text: string; key?: string } }
   | { type: 'RESTART_GAME'; payload: null };

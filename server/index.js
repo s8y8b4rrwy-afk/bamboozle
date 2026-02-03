@@ -81,6 +81,7 @@ io.on('connection', (socket) => {
 
     socket.join(roomCode);
     socket.data.roomCode = roomCode; // Track room for disconnect logic
+    socket.data.userId = id; // Track user ID for disconnect events
     const user = { id: id || socket.id, name: name || 'Anonymous' };
 
     // We don't necessarily need to store players/audience separately here 
@@ -122,33 +123,43 @@ io.on('connection', (socket) => {
     console.log('User disconnected:', socket.id);
 
     const roomCode = socket.data.roomCode;
+    const userId = socket.data.userId;
+
     if (roomCode && rooms[roomCode]) {
       // Check if host disconnected
       if (rooms[roomCode].hostSocketId === socket.id) {
-        console.log(`Host disconnected from ${roomCode}. Closing room.`);
-        io.to(roomCode).emit('roomClosed');
+        console.log(`Host disconnected from ${roomCode}. Starting 60s grace period.`);
 
-        if (roomTimeouts[roomCode]) {
-          clearTimeout(roomTimeouts[roomCode]);
+        // Start destruction timeout
+        roomTimeouts[roomCode] = setTimeout(() => {
+          console.log(`Grace period expired. Closing room ${roomCode}.`);
+          io.to(roomCode).emit('roomClosed');
+          delete rooms[roomCode];
           delete roomTimeouts[roomCode];
-        }
-        delete rooms[roomCode];
+        }, 60000);
         return;
       }
 
-      // Check if room is empty of human players
+      // Notify host that a player disconnected
+      if (userId) {
+        io.to(roomCode).emit('playerDisconnected', { userId });
+      }
+
+      // Check if room is empty of human players (excluding bots which don't have sockets)
       const roomSockets = io.sockets.adapter.rooms.get(roomCode);
       const numClients = roomSockets ? roomSockets.size : 0;
 
       console.log(`User left ${roomCode}. Remaining connections: ${numClients}`);
 
       if (numClients === 0 && rooms[roomCode]) {
-        console.log(`Room ${roomCode} empty. Starting 60s grace period.`);
-        roomTimeouts[roomCode] = setTimeout(() => {
-          console.log(`Closing room ${roomCode} due to inactivity.`);
-          delete rooms[roomCode];
-          delete roomTimeouts[roomCode];
-        }, 60000);
+        if (!roomTimeouts[roomCode]) {
+          console.log(`Room ${roomCode} empty. Starting 60s grace period.`);
+          roomTimeouts[roomCode] = setTimeout(() => {
+            console.log(`Closing room ${roomCode} due to inactivity.`);
+            delete rooms[roomCode];
+            delete roomTimeouts[roomCode];
+          }, 60000);
+        }
       }
     }
   });

@@ -685,6 +685,18 @@ export const PHRASES_EN = {
         "{winner} is the ultimate liar.",
         "End of line. Winner: {winner}."
     ],
+    PLAYER_LEFT: [
+        "{name} has left the building.",
+        "Wait, where did {name} go?",
+        "{name} couldn't take the heat.",
+        "Goodbye {name}. We won't miss you.",
+        "{name} has been disconnected. The game goes on.",
+        "Player {name} has departed.",
+        "{name} logged off. Quitter.",
+        "We lost {name}. Oh well.",
+        "{name} vanished into the digital void.",
+        "So long, {name}!"
+    ],
     AUDIENCE_JOIN: [
         "The Audience is growing. They are watching you.",
         "More audience members? Try to impress them.",

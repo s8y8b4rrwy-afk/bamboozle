@@ -163,6 +163,7 @@ export const useGameService = (role: 'HOST' | 'PLAYER' | 'AUDIENCE', playerName?
   const timerRef = useRef<number | null>(null);
   const speechDedupRef = useRef<Record<string, number>>({});
   const lastSyncRef = useRef<number>(0);
+  const playerTimeoutsRef = useRef<Record<string, number>>({});
 
   useEffect(() => {
     stateRef.current = state;
@@ -328,6 +329,12 @@ export const useGameService = (role: 'HOST' | 'PLAYER' | 'AUDIENCE', playerName?
       }
     });
 
+    socket.on('playerDisconnected', ({ userId }: { userId: string }) => {
+      if (role === 'HOST') {
+        processHostEvent({ type: 'PLAYER_DISCONNECTED', payload: { userId } });
+      }
+    });
+
     // Listen for Host Events (Narration)
     socket.on('hostEvent', (event: GameEvent) => {
       if (event.type === 'PLAY_NARRATION') {
@@ -450,6 +457,12 @@ export const useGameService = (role: 'HOST' | 'PLAYER' | 'AUDIENCE', playerName?
         // We ensure they are NOT in audience and just sync them.
         if (next.players[event.payload.id]) {
           next.players[event.payload.id].isConnected = true;
+          // Clear any auto-kick timeout
+          if (playerTimeoutsRef.current[event.payload.id]) {
+            clearTimeout(playerTimeoutsRef.current[event.payload.id]);
+            delete playerTimeoutsRef.current[event.payload.id];
+            console.log(`Auto-kick cancelled for ${event.payload.id} (reconnected)`);
+          }
           // Clean up audience if they somehow got there
           if (next.audience[event.payload.id]) {
             const { [event.payload.id]: _, ...rest } = next.audience;
@@ -766,6 +779,51 @@ export const useGameService = (role: 'HOST' | 'PLAYER' | 'AUDIENCE', playerName?
           next.usedQuestionIds = [];
 
           sfx.play('CLICK');
+          changed = true;
+        }
+        break;
+
+      case 'PLAYER_DISCONNECTED':
+        if (next.players[event.payload.userId]) {
+          next.players[event.payload.userId].isConnected = false;
+          changed = true;
+
+          // Start 60s auto-kick timeout
+          const pid = event.payload.userId;
+          if (playerTimeoutsRef.current[pid]) clearTimeout(playerTimeoutsRef.current[pid]);
+
+          playerTimeoutsRef.current[pid] = window.setTimeout(() => {
+            console.log(`Auto-kicking player ${pid} after 60s disconnect`);
+            processHostEvent({ type: 'KICK_PLAYER', payload: { playerId: pid } });
+          }, 60000);
+        }
+        break;
+
+      case 'KICK_PLAYER':
+        if (next.players[event.payload.playerId]) {
+          const playerName = next.players[event.payload.playerId].name;
+          const { [event.payload.playerId]: kicked, ...remainingPlayers } = next.players;
+          next.players = remainingPlayers;
+
+          // If VIP was kicked, reassign
+          if (next.vipId === event.payload.playerId) {
+            const humans = Object.values(next.players).filter(p => !p.isBot);
+            if (humans.length > 0) next.vipId = humans[0].id;
+            else {
+              const bots = Object.values(next.players);
+              if (bots.length > 0) next.vipId = bots[0].id;
+              else next.vipId = '';
+            }
+          }
+
+          // Clear any pending timeout
+          if (playerTimeoutsRef.current[event.payload.playerId]) {
+            clearTimeout(playerTimeoutsRef.current[event.payload.playerId]);
+            delete playerTimeoutsRef.current[event.payload.playerId];
+          }
+
+          sfx.play('FAILURE');
+          speak(getNarratorPhrase(next.language, 'PLAYER_LEFT', { name: playerName }) || `${playerName} has been kicked.`, false, `KICK_${event.payload.playerId}`);
           changed = true;
         }
         break;
@@ -1427,6 +1485,11 @@ export const useGameService = (role: 'HOST' | 'PLAYER' | 'AUDIENCE', playerName?
       sendCategorySelection,
       speak,
       triggerNextPhase,
+      kickPlayer: (playerId: string) => {
+        if (role === 'HOST') {
+          processHostEvent({ type: 'KICK_PLAYER', payload: { playerId } });
+        }
+      },
       sendToggleOnlineMode: () => {
         if (role === 'HOST') {
           processHostEvent({ type: 'TOGGLE_ONLINE_MODE', payload: null });
