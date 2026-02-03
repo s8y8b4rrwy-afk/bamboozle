@@ -26,6 +26,22 @@ export const getPointsConfig = (currentRound: number, totalRounds: number) => {
     };
 };
 
+export const getAdaptiveTextClass = (text: string, baseSize: string, lengthLimit: number = 50) => {
+    if (!text) return baseSize;
+    // Allow wrapping naturally first. Only shrink if it's really long.
+    if (text.length > lengthLimit * 2.5) return 'text-[0.6em] leading-tight'; // Very long -> smallest
+    if (text.length > lengthLimit * 1.5) return 'text-[0.8em] leading-tight'; // Long -> smaller
+    if (text.length > lengthLimit) return 'text-[0.9em] leading-tight'; // Medium
+    return baseSize; // Normal
+};
+
+export const GameBackground = ({ children, className = '' }: { children: React.ReactNode, className?: string }) => (
+    <div className={`relative w-full h-full bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900 overflow-hidden text-white selection:bg-pink-500 font-display flex flex-col ${className}`}>
+        <div className="absolute inset-0 z-0 opacity-10 pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle, #ffffff 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
+        {children}
+    </div>
+);
+
 export const CountUp = ({ value, from }: { value: number; from: number }) => {
     const [displayValue, setDisplayValue] = useState(isNaN(from) ? 0 : from);
 
@@ -59,18 +75,22 @@ export const CountUp = ({ value, from }: { value: number; from: number }) => {
 };
 
 // --- POINTS POPUP ANIMATION ---
-export const PointsPopup = ({ amount, label = 'PTS' }: { amount: number, label?: string }) => {
+export const PointsPopup = ({ amount, label = 'PTS', placement = 'bottom' }: { amount: number, label?: string, placement?: 'top' | 'bottom' }) => {
     useEffect(() => {
         sfx.play('SUCCESS');
     }, []);
 
+    const positionClass = placement === 'top'
+        ? "absolute bottom-full left-0 mb-4 pb-2"
+        : "absolute top-full left-0 mt-2";
+
     return (
         <motion.div
-            initial={{ scale: 0, y: 50, opacity: 0 }}
-            animate={{ scale: 0.9, y: -80, opacity: 1 }}
+            initial={{ scale: 0, y: placement === 'top' ? 10 : -10, opacity: 0 }}
+            animate={{ scale: 0.9, y: 0, opacity: 1 }}
             exit={{ scale: 0, opacity: 0 }}
             transition={{ type: "spring", stiffness: 200, damping: 10 }}
-            className="absolute z-[100] flex flex-col items-center pointer-events-none w-full"
+            className={`${positionClass} z-[100] flex flex-col items-center pointer-events-none w-full`}
         >
             <div className="text-3xl md:text-6xl font-black text-yellow-400 drop-shadow-[0_4px_4px_rgba(0,0,0,0.8)] stroke-black" style={{ WebkitTextStroke: '1px black' }}>
                 +{amount}
@@ -129,7 +149,7 @@ export const CategoryRoulette = ({ state, onSelect }: { state: GameState, onSele
     const selected = state.categorySelection?.selected;
 
     return (
-        <div className="flex flex-col items-center justify-center h-full w-full z-30 relative px-4 md:px-12 py-safe overflow-y-auto">
+        <div className="flex flex-col items-center justify-center h-full w-full z-30 relative px-4 md:px-12 py-safe min-h-0">
             <div className="mb-4 md:mb-12 text-center max-w-2xl mx-auto flex-shrink-0 pt-4 md:pt-0">
                 <h2 className="text-sm md:text-3xl text-purple-200 uppercase tracking-widest font-black drop-shadow-sm mb-2 md:mb-4">{getText(state.language, 'GAME_CATEGORY_SELECTION')}</h2>
                 <div className="flex flex-col items-center">
@@ -138,7 +158,7 @@ export const CategoryRoulette = ({ state, onSelect }: { state: GameState, onSele
                 </div>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-2 md:gap-6 w-full max-w-5xl px-1 md:px-2 pb-24 md:pb-0">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-2 md:gap-6 w-full max-w-5xl p-4 md:p-6 pb-24 md:pb-8 overflow-y-auto flex-1 min-h-0 content-start no-scrollbar">
                 {options.map((opt, idx) => {
                     const isSelected = selected === opt;
                     const isDimmed = selected && !isSelected;
@@ -165,7 +185,7 @@ export const CategoryRoulette = ({ state, onSelect }: { state: GameState, onSele
                             `}
                         >
                             <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent pointer-events-none" />
-                            <span className="relative z-10 leading-tight drop-shadow-md text-xs md:text-2xl line-clamp-2">{opt}</span>
+                            <span className={`relative z-10 leading-tight drop-shadow-md line-clamp-2 ${getAdaptiveTextClass(opt, 'text-xs md:text-2xl', 20)}`}>{opt}</span>
                         </motion.button>
                     );
                 })}
@@ -276,13 +296,13 @@ export const RevealSequence = ({ state, actions, setGalleryOverrides, isHost }: 
                     animate={{ scale: 1, opacity: 1, rotate: 0 }}
                     exit={{ scale: 1.2, opacity: 0 }}
                     transition={{ type: 'spring', bounce: 0.4 }}
-                    className={`relative w-full p-2 md:p-14 rounded-[2rem] md:rounded-[2.5rem] border-4 md:border-[6px] shadow-xl md:shadow-2xl flex flex-col items-center text-center transition-colors duration-500 uppercase flex-1 min-h-0 justify-center
+                    className={`relative w-full max-w-4xl mx-auto p-4 md:p-14 rounded-[2rem] md:rounded-[2.5rem] border-4 md:border-[6px] shadow-xl md:shadow-2xl flex flex-col items-center text-center transition-colors duration-500 uppercase flex-1 min-h-0 h-full justify-between pt-10 pb-8
                       ${isTruth && phase === 'AUTHOR'
                             ? 'bg-green-600 border-green-300 text-white shadow-[0_20px_60px_-15px_rgba(22,163,74,0.6)]'
                             : 'bg-white border-gray-200 text-black shadow-[0_20px_60px_-15px_rgba(255,255,255,0.4)]'}
                   `}
                 >
-                    <h2 className="text-lg md:text-7xl font-black mb-2 md:mb-12 leading-none drop-shadow-sm line-clamp-3 md:line-clamp-none overflow-hidden">{currentAnswer.text}</h2>
+                    <h2 className={`font-black mb-2 md:mb-8 leading-none drop-shadow-sm line-clamp-3 md:line-clamp-none overflow-hidden ${getAdaptiveTextClass(currentAnswer.text, 'text-lg md:text-5xl', 40)}`}>{currentAnswer.text}</h2>
 
                     {/* Voters Container */}
                     <div className="w-full flex flex-wrap items-center justify-center gap-2 md:gap-6 mb-2 md:mb-8 min-h-[4rem] relative flex-shrink-0">
@@ -362,7 +382,11 @@ export const RevealSequence = ({ state, actions, setGalleryOverrides, isHost }: 
                                 {/* Points Animation for Author */}
                                 <AnimatePresence>
                                     {currentAnswer.votes.length > 0 && (
-                                        <PointsPopup amount={pointsConfig.lie * currentAnswer.votes.length} label={getText(state.language, 'GAME_LIE_BONUS')} />
+                                        <PointsPopup
+                                            amount={pointsConfig.lie * currentAnswer.votes.length}
+                                            label={getText(state.language, 'GAME_LIE_BONUS')}
+                                            placement="top"
+                                        />
                                     )}
                                 </AnimatePresence>
 
@@ -452,7 +476,7 @@ export const LeaderboardSequence = ({ state, actions, onHome, isHost }: { state:
     };
 
     return (
-        <div className="flex flex-col items-center justify-center h-full w-full max-w-4xl mx-auto z-20 relative">
+        <div className="flex flex-col items-center w-full max-w-4xl mx-auto z-20 relative">
             <h2 className="text-3xl md:text-6xl font-black text-yellow-400 mb-8 drop-shadow-lg tracking-wider uppercase">
                 {state.phase === GamePhase.GAME_OVER ? getText(state.language, 'GAME_FINAL_SCORES') : getText(state.language, 'GAME_STANDINGS')}
             </h2>
@@ -496,13 +520,7 @@ export const LeaderboardSequence = ({ state, actions, onHome, isHost }: { state:
             </div>
 
             {/* HOST VIEW NO LONGER SHOWS CONTROLS IN GAME OVER - THEY ARE ON VIP PHONE */}
-            {state.phase === GamePhase.GAME_OVER && (
-                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 3 }} className="mt-8 flex gap-4 uppercase">
-                    <div className="text-2xl text-yellow-400 font-bold animate-pulse">
-                        {getText(state.language, 'GAME_WAITING_VIP')}
-                    </div>
-                </motion.div>
-            )}
+
         </div>
     );
 };

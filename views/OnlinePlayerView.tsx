@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Clock, Users, CheckCircle, Lock, Play, Crown, ArrowUp, Star, Menu, X, ChevronDown } from 'lucide-react';
 import { sfx } from '../services/audioService';
 import { getText } from '../i18n';
-import { RevealSequence, LeaderboardSequence, CategoryRoulette, PointsPopup, EmotePopupLayer, CountUp } from './GameSharedComponents';
+import { RevealSequence, LeaderboardSequence, CategoryRoulette, PointsPopup, EmotePopupLayer, CountUp, GameBackground, getAdaptiveTextClass } from './GameSharedComponents';
 
 interface OnlinePlayerViewProps {
     state: GameState;
@@ -15,6 +15,42 @@ interface OnlinePlayerViewProps {
     isSpeaking: boolean;
     onHome: () => void;
 }
+
+const AvatarStrip = React.memo(({ players, phase, submittedLies, isMobile, onToggleReactions }: {
+    players: Player[],
+    phase: GamePhase,
+    submittedLies: Record<string, string>,
+    isMobile: boolean,
+    onToggleReactions: () => void
+}) => {
+    // During lobby we show full grid, so skip strip
+    if (phase === GamePhase.LOBBY) return null;
+
+    return (
+        <div
+            onClick={onToggleReactions}
+            className={`
+                w-full z-40 shrink-0 relative transition-all duration-300
+                ${isMobile
+                    ? 'py-2 px-2 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 min-h-[4.5rem]'
+                    : 'p-2 flex flex-wrap justify-center items-end gap-3'
+                }
+            `}
+        >
+            {players.map(p => {
+                const isDone = (phase === GamePhase.WRITING && !!submittedLies[p.id]) ||
+                    (phase === GamePhase.VOTING && !!p.currentVote);
+                return (
+                    <div key={p.id} className={`relative flex-shrink-0 flex flex-col items-center z-10 ${isMobile ? 'min-w-[50px]' : ''}`}>
+                        {isDone && <div className="absolute top-0 right-0 bg-green-500 w-3 h-3 md:w-5 md:h-5 rounded-full border border-white z-10" />}
+                        <Avatar seed={p.avatarSeed} size={isMobile ? 40 : 50} expression={p.expression} className="filter drop-shadow-lg transition-transform hover:scale-110" />
+                        <span className={`text-white/90 uppercase font-bold mt-1 shadow-black/50 drop-shadow-md text-center leading-tight ${isMobile ? (p.name.length > 10 ? 'text-[8px] max-w-[85px]' : 'text-[10px] max-w-[70px]') : 'text-xs max-w-[100px]'}`}>{p.name}</span>
+                    </div>
+                );
+            })}
+        </div>
+    );
+});
 
 export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actions, playerId, isSpeaking, onHome }) => {
     const me = state.players[playerId];
@@ -135,40 +171,7 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
         </div>
     );
 
-    const AvatarStrip = () => {
-        const players = Object.values(state.players);
-        // During lobby we show full grid, so skip strip
-        if (state.phase === GamePhase.LOBBY) return null;
 
-        return (
-            <div
-                onClick={() => {
-                    if (isMobile) {
-                        if (showReactions) {
-                            setShowReactions(false);
-                            if (reactionTimerRef.current) clearTimeout(reactionTimerRef.current);
-                        } else {
-                            setShowReactions(true);
-                            resetReactionTimer();
-                        }
-                    }
-                }}
-                className="w-full py-3 px-2 overflow-x-auto flex items-center justify-center gap-3 z-40 shrink-0 no-scrollbar relative min-h-[4.5rem]"
-            >
-                {players.map(p => {
-                    const isDone = (state.phase === GamePhase.WRITING && !!state.submittedLies[p.id]) ||
-                        (state.phase === GamePhase.VOTING && !!p.currentVote);
-                    return (
-                        <div key={p.id} className="relative flex-shrink-0 flex flex-col items-center min-w-[50px] z-10">
-                            {isDone && <div className="absolute top-0 right-0 bg-green-500 w-3 h-3 rounded-full border border-white z-10" />}
-                            <Avatar seed={p.avatarSeed} size={40} expression={p.expression} className="filter drop-shadow-lg" />
-                            <span className="text-[10px] text-white/90 truncate max-w-[60px] uppercase font-bold mt-1 shadow-black/50 drop-shadow-md">{p.name}</span>
-                        </div>
-                    );
-                })}
-            </div>
-        );
-    }
 
     // --- JOIN FLOW ---
     if (!isJoined) {
@@ -286,7 +289,7 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
     // --- MAIN GAME RENDER ---
 
     return (
-        <div className="bg-gradient-to-b from-indigo-900 to-purple-900 flex flex-col h-full w-full overflow-hidden relative">
+        <GameBackground className="flex flex-col h-full w-full overflow-hidden relative">
             <EmotePopupLayer emotes={state.emotes} />
             <TopBar />
 
@@ -302,8 +305,8 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
 
             {/* MAIN CONTENT AREA - FlexGrow to fill space */}
             <div className={`
-                flex-1 relative flex flex-col w-full max-w-4xl mx-auto
-                ${(state.phase === GamePhase.REVEAL || state.phase === GamePhase.VOTING) ? 'overflow-hidden' : 'overflow-y-auto no-scrollbar'}
+                flex-1 relative flex flex-col w-full max-w-4xl mx-auto min-h-0 justify-center
+                ${(state.phase === GamePhase.VOTING) ? 'overflow-hidden' : 'overflow-y-auto no-scrollbar'}
             `}>
 
                 {/* 1. LOBBY */}
@@ -365,12 +368,9 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
                             </div>
                         </div>
 
-                        {/* C. BOTTOM SPACER (Clearing the Absolute Controls) */}
-                        <div className={`${isVip ? 'h-[320px]' : 'h-[240px]'} shrink-0`} />
-
-                        {/* Lobby Controls Fixed Bottom (Absolute) */}
+                        {/* Lobby Controls - Natural Flow */}
                         {me && (
-                            <div className={`absolute ${isVip ? 'bottom-4' : 'bottom-20'} left-4 right-4 z-50 flex flex-col gap-3 pb-safe-bottom`}>
+                            <div className="w-full flex flex-col gap-3 mt-8 pb-safe-bottom z-20 shrink-0">
                                 <button
                                     onClick={actions.sendToggleReady}
                                     className={`w-full py-4 rounded-xl font-black text-xl shadow-lg uppercase transition-all transform active:scale-95 ${me?.isReady ? 'bg-gray-700 text-gray-400' : 'bg-green-500 text-white'}`}
@@ -425,13 +425,13 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
                                 )}
                             </div>
                         )}
-                        {amAudience && <div className="absolute bottom-4 w-full text-center text-white/50 font-bold uppercase pb-safe-bottom">{getText(state.language, 'LOBBY_AUDIENCE_MODE')}</div>}
+                        {amAudience && <div className="w-full text-center text-white/50 font-bold uppercase pb-safe-bottom mt-8">{getText(state.language, 'LOBBY_AUDIENCE_MODE')}</div>}
                     </div>
                 )}
 
                 {/* 2. CATEGORY SELECT */}
                 {state.phase === GamePhase.CATEGORY_SELECT && (
-                    <div className="flex-1 flex flex-col items-center justify-center relative p-4">
+                    <div className="flex-1 flex flex-col items-center justify-center relative p-4 min-h-0 w-full">
                         {/* Timer moved safely away from content */}
                         <div className="absolute top-2 right-2 bg-black/50 px-3 py-1 rounded-full border border-white/20 backdrop-blur-md z-50">
                             <div className="flex items-center gap-2">
@@ -448,11 +448,11 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
 
                 {/* 3. WRITING (And INTRO) */}
                 {(state.phase === GamePhase.WRITING || state.phase === GamePhase.INTRO) && (
-                    <div className="flex-1 flex flex-col items-center justify-center p-4">
+                    <div className="flex-1 flex flex-col items-center justify-center p-4 min-h-0 w-full">
                         <div className="w-full max-w-md flex flex-col items-center gap-4">
 
                             {/* Stats Header */}
-                            <div className="w-full flex items-center justify-between px-1 pb-1 relative z-20">
+                            <div className="w-full flex items-center justify-between px-1 pb-1 relative z-20 flex-shrink-0">
                                 <div className="flex items-center gap-2">
                                     <div className="bg-purple-600/90 text-white text-[10px] font-black uppercase px-2 py-1 rounded-lg border-2 border-purple-400 shadow-sm">
                                         {isFinalRound ? getText(state.language, 'GAME_FINAL_ROUND') : getText(state.language, 'GAME_ROUND', { current: state.currentRound, total: state.totalRounds })}
@@ -471,7 +471,7 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
 
                             {/* Fact Card */}
                             <div className="w-full bg-white text-purple-900 p-4 md:p-6 rounded-2xl md:rounded-3xl shadow-xl border-b-4 md:border-b-8 border-purple-300 relative z-10 min-h-[15vh] flex items-center justify-center">
-                                <p className="text-base md:text-2xl font-black leading-tight uppercase text-center break-words">
+                                <p className={`font-black leading-tight uppercase text-center break-words ${getAdaptiveTextClass(state.currentQuestion?.fact.replace('<BLANK>', '________') || '', 'text-base md:text-2xl', 80)}`}>
                                     {state.currentQuestion?.fact.replace('<BLANK>', '________')}
                                 </p>
                             </div>
@@ -539,8 +539,8 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
                                 </div>
                             </div>
 
-                            <div className="w-full bg-purple-800/50 p-4 rounded-xl border border-white/10 backdrop-blur-sm shadow-md text-center">
-                                <p className="text-lg font-bold text-white leading-tight uppercase">
+                            <div className="w-full bg-purple-800/50 p-4 rounded-xl border border-white/10 backdrop-blur-sm shadow-md text-center max-h-[20vh] overflow-y-auto">
+                                <p className={`font-bold text-white leading-tight uppercase ${getAdaptiveTextClass(state.currentQuestion?.fact.replace('<BLANK>', '________') || '', 'text-lg', 60)}`}>
                                     {state.currentQuestion?.fact.replace('<BLANK>', '________')}
                                 </p>
                             </div>
@@ -569,27 +569,25 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
                                             }}
                                             disabled={iVoted && !amAudience}
                                             className={`
-                                                  w-full p-3 md:p-4 rounded-xl border-l-4 md:border-l-8 text-left font-bold text-base md:text-lg shadow-md transition-all active:scale-95 uppercase relative overflow-hidden min-h-[2.5rem] flex items-center
+                                                  w-full p-4 rounded-xl border-b-4 md:border-b-8 font-black shadow-lg transition-all active:scale-95 uppercase relative overflow-hidden min-h-[80px] flex items-center justify-center
                                                   ${iVoted
-                                                    ? 'bg-indigo-600 border-indigo-400 text-white'
-                                                    : 'bg-white border-transparent text-indigo-900'
+                                                    ? 'bg-blue-600 border-blue-800 text-white'
+                                                    : 'bg-white border-blue-200 text-indigo-950 hover:bg-blue-50'
                                                 }
                                                   ${(me?.currentVote && !iVoted) ? 'opacity-50 grayscale' : ''}
                                               `}
                                         >
-                                            <div className="relative z-10 flex flex-col w-full min-h-[3rem] justify-center">
-                                                <span className="leading-tight text-sm md:text-base">{ans.text}</span>
-                                                {/* Audience Indicator */}
-                                                {ans.audienceVotes.length > 0 && (
-                                                    <div className="flex items-center gap-1 mt-1 opacity-70">
-                                                        <Users size={12} className={iVoted ? 'text-black' : 'text-purple-500'} />
-                                                        <span className={`text-[10px] font-black ${iVoted ? 'text-black' : 'text-purple-500'}`}>
-                                                            {ans.audienceVotes.length}
-                                                        </span>
-                                                    </div>
-                                                )}
+                                            <div className="relative z-10 flex flex-col w-full justify-center items-center h-full px-2">
+                                                <span className={`leading-tight text-center w-full break-words whitespace-normal drop-shadow-sm ${getAdaptiveTextClass(ans.text, 'text-lg md:text-2xl', 30)}`}>{ans.text}</span>
                                             </div>
-                                            {iVoted && <motion.div layoutId="voted-check" className="absolute right-4"><CheckCircle size={24} /></motion.div>}
+
+                                            {/* Audience Indicator - Absolute Top Right */}
+                                            {ans.audienceVotes.length > 0 && (
+                                                <div className={`absolute top-2 right-2 flex items-center gap-1 font-black text-xs px-2 py-0.5 rounded-full ${iVoted ? 'bg-blue-800 text-blue-200' : 'bg-blue-100 text-blue-600'}`}>
+                                                    <Users size={12} />
+                                                    <span>{ans.audienceVotes.length}</span>
+                                                </div>
+                                            )}
                                         </motion.button>
                                     )
                                 })}
@@ -616,7 +614,7 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
 
                 {/* 5. REVEAL & LEADERBOARD (Shared) */}
                 {state.phase === GamePhase.REVEAL && (
-                    <div className="flex-1 flex items-center justify-center p-4">
+                    <div className="flex-1 flex flex-col items-center justify-center p-2 md:p-4 min-h-0 w-full">
                         <RevealSequence state={state} actions={actions} setGalleryOverrides={() => { }} isHost={isVip} />
                     </div>
                 )}
@@ -628,10 +626,19 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
                 )}
 
                 {state.phase === GamePhase.GAME_OVER && (
-                    <div className="flex-1 flex flex-col items-center justify-center p-4 overflow-y-auto">
+                    <div className="flex-1 flex flex-col items-center justify-start p-4 py-8 overflow-y-auto">
                         <LeaderboardSequence state={state} actions={actions} onHome={() => { }} isHost={isVip} />
+
+                        {!isVip && (
+                            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 3 }} className="mt-8 flex gap-4 uppercase pb-12">
+                                <div className="text-xl md:text-2xl text-yellow-400 font-bold animate-pulse text-center">
+                                    {getText(state.language, 'GAME_WAITING_VIP')}
+                                </div>
+                            </motion.div>
+                        )}
+
                         {isVip && (
-                            <div className="flex flex-col gap-4 mt-8 w-full max-w-sm pb-12">
+                            <div className="flex flex-col gap-4 mt-8 w-full max-w-sm pb-12 shrink-0">
                                 <button onClick={() => actions.sendRestart()} className="bg-green-500 hover:bg-green-600 text-white px-8 py-4 rounded-xl font-black text-xl shadow-lg uppercase w-full">
                                     {getText(state.language, 'GAME_OVER_PLAY_AGAIN')}
                                 </button>
@@ -648,9 +655,23 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
             {
                 state.phase !== GamePhase.LOBBY && state.phase !== GamePhase.LEADERBOARD && state.phase !== GamePhase.GAME_OVER && (
                     <div className="pb-safe-bottom z-50 transition-all duration-300">
-                        <AvatarStrip />
+                        <AvatarStrip
+                            players={Object.values(state.players)}
+                            phase={state.phase}
+                            submittedLies={state.submittedLies}
+                            isMobile={isMobile}
+                            onToggleReactions={() => {
+                                if (showReactions) {
+                                    setShowReactions(false);
+                                    if (reactionTimerRef.current) clearTimeout(reactionTimerRef.current);
+                                } else {
+                                    setShowReactions(true);
+                                    resetReactionTimer();
+                                }
+                            }}
+                        />
                         <AnimatePresence>
-                            {(!isMobile || showReactions) && (
+                            {(showReactions) && (
                                 <motion.div
                                     initial={{ height: 0, opacity: 0 }}
                                     animate={{ height: 'auto', opacity: 1 }}
@@ -667,6 +688,6 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
                     </div>
                 )
             }
-        </div >
+        </GameBackground >
     );
 };

@@ -24,7 +24,7 @@ export const I18N_EL = {
 
     // Join Screen
     JOIN_ENTER_CODE: "ΚΩΔΙΚΟΣ",
-    JOIN_PLACEHOLDER_CODE: "ΑΒΓΔ",
+    JOIN_PLACEHOLDER_CODE: "ADCD",
     JOIN_ENTER_NAME: "ΟΝΟΜΑ",
     JOIN_BTN_ENTER: "ΕΙΣΟΔΟΣ",
     JOIN_BTN_PLAY: "ΠΑΙΞΕ",
@@ -42,10 +42,10 @@ export const I18N_EL = {
     PROMPT_SUBMIT: "ΥΠΟΒΟΛΗ",
     PROMPT_LIE_SENT: "ΕΣΤΑΛΗ",
     PROMPT_WAITING: "Αναμονή παικτών...",
-    PROMPT_CANNOT_TRUTH: "Δεν μπορείς να γράψεις την αλήθεια!",
+    PROMPT_CANNOT_TRUTH: "Επ! Το βρήκες αλλά δεν μπορείς να γράψεις την αλήθεια!",
 
     // Voting
-    VOTE_SCROLL: "Κύλιση για περισσότερα",
+    VOTE_SCROLL: "Scroll για περισσότερα",
 
     // Game Over
     GAME_OVER_PLAY_AGAIN: "ΠΑΙΞΕ ΞΑΝΑ",
@@ -66,7 +66,7 @@ export const I18N_EL = {
     // Game Constants / Shared
     GAME_DOUBLE_POINTS: "ΔΙΠΛΟΙ ΠΟΝΤΟΙ",
     GAME_BLANK: "ΚΕΝΟ",
-    GAME_WRITING_INDICATOR: ";",
+    GAME_WRITING_INDICATOR: "???",
     GAME_THE_FACT: "ΤΟ ΓΕΓΟΝΟΣ",
     GAME_SPOT_TRUTH: "ΒΡΕΣ ΤΗΝ",
     GAME_TRUTH: "ΑΛΗΘΕΙΑ",
@@ -75,13 +75,13 @@ export const I18N_EL = {
     GAME_WAITING_VIP: "ΑΝΑΜΟΝΗ ΓΙΑ VIP...",
 
     // Shared Components
-    GAME_PTS: "ΠΝΤ",
+    GAME_PTS: "ΠΟΝΤΟΙ",
     GAME_CATEGORY_SELECTION: "Επιλογή Κατηγορίας",
     GAME_PICK_CATEGORY: "ΔΙΑΛΕΞΕ ΚΑΤΗΓΟΡΙΑ",
     GAME_IS_CHOOSING: "ΕΠΙΛΕΓΕΙ...",
     GAME_WAITING_HOST: "Αναμονή για τον Host...",
     GAME_LOADING: "Φόρτωση...",
-    GAME_TAG_SMART: "ΕΞΥΠΝΟΣ",
+    GAME_TAG_SMART: "ΜΠΡΑΒΟ!",
     GAME_TAG_FOOLED: "ΞΕΓΕΛΑΣΤΗΚΕ",
     GAME_TAG_AUDIENCE: "Κοινό",
     GAME_NO_TAKERS: "(Κανείς)",

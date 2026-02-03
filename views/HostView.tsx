@@ -22,7 +22,9 @@ import {
     EmotePopupLayer,
     CategoryRoulette,
     RevealSequence,
-    LeaderboardSequence
+    LeaderboardSequence,
+    GameBackground,
+    getAdaptiveTextClass
 } from './GameSharedComponents';
 
 export const HostView: React.FC<HostViewProps> = ({ state, actions, onHome, debugMode, isSpeaking }) => {
@@ -102,7 +104,7 @@ export const HostView: React.FC<HostViewProps> = ({ state, actions, onHome, debu
                     <div className="absolute top-0 right-0 p-6 opacity-5">
                         <Quote className="w-10 h-10 md:w-20 md:h-20" />
                     </div>
-                    <p className="text-xl md:text-5xl font-black leading-tight uppercase relative z-10">
+                    <div className={`font-black leading-tight uppercase relative z-10 ${getAdaptiveTextClass(state.currentQuestion?.fact || '', 'text-xl md:text-5xl', 80)}`}>
                         {state.currentQuestion?.fact.split('<BLANK>').map((part, i, arr) => (
                             <span key={i}>
                                 {part}
@@ -113,7 +115,7 @@ export const HostView: React.FC<HostViewProps> = ({ state, actions, onHome, debu
                                 )}
                             </span>
                         ))}
-                    </p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -174,8 +176,7 @@ export const HostView: React.FC<HostViewProps> = ({ state, actions, onHome, debu
     const showTimer = (state.phase === GamePhase.WRITING || state.phase === GamePhase.VOTING || state.phase === GamePhase.CATEGORY_SELECT) && state.timeLeft > 0;
 
     return (
-        <div className="relative w-full h-full bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900 overflow-hidden text-white selection:bg-pink-500 font-display flex flex-col">
-            <div className="absolute inset-0 z-0 opacity-10 pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle, #ffffff 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
+        <GameBackground>
 
             {/* Emotes Overlay */}
             <EmotePopupLayer emotes={state.emotes} />
@@ -190,7 +191,18 @@ export const HostView: React.FC<HostViewProps> = ({ state, actions, onHome, debu
                 {(state.phase === GamePhase.INTRO || state.phase === GamePhase.WRITING) && renderQuestion()}
                 {state.phase === GamePhase.VOTING && renderVoting()}
                 {state.phase === GamePhase.REVEAL && <RevealSequence state={state} actions={actions} setGalleryOverrides={setGalleryOverrides} isHost={true} />}
-                {(state.phase === GamePhase.LEADERBOARD || state.phase === GamePhase.GAME_OVER) && <LeaderboardSequence state={state} actions={actions} onHome={onHome} isHost={true} />}
+                {(state.phase === GamePhase.LEADERBOARD || state.phase === GamePhase.GAME_OVER) && (
+                    <div className="flex flex-col items-center justify-center h-full w-full">
+                        <LeaderboardSequence state={state} actions={actions} onHome={onHome} isHost={true} />
+                        {state.phase === GamePhase.GAME_OVER && (
+                            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 3 }} className="mt-8 flex gap-4 uppercase">
+                                <div className="text-2xl text-yellow-400 font-bold animate-pulse">
+                                    {getText(state.language, 'GAME_WAITING_VIP')}
+                                </div>
+                            </motion.div>
+                        )}
+                    </div>
+                )}
             </main>
 
             {/* Persistent Room Code & Audience Count - CLEANED UP LAYOUT */}
@@ -296,6 +308,6 @@ export const HostView: React.FC<HostViewProps> = ({ state, actions, onHome, debu
                     </motion.div>
                 )}
             </AnimatePresence>
-        </div>
+        </GameBackground>
     );
 };
