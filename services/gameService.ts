@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { GameState, GameEvent, Player, GamePhase, Answer, Question, Expression, AudienceMember, Emote } from '../types';
 import { ROUND_TIMER_SECONDS } from '../constants';
@@ -188,16 +188,22 @@ export const useGameService = (role: 'HOST' | 'PLAYER' | 'AUDIENCE', playerName?
   });
 
   const stateRef = useRef<GameState>(state);
-  /* --- SPEECH QUEUE REFS --- */
-  const speechQueueRef = useRef<{ type: 'LOCAL' | 'REMOTE', text: string, audioUrl?: string }[]>([]);
-  const isSpeakingRef = useRef(false);
-  const currentAudioRef = useRef<HTMLAudioElement | null>(null);
   const [socket, setSocket] = useState<any>(null);
   const socketRef = useRef<Socket | null>(null);
   const timerRef = useRef<number | null>(null);
   const speechDedupRef = useRef<Record<string, number>>({});
   const lastSyncRef = useRef<number>(0);
   const isHostRef = useRef<boolean>(role === 'HOST'); // Track if we're acting as host (can change via reclaim)
+  const activeAudioRef = useRef<HTMLAudioElement | null>(null);
+
+  const stopSpeech = () => {
+    window.speechSynthesis.cancel();
+    if (activeAudioRef.current) {
+      activeAudioRef.current.pause();
+      activeAudioRef.current = null;
+    }
+    setLocalIsNarrating(false);
+  };
 
   useEffect(() => {
     stateRef.current = state;
@@ -241,101 +247,89 @@ export const useGameService = (role: 'HOST' | 'PLAYER' | 'AUDIENCE', playerName?
   const [roomClosed, setRoomClosed] = useState(false);
 
   // --- AUDIO / TTS ENGINE ---
+  // --- AUDIO / TTS ENGINE ---
+  const internalSpeak = (text: string, force: boolean = false, dedupKey?: string) => {
+    // Valid text check
+    if (!text) return;
 
-  const processQueue = useCallback(() => {
-    if (isSpeakingRef.current) return;
-    if (speechQueueRef.current.length === 0) {
-      setLocalIsNarrating(false);
-      return;
-    }
+    if ('speechSynthesis' in window) {
+      const now = Date.now();
+      const key = dedupKey || text;
 
-    const next = speechQueueRef.current.shift();
-    if (!next) return;
-
-    isSpeakingRef.current = true;
-    setLocalIsNarrating(true);
-
-    if (next.type === 'REMOTE' && next.audioUrl) {
-      // Play Remote Audio
-      // Use the current socket URL base if audioUrl is relative
-      const fullUrl = next.audioUrl.startsWith('http') ? next.audioUrl : `${SOCKET_URL}${next.audioUrl}`;
-      const audio = new Audio(fullUrl);
-      currentAudioRef.current = audio;
-
-      audio.play().catch(e => {
-        console.warn('[Audio] Failed to play remote audio:', e);
-        isSpeakingRef.current = false;
-        processQueue();
-      });
-
-      audio.onended = () => {
-        isSpeakingRef.current = false;
-        currentAudioRef.current = null;
-        processQueue();
-      };
-    } else {
-      // Play Local TTS
-      if (!('speechSynthesis' in window)) {
-        isSpeakingRef.current = false;
-        processQueue();
+      // Debounce: If same key/text spoken within 1 second, skip
+      if (!force && speechDedupRef.current[key] && now - speechDedupRef.current[key] < 1000) {
         return;
       }
+      speechDedupRef.current[key] = now;
 
-      const utterance = new SpeechSynthesisUtterance(next.text);
-      utterance.lang = stateRef.current.language === 'el' ? 'el-GR' : 'en-US';
+      // OPTIMISTIC START: Ensure visuals trigger even if audio is blocked/fails
+      setLocalIsNarrating(true);
+
+      // Cancel previous speech if forced? (Optional, but good for interruptions)
+      if (force && window.speechSynthesis.speaking) {
+        window.speechSynthesis.cancel();
+      }
+
+      // Fallback Timer: Calculate estimated duration in case onend never fires (blocked audio)
+      // approx 400ms per word + buffer
+      const wordCount = text.split(' ').length;
+      const estimatedDuration = Math.max(2000, wordCount * 500);
+
+      // Clear previous fallback if it exists (using a ref for this would be best, but we'll rely on the dedicated timer below not conflicting too much)
+      // Ideally we'd store `narratorTimeoutRef` but for now we'll set a new one. 
+      // A safety timeout to ensure we don't get stuck talking forever.
+      const safetyTimeout = setTimeout(() => {
+        setLocalIsNarrating(false);
+      }, estimatedDuration + 1000);
+
+      const utterance = new SpeechSynthesisUtterance(text);
+
+      // Voice Selection with Retry Logic
+      let voices = window.speechSynthesis.getVoices();
+      if (voices.length === 0) {
+        // Try to wait for voices? Or just proceed with default
+        // Chrome loads voices async. We might be using default.
+      }
+
+      const preferred = voices.find(v => v.name.includes('Google US English')) ||
+        voices.find(v => v.lang.includes('en-US')) ||
+        voices[0];
+
+      // Greek Voice Support
+      if (stateRef.current.language === 'el') {
+        const greekVoice = voices.find(v => v.lang.includes('el') || v.name.includes('Greek'));
+        if (greekVoice) utterance.voice = greekVoice;
+      } else {
+        if (preferred) utterance.voice = preferred;
+      }
+
+      utterance.pitch = 0.9 + Math.random() * 0.2;
+      utterance.rate = 0.9 + Math.random() * 0.2;
+
+      // Event Handlers
+      utterance.onstart = () => {
+        setLocalIsNarrating(true);
+      };
 
       utterance.onend = () => {
-        isSpeakingRef.current = false;
-        processQueue();
+        setLocalIsNarrating(false);
+        clearTimeout(safetyTimeout);
       };
+
       utterance.onerror = (e) => {
-        console.warn('Local Speech Error:', e);
-        if (e.error !== 'canceled') {
-          isSpeakingRef.current = false;
-          processQueue();
+        console.warn('Speech Error:', e);
+        // If not allowed, we KEEP isNarrating true (via optimistic) until safety timeout clears it
+        // so the user still sees the "talking" even if they don't hear it.
+        // Unless it was canceled.
+        if (e.error === 'canceled') {
+          setLocalIsNarrating(false);
+          clearTimeout(safetyTimeout);
         }
       };
 
-      console.log('[TTS] Speaking Local:', next.text);
+      console.log('[TTS] Speaking:', text);
       window.speechSynthesis.speak(utterance);
     }
-  }, []);
-
-  const cancelAllSpeech = useCallback(() => {
-    console.log('[TTS] Cancelling all speech...');
-    // 1. Clear Queue
-    speechQueueRef.current = [];
-
-    // 2. Stop Remote Audio
-    if (currentAudioRef.current) {
-      currentAudioRef.current.pause();
-      currentAudioRef.current = null;
-    }
-
-    // 3. Stop Local TTS
-    if ('speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
-    }
-
-    // 4. Reset Flag
-    isSpeakingRef.current = false;
-    setLocalIsNarrating(false);
-  }, []);
-
-  const internalSpeak = (text: string, force: boolean = false, dedupKey?: string) => {
-    if (!text) return;
-
-    // Dedup Logic (Local)
-    const now = Date.now();
-    const key = dedupKey || text;
-    if (!force && speechDedupRef.current[key] && now - speechDedupRef.current[key] < 2000) {
-      return;
-    }
-    speechDedupRef.current[key] = now;
-
-    // Add to Queue
-    speechQueueRef.current.push({ type: 'LOCAL', text });
-    processQueue();
   };
 
   const checkRoomExists = (roomCode: string, callback: (exists: boolean) => void) => {
@@ -361,7 +355,7 @@ export const useGameService = (role: 'HOST' | 'PLAYER' | 'AUDIENCE', playerName?
 
         console.log('[TTS] Requesting premium voice from server...');
 
-        // Start a fallback timer. INCREASED TO 4000ms per user request.
+        // Start a fallback timer. If server doesn't respond in 4s, use local TTS.
         const fallbackTimer = setTimeout(() => {
           console.warn('[TTS] Server took too long to respond. Falling back to local voice.');
           internalSpeak(text, force, dedupKey);
@@ -373,7 +367,8 @@ export const useGameService = (role: 'HOST' | 'PLAYER' | 'AUDIENCE', playerName?
           language: stateRef.current.language
         });
 
-        // Store the timer
+        // Store the timer so we can cancel it if 'playAudio' arrives for this text
+        // (Simplified: just global ref for now is fine since narration is sequential)
         (window as any)._lastTTSFallback = fallbackTimer;
       }
       // Players do nothing; they wait for 'playAudio' event
@@ -382,6 +377,7 @@ export const useGameService = (role: 'HOST' | 'PLAYER' | 'AUDIENCE', playerName?
       if (isHostRef.current) {
         processHostEvent({ type: 'PLAY_NARRATION', payload: { text, key: dedupKey } });
       } else {
+        // Players: Likely ignored unless event received
         internalSpeak(text, force, dedupKey);
       }
     }
@@ -467,9 +463,35 @@ export const useGameService = (role: 'HOST' | 'PLAYER' | 'AUDIENCE', playerName?
         (window as any)._lastTTSFallback = null;
       }
 
-      // Add to Queue instead of playing immediately
-      speechQueueRef.current.push({ type: 'REMOTE', text, audioUrl });
-      processQueue();
+      // Use the current socket URL base if audioUrl is relative
+      const fullUrl = audioUrl.startsWith('http') ? audioUrl : `${SOCKET_URL}${audioUrl}`;
+
+      const audio = new Audio(fullUrl);
+      activeAudioRef.current = audio;
+
+      // Better Lip-Sync: Only start narrating when audio actually begins
+      audio.onplay = () => {
+        setLocalIsNarrating(true);
+      };
+
+      audio.play().catch(e => {
+        console.warn('[Audio] Failed to play remote audio:', e);
+        // Fallback to local if remote fails?
+        // internalSpeak(text, false); 
+      });
+
+      audio.onended = () => {
+        setLocalIsNarrating(false);
+        if (activeAudioRef.current === audio) activeAudioRef.current = null;
+      };
+
+      // Failsafe
+      setTimeout(() => {
+        if (activeAudioRef.current === audio) {
+          setLocalIsNarrating(false);
+          activeAudioRef.current = null;
+        }
+      }, 10000);
     });
 
     return () => {
@@ -713,8 +735,8 @@ export const useGameService = (role: 'HOST' | 'PLAYER' | 'AUDIENCE', playerName?
         break;
 
       case 'START_GAME':
-        cancelAllSpeech();
-        if (next.phase !== GamePhase.LOBBY) break; {
+        stopSpeech();
+        if (next.phase === GamePhase.LOBBY) {
           // Check player count
           const currentPlayers = Object.values(next.players);
           if (currentPlayers.length < 2) {
@@ -738,14 +760,15 @@ export const useGameService = (role: 'HOST' | 'PLAYER' | 'AUDIENCE', playerName?
               };
             };
           }
-          speak(getNarratorPhrase(next.language, 'RESTART', {}), false, 'ADD_BOTS'); // Using Restart line as generic filler or create new Add Bots line
         }
 
         next.totalRounds = event.payload.rounds;
         next.currentRound = 1;
         next.playersWhoPicked = [];
         sfx.play('START');
+
         startCategorySelectionPhase(next);
+
         changed = true;
         break;
 
