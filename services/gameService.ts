@@ -48,19 +48,16 @@ const loadQuestions = (lang: Language) => {
 const getUniqueBotName = (usedNames: string[], language: Language): string => {
   const allBots = getBotNames(language);
   const available = allBots.filter(name => !usedNames.includes(name));
+  const baseNames = available.length > 0 ? available : allBots;
 
-  if (available.length > 0) {
-    return available[Math.floor(Math.random() * available.length)];
-  }
-
-  // Fallback: Pick random name + number
-  let suffix = 1;
   let candidate = '';
+  let attempts = 0;
   do {
-    const base = allBots[Math.floor(Math.random() * allBots.length)];
-    candidate = `${base} ${suffix}`;
-    suffix++;
-  } while (usedNames.includes(candidate) && suffix < 100);
+    const base = baseNames[Math.floor(Math.random() * baseNames.length)];
+    // Add a random number 10-99 for bot flair
+    candidate = `${base} ${Math.floor(Math.random() * 90) + 10}`;
+    attempts++;
+  } while (usedNames.includes(candidate) && attempts < 100);
 
   return candidate;
 };
@@ -113,7 +110,7 @@ const INITIAL_STATE: GameState = {
   revealSubPhase: 'CARD',
   leaderboardPhase: 'INTRO',
   language: 'en',
-  usePremiumVoices: true // Default to Premium Voices ON
+  usePremiumVoices: false // Default to Premium Voices OFF
 };
 
 export const useGameService = (role: 'HOST' | 'PLAYER' | 'AUDIENCE', playerName?: string, initialLanguage?: 'en' | 'el') => {
@@ -377,8 +374,10 @@ export const useGameService = (role: 'HOST' | 'PLAYER' | 'AUDIENCE', playerName?
       if (isHostRef.current) {
         processHostEvent({ type: 'PLAY_NARRATION', payload: { text, key: dedupKey } });
       } else {
-        // Players: Likely ignored unless event received
-        internalSpeak(text, force, dedupKey);
+        // Players: only speak if in online mode
+        if (stateRef.current.isOnlineMode) {
+          internalSpeak(text, force, dedupKey);
+        }
       }
     }
   };
@@ -1645,7 +1644,7 @@ export const useGameService = (role: 'HOST' | 'PLAYER' | 'AUDIENCE', playerName?
 
   const addAudienceBot = () => {
     const botId = generateId();
-    const botName = (getNarratorPhrase(state.language, 'AUDIENCE_BOT_NAME', {}) || "Audience Bot") + " " + Math.floor(Math.random() * 100);
+    const botName = (getNarratorPhrase(state.language, 'AUDIENCE_BOT_NAME', {}) || "Audience Bot") + " " + (Math.floor(Math.random() * 90) + 10);
     dispatch({ type: 'JOIN_AUDIENCE', payload: { id: botId, name: botName, avatarSeed: botName, isBot: true } });
   };
 

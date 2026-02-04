@@ -65,13 +65,15 @@ const HomeSelector = ({ onSelect, isMobile, language, setLanguage }: { onSelect:
 
       <div className="relative z-10 w-full max-w-6xl flex flex-col items-center py-8">
         {/* Settings Button (Top Left) */}
-        <button
-          onClick={() => navigate('/settings')}
-          className="absolute top-0 left-4 p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
-          title="Settings"
-        >
-          <SettingsIcon className="w-6 h-6 text-white/70" />
-        </button>
+        {!import.meta.env.PROD && (
+          <button
+            onClick={() => navigate('/settings')}
+            className="absolute top-0 left-4 p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
+            title="Settings"
+          >
+            <SettingsIcon className="w-6 h-6 text-white/70" />
+          </button>
+        )}
 
         <h1 className="text-4xl md:text-8xl font-black text-transparent bg-clip-text bg-gradient-to-b from-yellow-300 to-yellow-600 mb-8 md:mb-12 drop-shadow-2xl tracking-tighter uppercase transform -rotate-2 text-center">
           Bamboozle

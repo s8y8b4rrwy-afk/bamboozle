@@ -192,14 +192,26 @@ io.on('connection', (socket) => {
       // In Prod/Railway this will be the deployed URL
       // We can infer it from the socket handshake headers or just send relative path if client handles it?
       // Better to send relative path: '/audio/CODE/FILE.mp3' and let Client prepend their known server URL.
+      // Construct public URL
       const audioUrl = `/audio/${roomCode}/${result.file}`;
 
-      // Broadcast to everyone (including sender)
-      io.in(roomCode).emit('playAudio', {
-        audioUrl,
-        text,
-        hash: null
-      });
+      // Broadcast to everyone ONLY if in Online Mode, otherwise only to Host (the sender)
+      const isOnlineMode = rooms[roomCode].state && rooms[roomCode].state.isOnlineMode;
+
+      if (isOnlineMode) {
+        io.in(roomCode).emit('playAudio', {
+          audioUrl,
+          text,
+          hash: null
+        });
+      } else {
+        // Only back to host (sender)
+        socket.emit('playAudio', {
+          audioUrl,
+          text,
+          hash: null
+        });
+      }
 
     } catch (e) {
       console.error('Narrator Error:', e);

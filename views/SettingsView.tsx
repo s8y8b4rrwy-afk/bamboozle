@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 export const SettingsView: React.FC = () => {
     const navigate = useNavigate();
     const [useLocalServer, setUseLocalServer] = useState(false);
-    const [usePremiumVoices, setUsePremiumVoices] = useState(true);
+    const [usePremiumVoices, setUsePremiumVoices] = useState(false);
     const [customServerUrl, setCustomServerUrl] = useState('http://localhost:3001');
 
     const [isLoaded, setIsLoaded] = useState(false);

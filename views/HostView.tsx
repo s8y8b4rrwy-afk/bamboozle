@@ -92,16 +92,6 @@ export const HostView: React.FC<HostViewProps> = ({ state, actions, onHome, debu
                                 <span className="font-black text-white uppercase tracking-wider text-sm md:text-base text-center">{getText(state.language, 'HOST_ONLINE_MODE_TITLE')}</span>
                             </button>
 
-                            {/* PREMIUM VOICES TOGGLE */}
-                            <button
-                                onClick={() => { sfx.play('CLICK'); actions.sendTogglePremiumVoices(); }}
-                                className={`flex flex-col items-center p-4 rounded-3xl border-2 transition-all shadow-xl hover:scale-105 active:scale-95 flex-1 min-w-[140px] ${state.usePremiumVoices ? 'bg-blue-600/20 border-blue-400' : 'bg-black/40 border-gray-500 hover:border-white hover:bg-black/60'}`}
-                            >
-                                <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center transition-colors mb-2 ${state.usePremiumVoices ? 'bg-white border-white' : 'border-gray-500'}`}>
-                                    {state.usePremiumVoices && <CheckCircle size={20} className="text-blue-600" strokeWidth={4} />}
-                                </div>
-                                <span className="font-black text-white uppercase tracking-wider text-sm md:text-base text-center">Premium Voices</span>
-                            </button>
                         </div>
                     </div>
                 )
