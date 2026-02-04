@@ -1,10 +1,29 @@
 const fs = require('fs');
 const path = require('path');
 const md5 = require('md5');
+const util = require('util');
 const textToSpeech = require('@google-cloud/text-to-speech');
 
 // Initialize Google Cloud TTS Client
-// Credentials should be set via GOOGLE_APPLICATION_CREDENTIALS env var
+let clientOptions = {};
+
+// BULLETPROOF RAILWAY AUTH: 
+// If the JSON string is in the environment, write it to a temp file
+// and point the library to it. This is safer than passing objects.
+if (process.env.GOOGLE_CREDENTIALS_JSON) {
+    try {
+        const creds = JSON.parse(process.env.GOOGLE_CREDENTIALS_JSON);
+        const tempCredsPath = path.join('/tmp', 'google-auth.json');
+        fs.writeFileSync(tempCredsPath, JSON.stringify(creds));
+        process.env.GOOGLE_APPLICATION_CREDENTIALS = tempCredsPath;
+        console.log('[TTS] Successfully wrote credentials to', tempCredsPath);
+    } catch (e) {
+        console.error('[TTS] Failed to process GOOGLE_CREDENTIALS_JSON:', e);
+    }
+} else {
+    console.log('[TTS] Warning: No GOOGLE_CREDENTIALS_JSON found. Expecting GOOGLE_APPLICATION_CREDENTIALS file.');
+}
+
 const client = new textToSpeech.TextToSpeechClient();
 
 const CACHE_DIR = '/tmp/bamboozle_audio_cache';
@@ -15,11 +34,10 @@ if (!fs.existsSync(CACHE_DIR)) {
 }
 
 // Voice Configuration Map
-// Strategy: Use Wavenet for balance of quality, speed, and cost.
+// Strategy: Use Neural2 for highest quality, Wavenet for balance.
 const VOICE_CONFIG = {
-    'en': { languageCode: 'en-US', name: 'en-US-Wavenet-F', ssmlGender: 'FEMALE' },
+    'en': { languageCode: 'en-US', name: 'en-US-Neural2-F', ssmlGender: 'FEMALE' },
     'el': { languageCode: 'el-GR', name: 'el-GR-Wavenet-A', ssmlGender: 'FEMALE' }
-    // Add more languages here (e.g., 'es', 'fr')
 };
 
 const getVoiceConfig = (lang) => {
@@ -103,7 +121,5 @@ const ttsService = {
         }
     }
 };
-
-const util = require('util');
 
 module.exports = ttsService;

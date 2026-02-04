@@ -475,9 +475,9 @@ export const useGameService = (role: 'HOST' | 'PLAYER' | 'AUDIENCE', playerName?
       };
 
       audio.play().catch(e => {
-        console.warn('[Audio] Failed to play remote audio:', e);
-        // Fallback to local if remote fails?
-        // internalSpeak(text, false); 
+        console.warn('[Audio] Failed to play remote audio:', e, 'URL:', fullUrl);
+        // We don't automatically fallback here to avoid double-speaking 
+        // if the fallback timer already fired.
       });
 
       audio.onended = () => {

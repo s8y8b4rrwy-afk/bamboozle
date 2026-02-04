@@ -21,7 +21,11 @@ app.use(cors());
 
 // Serve Static Audio Files from Cache
 // Route: /audio/:roomCode/:filename
-app.use('/audio', express.static('/tmp/bamboozle_audio_cache'));
+app.use('/audio', express.static('/tmp/bamboozle_audio_cache', {
+  setHeaders: (res) => {
+    res.set('Access-Control-Allow-Origin', '*');
+  }
+}));
 
 app.get('/', (req, res) => {
   res.send('Bamboozle server is running');
