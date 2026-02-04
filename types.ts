@@ -93,6 +93,7 @@ export interface GameState {
   revealSubPhase: 'CARD' | 'VOTERS' | 'AUTHOR'; // Current sub-phase of the reveal animation
   leaderboardPhase: 'INTRO' | 'REVEAL' | 'LEADER'; // Syncing the exact moment of score update
   language: 'en' | 'el'; // Current game language
+  usePremiumVoices: boolean; // New: Toggle for Google Cloud TTS
 }
 
 export type GameEvent =
@@ -108,9 +109,9 @@ export type GameEvent =
   | { type: 'SEND_EMOTE'; payload: { type: 'LAUGH' | 'SHOCK' | 'LOVE' | 'TOMATO'; senderName: string; senderSeed: string } }
   | { type: 'START_GAME'; payload: { rounds: number } }
   | { type: 'SELECT_CATEGORY'; payload: { category: string } }
-  | { type: 'SELECT_CATEGORY'; payload: { category: string } }
   | { type: 'TOGGLE_ONLINE_MODE'; payload: null }
   | { type: 'TOGGLE_LANGUAGE'; payload: null } // New event
+  | { type: 'TOGGLE_PREMIUM_VOICES'; payload: null } // New event
   | { type: 'PLAY_NARRATION'; payload: { text: string; key?: string } }
   | { type: 'REMOVE_PLAYER'; payload: { playerId: string } }
   | { type: 'RESTART_GAME'; payload: null };

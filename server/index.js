@@ -1,6 +1,9 @@
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
+const path = require('path');
+const cors = require('cors');
+const ttsService = require('./ttsService');
 
 const app = express();
 const server = http.createServer(app);
@@ -13,8 +16,30 @@ const io = new Server(server, {
 
 const PORT = process.env.PORT || 3001;
 
+app.use(express.json());
+app.use(cors());
+
+// Serve Static Audio Files from Cache
+// Route: /audio/:roomCode/:filename
+app.use('/audio', express.static('/tmp/bamboozle_audio_cache'));
+
 app.get('/', (req, res) => {
   res.send('Bamboozle server is running');
+});
+
+// Trigger TTS manually (fallback/test endpoint)
+app.post('/api/tts', async (req, res) => {
+  try {
+    const { text, language, roomCode } = req.body;
+    const result = await ttsService.getAudio(text, language || 'en', roomCode || 'test');
+    // Return full URL
+    const protocol = req.protocol;
+    const host = req.get('host');
+    const url = `${protocol}://${host}/audio/${roomCode || 'test'}/${result.file}`;
+    res.json({ url, isHit: result.isHit });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
 });
 
 server.listen(PORT, () => {
@@ -148,6 +173,35 @@ io.on('connection', (socket) => {
     socket.to(roomCode).emit('hostEvent', event);
   });
 
+  // --- TTS LOGIC ---
+  socket.on('requestNarrator', async ({ roomCode, text, language }) => {
+    try {
+      console.log(`[TTS Req] Room: ${roomCode}, Text: "${text}"`);
+      // Only accept from Host (simple check via rooms map)
+      if (!rooms[roomCode]) return; // Invalid room
+
+      // Generate (or get from cache)
+      const result = await ttsService.getAudio(text, language || 'en', roomCode);
+
+      // Construct public URL
+      // In local dev this is http://localhost:3001
+      // In Prod/Railway this will be the deployed URL
+      // We can infer it from the socket handshake headers or just send relative path if client handles it?
+      // Better to send relative path: '/audio/CODE/FILE.mp3' and let Client prepend their known server URL.
+      const audioUrl = `/audio/${roomCode}/${result.file}`;
+
+      // Broadcast to everyone (including sender)
+      io.in(roomCode).emit('playAudio', {
+        audioUrl,
+        text,
+        hash: null
+      });
+
+    } catch (e) {
+      console.error('Narrator Error:', e);
+    }
+  });
+
   socket.on('requestState', ({ roomCode }, callback) => {
     if (rooms[roomCode]) {
       if (callback) callback(rooms[roomCode].state);
@@ -187,6 +241,9 @@ io.on('connection', (socket) => {
               delete playerTimeouts[key];
             }
           });
+
+          // TTS Cleanup
+          ttsService.cleanupRoom(roomCode);
 
           delete rooms[roomCode];
           delete hostTimeouts[roomCode];
@@ -238,6 +295,9 @@ io.on('connection', (socket) => {
               delete playerTimeouts[key];
             }
           });
+
+          // TTS Cleanup
+          ttsService.cleanupRoom(roomCode);
 
           delete rooms[roomCode];
           delete roomTimeouts[roomCode];

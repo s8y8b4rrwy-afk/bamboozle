@@ -1,12 +1,25 @@
 import React, { useState, useEffect } from 'react';
+import { BrowserRouter, Routes, Route, useNavigate } from 'react-router-dom';
 import { useGameService } from './services/gameService';
 import { HostView } from './views/HostView';
 import { PlayerView } from './views/PlayerView';
-import { Monitor, Smartphone, Users, SplitSquareHorizontal, Globe } from 'lucide-react';
+import { Monitor, Smartphone, Users, SplitSquareHorizontal, Globe, Settings as SettingsIcon } from 'lucide-react';
 import { OnlinePlayerView } from './views/OnlinePlayerView';
+import { SettingsView } from './views/SettingsView';
 import { getText } from './i18n';
 
 const App: React.FC = () => {
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<AppContent />} />
+        <Route path="/settings" element={<SettingsView />} />
+      </Routes>
+    </BrowserRouter>
+  );
+};
+
+const AppContent: React.FC = () => {
   const [view, setView] = useState<'HOME' | 'HOST' | 'PLAYER' | 'TEST'>('HOME');
   const [language, setLanguage] = useState<'en' | 'el'>(() => {
     const stored = localStorage.getItem('bamboozle_language');
@@ -44,12 +57,22 @@ const HomeSelector = ({ onSelect, isMobile, language, setLanguage }: { onSelect:
   const toggleLanguage = () => {
     setLanguage(language === 'en' ? 'el' : 'en');
   };
+  const navigate = useNavigate();
 
   return (
     <div className="h-full w-full bg-gradient-to-br from-indigo-900 via-purple-900 to-black text-white flex flex-col items-center justify-center p-4 relative overflow-y-auto">
       <div className="absolute inset-0 z-0 opacity-20 pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle, #ffffff 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
 
       <div className="relative z-10 w-full max-w-6xl flex flex-col items-center py-8">
+        {/* Settings Button (Top Left) */}
+        <button
+          onClick={() => navigate('/settings')}
+          className="absolute top-0 left-4 p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
+          title="Settings"
+        >
+          <SettingsIcon className="w-6 h-6 text-white/70" />
+        </button>
+
         <h1 className="text-4xl md:text-8xl font-black text-transparent bg-clip-text bg-gradient-to-b from-yellow-300 to-yellow-600 mb-8 md:mb-12 drop-shadow-2xl tracking-tighter uppercase transform -rotate-2 text-center">
           Bamboozle
         </h1>

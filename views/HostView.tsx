@@ -63,32 +63,50 @@ export const HostView: React.FC<HostViewProps> = ({ state, actions, onHome, debu
                 <button onClick={() => { sfx.play('CLICK'); actions.addBot(); }} className="px-6 py-3 bg-blue-600/50 hover:bg-blue-600 text-white text-base md:text-xl font-bold rounded-2xl flex items-center gap-2">
                     <Bot size={24} /> {getText(state.language, 'HOST_ADD_BOT')}
                 </button>
-                <button onClick={() => { sfx.play('CLICK'); actions.addAudienceBot(); }} className="px-6 py-3 bg-indigo-600/50 hover:bg-indigo-600 text-white text-base md:text-xl font-bold rounded-2xl flex items-center gap-2">
+
+                <button
+                    onClick={() => { sfx.play('CLICK'); actions.addAudienceBot(); }}
+                    className="px-6 py-3 bg-indigo-600/50 hover:bg-indigo-600 text-white text-base md:text-xl font-bold rounded-2xl flex items-center gap-2"
+                >
                     <Users size={24} /> {getText(state.language, 'HOST_ADD_AUDIENCE_BOT')}
                 </button>
             </div>
-            {!debugMode && (
-                <div className="flex flex-col items-center gap-6 mt-4 md:mt-12 w-full max-w-md">
-                    <div className="text-lg md:text-2xl text-yellow-400 font-bold animate-pulse uppercase tracking-widest flex items-center gap-3 text-center">
-                        <div className="w-3 h-3 bg-yellow-400 rounded-full animate-ping flex-shrink-0" />
-                        {getText(state.language, 'PROMPT_WAITING')}
-                    </div>
 
-                    <button
-                        onClick={() => { sfx.play('CLICK'); actions.sendToggleOnlineMode(); }}
-                        className={`flex items-center gap-4 px-6 md:px-8 py-3 md:py-4 rounded-full border-2 transition-all shadow-xl hover:scale-105 active:scale-95 w-full md:w-auto justify-center ${state.isOnlineMode ? 'bg-green-600 border-green-400' : 'bg-black/40 border-gray-500 hover:border-white hover:bg-black/60'}`}
-                    >
-                        <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors flex-shrink-0 ${state.isOnlineMode ? 'bg-white border-white' : 'border-gray-500'}`}>
-                            {state.isOnlineMode && <CheckCircle size={16} className="text-green-600" strokeWidth={4} />}
+            {
+                !debugMode && (
+                    <div className="flex flex-col items-center gap-6 mt-4 md:mt-12 w-full max-w-md">
+                        <div className="text-lg md:text-2xl text-yellow-400 font-bold animate-pulse uppercase tracking-widest flex items-center gap-3 text-center">
+                            <div className="w-3 h-3 bg-yellow-400 rounded-full animate-ping flex-shrink-0" />
+                            {getText(state.language, 'PROMPT_WAITING')}
                         </div>
-                        <div className="flex flex-col items-start text-left">
-                            <span className="font-black text-white uppercase tracking-wider text-sm md:text-lg">{getText(state.language, 'HOST_ONLINE_MODE_TITLE')}</span>
-                            <span className="text-[10px] md:text-xs text-gray-300 uppercase font-bold tracking-wide opacity-80">{getText(state.language, 'HOST_ONLINE_MODE_SUBTITLE')}</span>
+
+                        <div className="flex gap-4 w-full justify-center">
+                            {/* ONLINE MODE TOGGLE */}
+                            <button
+                                onClick={() => { sfx.play('CLICK'); actions.sendToggleOnlineMode(); }}
+                                className={`flex flex-col items-center p-4 rounded-3xl border-2 transition-all shadow-xl hover:scale-105 active:scale-95 flex-1 min-w-[140px] ${state.isOnlineMode ? 'bg-green-600/20 border-green-400' : 'bg-black/40 border-gray-500 hover:border-white hover:bg-black/60'}`}
+                            >
+                                <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center transition-colors mb-2 ${state.isOnlineMode ? 'bg-white border-white' : 'border-gray-500'}`}>
+                                    {state.isOnlineMode && <CheckCircle size={20} className="text-green-600" strokeWidth={4} />}
+                                </div>
+                                <span className="font-black text-white uppercase tracking-wider text-sm md:text-base text-center">{getText(state.language, 'HOST_ONLINE_MODE_TITLE')}</span>
+                            </button>
+
+                            {/* PREMIUM VOICES TOGGLE */}
+                            <button
+                                onClick={() => { sfx.play('CLICK'); actions.sendTogglePremiumVoices(); }}
+                                className={`flex flex-col items-center p-4 rounded-3xl border-2 transition-all shadow-xl hover:scale-105 active:scale-95 flex-1 min-w-[140px] ${state.usePremiumVoices ? 'bg-blue-600/20 border-blue-400' : 'bg-black/40 border-gray-500 hover:border-white hover:bg-black/60'}`}
+                            >
+                                <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center transition-colors mb-2 ${state.usePremiumVoices ? 'bg-white border-white' : 'border-gray-500'}`}>
+                                    {state.usePremiumVoices && <CheckCircle size={20} className="text-blue-600" strokeWidth={4} />}
+                                </div>
+                                <span className="font-black text-white uppercase tracking-wider text-sm md:text-base text-center">Premium Voices</span>
+                            </button>
                         </div>
-                    </button>
-                </div>
-            )}
-        </div>
+                    </div>
+                )
+            }
+        </div >
     );
 
 
