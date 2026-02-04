@@ -130,7 +130,7 @@ const TestModeView = ({ language }: { language: 'en' | 'el' }) => {
 }
 
 const GameHostWrapper = ({ onHome, debugMode, language }: { onHome: () => void, debugMode: boolean, language?: 'en' | 'el' }) => {
-  const { state, actions, playerId, isSpeaking } = useGameService('HOST', undefined, language);
+  const { state, actions, playerId, isSpeaking, hostDisconnected, roomClosed } = useGameService('HOST', undefined, language);
 
   // Automatically switch to online mode if on mobile
   useEffect(() => {
@@ -141,18 +141,18 @@ const GameHostWrapper = ({ onHome, debugMode, language }: { onHome: () => void, 
   }, [state.isOnlineMode, state.roomCode, actions]);
 
   if (state.isOnlineMode) {
-    return <OnlinePlayerView state={state} actions={actions} playerId={playerId} isSpeaking={isSpeaking} onHome={onHome} />;
+    return <OnlinePlayerView state={state} actions={actions} playerId={playerId} isSpeaking={isSpeaking} onHome={onHome} hostDisconnected={hostDisconnected} roomClosed={roomClosed} />;
   }
 
   return <HostView state={state} actions={actions} onHome={onHome} debugMode={debugMode} isSpeaking={isSpeaking} />;
 };
 
 const GamePlayerWrapper = ({ onHome, language }: { onHome: () => void, language?: 'en' | 'el' }) => {
-  const { state, actions, playerId, isSpeaking } = useGameService('PLAYER', undefined, language);
+  const { state, actions, playerId, isSpeaking, hostDisconnected, roomClosed } = useGameService('PLAYER', undefined, language);
 
   // New: Switch to Online Player View if mode is enabled
   if (state.isOnlineMode) {
-    return <OnlinePlayerView state={state} actions={actions} playerId={playerId} isSpeaking={isSpeaking} onHome={onHome} />;
+    return <OnlinePlayerView state={state} actions={actions} playerId={playerId} isSpeaking={isSpeaking} onHome={onHome} hostDisconnected={hostDisconnected} roomClosed={roomClosed} />;
   }
 
   // Regular Player View doesn't need isSpeaking yet (it's mobile only, no narrator usually)

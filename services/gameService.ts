@@ -159,11 +159,12 @@ export const useGameService = (role: 'HOST' | 'PLAYER' | 'AUDIENCE', playerName?
   });
 
   const stateRef = useRef<GameState>(state);
+  const [socket, setSocket] = useState<any>(null);
   const socketRef = useRef<Socket | null>(null);
   const timerRef = useRef<number | null>(null);
   const speechDedupRef = useRef<Record<string, number>>({});
   const lastSyncRef = useRef<number>(0);
-  const playerTimeoutsRef = useRef<Record<string, number>>({});
+  const isHostRef = useRef<boolean>(role === 'HOST'); // Track if we're acting as host (can change via reclaim)
 
   useEffect(() => {
     stateRef.current = state;
@@ -203,6 +204,8 @@ export const useGameService = (role: 'HOST' | 'PLAYER' | 'AUDIENCE', playerName?
   }, [role]);
 
   const [localIsNarrating, setLocalIsNarrating] = useState(false);
+  const [hostDisconnected, setHostDisconnected] = useState(false);
+  const [roomClosed, setRoomClosed] = useState(false);
 
   // --- AUDIO / TTS ENGINE ---
   // --- AUDIO / TTS ENGINE ---
@@ -290,11 +293,19 @@ export const useGameService = (role: 'HOST' | 'PLAYER' | 'AUDIENCE', playerName?
     }
   };
 
+  const checkRoomExists = (roomCode: string, callback: (exists: boolean) => void) => {
+    console.log('[GameService] Checking if room exists:', roomCode);
+    socketRef.current?.emit('checkRoom', { roomCode }, (response: { exists: boolean }) => {
+      console.log('[GameService] Room exists check for', roomCode, 'result:', response.exists);
+      callback(response.exists);
+    });
+  };
+
   const speak = (text: string, force: boolean = false, dedupKey?: string) => {
     // HOST LOGIC:
     // 1. Emit Event to everyone else
     // 2. Play locally immediately
-    if (role === 'HOST') {
+    if (isHostRef.current) {
       processHostEvent({ type: 'PLAY_NARRATION', payload: { text, key: dedupKey } });
     } else {
       // Players don't trigger global narration directly usually, but if they do, likely just local feedback?
@@ -307,31 +318,33 @@ export const useGameService = (role: 'HOST' | 'PLAYER' | 'AUDIENCE', playerName?
   useEffect(() => {
     const socket = io(SOCKET_URL);
     socketRef.current = socket;
+    setSocket(socket);
 
     if (role === 'HOST') {
-      socket.emit('createRoom', (roomCode: string) => {
+      const setupHostListeners = () => {
+        socket.on('playerEvent', (event: GameEvent) => {
+          processHostEvent(event);
+        });
+      };
+
+      // Always create a new room when hosting
+      socket.emit('createRoom', { hostId: playerId }, (roomCode: string) => {
+        console.log('[GameService] Room created:', roomCode, '. Saving to localStorage.');
+        localStorage.setItem('bamboozle_room_code', roomCode); // Save for rejoin
         setState(prev => {
           const next = { ...prev, roomCode };
           socket.emit('gameStateUpdate', { roomCode, gameState: next });
           return next;
         });
       });
-
-      socket.on('playerEvent', (event: GameEvent) => {
-        processHostEvent(event);
-      });
+      setupHostListeners();
     }
 
     // Listen for game state updates
     socket.on('gameStateUpdate', (gameState: GameState) => {
-      if (role !== 'HOST') {
+      // Only non-hosts should accept state updates from server
+      if (!isHostRef.current) {
         setState(gameState);
-      }
-    });
-
-    socket.on('playerDisconnected', ({ userId }: { userId: string }) => {
-      if (role === 'HOST') {
-        processHostEvent({ type: 'PLAYER_DISCONNECTED', payload: { userId } });
       }
     });
 
@@ -342,9 +355,34 @@ export const useGameService = (role: 'HOST' | 'PLAYER' | 'AUDIENCE', playerName?
       }
     });
 
+    // Room is closing (host didn't reconnect in time)
     socket.on('roomClosed', () => {
-      alert('The host has disconnected. The room is now closed.');
-      window.location.href = '/';
+      localStorage.removeItem('bamboozle_room_code'); // Clear session
+      setHostDisconnected(false);
+      setRoomClosed(true);
+    });
+
+    // Host disconnected - show overlay while waiting for reconnection
+    socket.on('hostDisconnected', () => {
+      console.log('Host disconnected. Waiting for reconnection...');
+      if (!isHostRef.current) {
+        setHostDisconnected(true);
+      }
+    });
+
+    // Host reconnected - hide overlay
+    socket.on('hostReconnected', () => {
+      console.log('Host reconnected!');
+      setHostDisconnected(false);
+    });
+
+    // Player was kicked after 60s disconnect timeout
+    socket.on('playerKicked', ({ playerId }: { playerId: string }) => {
+      console.log(`Player ${playerId} was kicked due to disconnect timeout`);
+      // If we're the host, remove the player from state
+      if (isHostRef.current) {
+        processHostEvent({ type: 'REMOVE_PLAYER', payload: { playerId } });
+      }
     });
 
     return () => {
@@ -457,12 +495,6 @@ export const useGameService = (role: 'HOST' | 'PLAYER' | 'AUDIENCE', playerName?
         // We ensure they are NOT in audience and just sync them.
         if (next.players[event.payload.id]) {
           next.players[event.payload.id].isConnected = true;
-          // Clear any auto-kick timeout
-          if (playerTimeoutsRef.current[event.payload.id]) {
-            clearTimeout(playerTimeoutsRef.current[event.payload.id]);
-            delete playerTimeoutsRef.current[event.payload.id];
-            console.log(`Auto-kick cancelled for ${event.payload.id} (reconnected)`);
-          }
           // Clean up audience if they somehow got there
           if (next.audience[event.payload.id]) {
             const { [event.payload.id]: _, ...rest } = next.audience;
@@ -783,48 +815,32 @@ export const useGameService = (role: 'HOST' | 'PLAYER' | 'AUDIENCE', playerName?
         }
         break;
 
-      case 'PLAYER_DISCONNECTED':
-        if (next.players[event.payload.userId]) {
-          next.players[event.payload.userId].isConnected = false;
-          changed = true;
+      case 'REMOVE_PLAYER':
+        if (next.phase === GamePhase.LOBBY) {
+          const targetId = event.payload.playerId;
+          const targetPlayer = next.players[targetId];
 
-          // Start 60s auto-kick timeout
-          const pid = event.payload.userId;
-          if (playerTimeoutsRef.current[pid]) clearTimeout(playerTimeoutsRef.current[pid]);
+          if (targetPlayer) {
+            // Get the name before removal for narrator
+            const playerName = targetPlayer.name;
 
-          playerTimeoutsRef.current[pid] = window.setTimeout(() => {
-            console.log(`Auto-kicking player ${pid} after 60s disconnect`);
-            processHostEvent({ type: 'KICK_PLAYER', payload: { playerId: pid } });
-          }, 60000);
-        }
-        break;
+            // Remove the player
+            const { [targetId]: removed, ...remainingPlayers } = next.players;
+            next.players = remainingPlayers;
 
-      case 'KICK_PLAYER':
-        if (next.players[event.payload.playerId]) {
-          const playerName = next.players[event.payload.playerId].name;
-          const { [event.payload.playerId]: kicked, ...remainingPlayers } = next.players;
-          next.players = remainingPlayers;
-
-          // If VIP was kicked, reassign
-          if (next.vipId === event.payload.playerId) {
-            const humans = Object.values(next.players).filter(p => !p.isBot);
-            if (humans.length > 0) next.vipId = humans[0].id;
-            else {
-              const bots = Object.values(next.players);
-              if (bots.length > 0) next.vipId = bots[0].id;
-              else next.vipId = '';
+            // If removed player was VIP, reassign VIP
+            if (next.vipId === targetId) {
+              const remainingPlayerList = Object.values(remainingPlayers);
+              // Prefer human players for VIP
+              const humanPlayer = remainingPlayerList.find(p => !p.isBot);
+              const newVip = humanPlayer || remainingPlayerList[0];
+              next.vipId = newVip?.id || '';
             }
-          }
 
-          // Clear any pending timeout
-          if (playerTimeoutsRef.current[event.payload.playerId]) {
-            clearTimeout(playerTimeoutsRef.current[event.payload.playerId]);
-            delete playerTimeoutsRef.current[event.payload.playerId];
+            sfx.play('CLICK');
+            speak(getNarratorPhrase(next.language, 'PLAYER_REMOVED', { name: playerName }), false, `REMOVED_${targetId}`);
+            changed = true;
           }
-
-          sfx.play('FAILURE');
-          speak(getNarratorPhrase(next.language, 'PLAYER_LEFT', { name: playerName }) || `${playerName} has been kicked.`, false, `KICK_${event.payload.playerId}`);
-          changed = true;
         }
         break;
     }
@@ -1378,23 +1394,113 @@ export const useGameService = (role: 'HOST' | 'PLAYER' | 'AUDIENCE', playerName?
     socketRef.current?.emit('gameStateUpdate', { roomCode: newState.roomCode, gameState: newState });
   };
 
+  const resumeGameProgression = (state: GameState) => {
+    if (!isHostRef.current) return;
+
+    console.log('[Host Reclaim] Resuming game progression for phase:', state.phase, 'Time left:', state.timeLeft);
+
+    // If it's a phase with a countdown, restart the timer
+    if (state.phase === GamePhase.WRITING) {
+      startTimer(state.timeLeft > 0 ? state.timeLeft : 60, () => {
+        const s = { ...stateRef.current };
+        startVotingPhase(s);
+        stateRef.current = s;
+        setState(s);
+        broadcastState(s);
+      });
+    } else if (state.phase === GamePhase.VOTING) {
+      startTimer(state.timeLeft > 0 ? state.timeLeft : 60, () => {
+        const s = { ...stateRef.current };
+        startRevealPhase(s);
+        stateRef.current = s;
+        setState(s);
+        broadcastState(s);
+      });
+    } else if (state.phase === GamePhase.CATEGORY_SELECT) {
+      if (state.categorySelection?.selected) {
+        // Category already selected, start the short delay to Actual Round
+        startTimer(4, () => {
+          const s = { ...stateRef.current };
+          startActualRound(s, s.categorySelection!.selected!);
+          stateRef.current = s;
+          setState(s);
+          broadcastState(s);
+        });
+      } else {
+        startTimer(state.timeLeft > 0 ? state.timeLeft : 20, () => {
+          const s = stateRef.current;
+          if (s.phase === GamePhase.CATEGORY_SELECT && s.categorySelection && !s.categorySelection.selected) {
+            const randomCat = s.categorySelection.options[Math.floor(Math.random() * s.categorySelection.options.length)];
+            processHostEvent({ type: 'SELECT_CATEGORY', payload: { category: randomCat } });
+          }
+        });
+      }
+    } else if (state.phase === GamePhase.REVEAL) {
+      // For reveal, we can safely just run the current step again
+      runRevealStep(state);
+    } else if (state.phase === GamePhase.INTRO) {
+      // If we were reading the question intro, jump to writing to avoid freeze
+      startWritingPhase(state);
+      stateRef.current = state;
+      setState(state);
+      broadcastState(state);
+    } else if (state.phase === GamePhase.LEADERBOARD) {
+      // For leaderboard, if it was mid-animation it might freeze. 
+      // Safest to just jump to STANDINGS or restart it. Restarting is safer.
+      startLeaderboardPhase();
+    }
+  };
+
   const dispatch = (event: GameEvent) => {
     // Debug log
-    console.log('[Dispatch]', role, event.type, state.roomCode);
+    console.log('[Dispatch]', isHostRef.current ? 'HOST' : role, event.type, stateRef.current.roomCode);
 
-    if (role === 'HOST') {
+    if (isHostRef.current) {
       processHostEvent(event);
     } else {
-      socketRef.current?.emit('playerEvent', { roomCode: state.roomCode, event });
+      socketRef.current?.emit('playerEvent', { roomCode: stateRef.current.roomCode, event });
     }
   };
 
   // Exposed Actions
-  const joinRoom = (roomCode: string, callback?: (success: boolean, error?: string) => void) => {
+  const joinRoom = (roomCode: string, callback?: (success: boolean, error?: string, becameHost?: boolean) => void) => {
     socketRef.current?.emit('joinRoom', { roomCode, id: playerId }, (response: any) => {
       if (response.success) {
+        // Update both stateRef and setState to ensure everything is in sync
+        stateRef.current = response.state;
         setState(response.state);
-        if (callback) callback(true);
+
+        // If we reclaimed host status, set up host listeners and broadcast function
+        if (response.becameHost) {
+          console.log('Reclaimed host status! Setting up host listeners.');
+
+          // Mark this client as now being the host
+          isHostRef.current = true;
+
+          // Set up playerEvent listener for incoming player actions
+          socketRef.current?.on('playerEvent', (event: GameEvent) => {
+            processHostEvent(event);
+          });
+
+          // Ensure host is VIP if they're a player
+          const updatedState = { ...response.state };
+          if (updatedState.players[playerId]) {
+            updatedState.vipId = playerId;
+            stateRef.current = updatedState;
+            setState(updatedState);
+          }
+
+          // Broadcast the current state to sync all players
+          socketRef.current?.emit('gameStateUpdate', { roomCode, gameState: stateRef.current });
+
+          // Resume game logic if mid-game
+          resumeGameProgression(stateRef.current);
+        }
+
+        if (callback) callback(true, undefined, response.becameHost);
+        // Save code on successful join
+        console.log('[GameService] Joined room:', roomCode, '. Saving to localStorage.');
+        localStorage.setItem('bamboozle_room_code', roomCode);
       } else {
         if (callback) callback(false, response.error);
       }
@@ -1429,6 +1535,8 @@ export const useGameService = (role: 'HOST' | 'PLAYER' | 'AUDIENCE', playerName?
   const sendVote = (answerId: string) => dispatch({ type: 'SUBMIT_VOTE', payload: { playerId, answerId } });
   const sendAudienceVote = (answerId: string) => dispatch({ type: 'SUBMIT_AUDIENCE_VOTE', payload: { playerId, answerId } });
   const sendEmote = (type: 'LAUGH' | 'SHOCK' | 'LOVE' | 'TOMATO', senderName: string, senderSeed: string) => dispatch({ type: 'SEND_EMOTE', payload: { type, senderName, senderSeed } });
+
+  const removePlayer = (targetPlayerId: string) => dispatch({ type: 'REMOVE_PLAYER', payload: { playerId: targetPlayerId } });
 
   const sendRestart = () => dispatch({ type: 'RESTART_GAME', payload: null });
   const sendCategorySelection = (category: string) => dispatch({ type: 'SELECT_CATEGORY', payload: { category } });
@@ -1481,21 +1589,20 @@ export const useGameService = (role: 'HOST' | 'PLAYER' | 'AUDIENCE', playerName?
       sendVote,
       sendAudienceVote,
       sendEmote,
+      removePlayer,
       sendRestart,
       sendCategorySelection,
+      checkRoomExists,
       speak,
       triggerNextPhase,
-      kickPlayer: (playerId: string) => {
-        if (role === 'HOST') {
-          processHostEvent({ type: 'KICK_PLAYER', payload: { playerId } });
-        }
-      },
       sendToggleOnlineMode: () => {
         if (role === 'HOST') {
           processHostEvent({ type: 'TOGGLE_ONLINE_MODE', payload: null });
         }
       }
     },
-    isSpeaking: localIsNarrating // Use local state primarily for lip sync as it reflects actual audio
+    isSpeaking: localIsNarrating, // Use local state primarily for lip sync as it reflects actual audio
+    hostDisconnected,
+    roomClosed
   };
 };

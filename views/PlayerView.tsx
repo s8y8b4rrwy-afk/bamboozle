@@ -4,6 +4,7 @@ import { Avatar } from '../components/Avatar';
 import { Clock, Users, CheckCircle, Lock, Play, Minus, Plus, RotateCcw, Crown, Home } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { sfx } from '../services/audioService';
+import { getText } from '../i18n';
 
 interface PlayerViewProps {
     state: GameState;
@@ -23,10 +24,30 @@ export const PlayerView: React.FC<PlayerViewProps> = ({ state, actions, playerId
     const [inputCode, setInputCode] = useState('');
     const [joinName, setJoinName] = useState('');
     const [codeError, setCodeError] = useState('');
+    const [rejoinCode, setRejoinCode] = useState<string | null>(null);
 
     const me = state.players[playerId];
     const amAudience = state.audience[playerId];
     const isJoined = !!me || !!amAudience;
+
+    // Check for rejoinable session
+    useEffect(() => {
+        console.log('[PlayerView] Session check effect. isJoined:', isJoined, 'joinStep:', joinStep, 'actions available:', !!actions);
+        if (isJoined || joinStep !== 'CODE') return;
+
+        const storedCode = localStorage.getItem('bamboozle_room_code');
+        console.log('[PlayerView] Stored room code in localStorage:', storedCode);
+        if (storedCode && storedCode.length === 4) {
+            actions.checkRoomExists(storedCode, (exists: boolean) => {
+                console.log('[PlayerView] Room check result for', storedCode, ':', exists);
+                if (exists) {
+                    setRejoinCode(storedCode);
+                } else {
+                    localStorage.removeItem('bamboozle_room_code');
+                }
+            });
+        }
+    }, [isJoined, joinStep, actions]);
 
     // Reset lie text between rounds
     useEffect(() => {
@@ -137,9 +158,39 @@ export const PlayerView: React.FC<PlayerViewProps> = ({ state, actions, playerId
                                 </div>
                             )}
 
+                            {rejoinCode && !inputCode && (
+                                <motion.button
+                                    initial={{ opacity: 0, scale: 0.9 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    onClick={() => {
+                                        sfx.play('CLICK');
+                                        actions.joinRoom(rejoinCode, (success: boolean, error?: string) => {
+                                            if (success) {
+                                                setJoinStep('NAME');
+                                            } else {
+                                                setRejoinCode(null);
+                                                localStorage.removeItem('bamboozle_room_code');
+                                            }
+                                        });
+                                    }}
+                                    className="w-full bg-white/10 hover:bg-white/20 border-2 border-dashed border-yellow-400/50 p-4 rounded-2xl flex items-center justify-between group transition-all"
+                                >
+                                    <div className="text-left">
+                                        <p className="text-[10px] font-black text-yellow-400 uppercase tracking-widest opacity-80">{getText(state.language, 'JOIN_ACTIVE_GAME')}</p>
+                                        <p className="text-2xl font-black text-white tracking-[0.2em]">{rejoinCode}</p>
+                                    </div>
+                                    <div className="bg-yellow-400 text-black p-2 rounded-lg group-hover:scale-110 transition-transform">
+                                        <RotateCcw size={20} />
+                                    </div>
+                                </motion.button>
+                            )}
+
                             <button
                                 onClick={() => {
-                                    actions.joinRoom(inputCode, (success: boolean, error?: string) => {
+                                    const codeToUse = inputCode || rejoinCode;
+                                    if (!codeToUse) return;
+
+                                    actions.joinRoom(codeToUse, (success: boolean, error?: string, becameHost?: boolean) => {
                                         if (success) {
                                             sfx.play('CLICK');
                                             setJoinStep('NAME');
@@ -149,9 +200,10 @@ export const PlayerView: React.FC<PlayerViewProps> = ({ state, actions, playerId
                                         }
                                     });
                                 }}
-                                className="w-full bg-yellow-400 hover:bg-yellow-300 text-black py-5 rounded-2xl font-black text-2xl shadow-lg uppercase tracking-wide transform active:scale-95 transition-all"
+                                disabled={!inputCode && !rejoinCode}
+                                className="w-full bg-yellow-400 hover:bg-yellow-300 disabled:opacity-50 disabled:bg-gray-400 text-black py-5 rounded-2xl font-black text-2xl shadow-lg uppercase tracking-wide transform active:scale-95 transition-all"
                             >
-                                Next
+                                {getText(state.language, 'JOIN_BTN_ENTER')}
                             </button>
                         </motion.div>
                     )}

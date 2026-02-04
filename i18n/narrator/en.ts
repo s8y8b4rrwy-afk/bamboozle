@@ -685,18 +685,6 @@ export const PHRASES_EN = {
         "{winner} is the ultimate liar.",
         "End of line. Winner: {winner}."
     ],
-    PLAYER_LEFT: [
-        "{name} has left the building.",
-        "Wait, where did {name} go?",
-        "{name} couldn't take the heat.",
-        "Goodbye {name}. We won't miss you.",
-        "{name} has been disconnected. The game goes on.",
-        "Player {name} has departed.",
-        "{name} logged off. Quitter.",
-        "We lost {name}. Oh well.",
-        "{name} vanished into the digital void.",
-        "So long, {name}!"
-    ],
     AUDIENCE_JOIN: [
         "The Audience is growing. They are watching you.",
         "More audience members? Try to impress them.",
@@ -771,6 +759,28 @@ export const PHRASES_EN = {
     ],
     AUDIENCE_BOT_NAME: [
         "Audience Bot"
+    ],
+    PLAYER_REMOVED: [
+        "{name} has been removed from the game.",
+        "Farewell, {name}. You have been kicked.",
+        "{name} is no longer with us.",
+        "Goodbye, {name}!",
+        "{name} has been ejected.",
+        "{name} has left the building.",
+        "We've said goodbye to {name}.",
+        "{name} was removed. Moving on.",
+        "Bye bye, {name}!",
+        "{name} got the boot.",
+        "Player {name} has been dismissed.",
+        "{name} has been shown the door.",
+        "Adios, {name}.",
+        "{name}? Never heard of them.",
+        "And just like that, {name} is gone.",
+        "{name} has been kicked out.",
+        "{name} is history.",
+        "Say goodbye to {name}.",
+        "{name} connection terminated.",
+        "We've lost {name}. On purpose."
     ],
     AND_CONNECTIVE: [
         " and "

@@ -3,10 +3,10 @@ import { GameState, GamePhase, Player, Answer, Expression } from '../types';
 import { Avatar } from '../components/Avatar';
 import { Narrator } from '../components/Narrator';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Clock, Users, CheckCircle, Lock, Play, Crown, ArrowUp, Star, Menu, X, ChevronDown, XCircle, WifiOff } from 'lucide-react';
+import { Clock, Users, CheckCircle, Lock, Play, Crown, ArrowUp, Star, Menu, X, ChevronDown, RotateCcw } from 'lucide-react';
 import { sfx } from '../services/audioService';
 import { getText } from '../i18n';
-import { RevealSequence, LeaderboardSequence, CategoryRoulette, PointsPopup, EmotePopupLayer, CountUp, GameBackground, getAdaptiveTextClass } from './GameSharedComponents';
+import { RevealSequence, LeaderboardSequence, CategoryRoulette, PointsPopup, EmotePopupLayer, CountUp, GameBackground, getAdaptiveTextClass, ConnectionOverlay } from './GameSharedComponents';
 
 interface OnlinePlayerViewProps {
     state: GameState;
@@ -14,6 +14,8 @@ interface OnlinePlayerViewProps {
     playerId: string;
     isSpeaking: boolean;
     onHome: () => void;
+    hostDisconnected?: boolean;
+    roomClosed?: boolean;
 }
 
 const AvatarStrip = React.memo(({ players, phase, submittedLies, isMobile, onToggleReactions }: {
@@ -42,17 +44,8 @@ const AvatarStrip = React.memo(({ players, phase, submittedLies, isMobile, onTog
                     (phase === GamePhase.VOTING && !!p.currentVote);
                 return (
                     <div key={p.id} className={`relative flex-shrink-0 flex flex-col items-center z-10 ${isMobile ? 'min-w-[50px]' : ''}`}>
-                        <AnimatePresence>
-                            {isDone && (
-                                <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }} className="absolute top-0 right-0 bg-green-500 w-3 h-3 md:w-5 md:h-5 rounded-full border border-white z-20" />
-                            )}
-                            {!p.isConnected && (
-                                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center z-20 backdrop-blur-[1px]">
-                                    <WifiOff size={isMobile ? 12 : 16} className="text-red-500" />
-                                </motion.div>
-                            )}
-                        </AnimatePresence>
-                        <Avatar seed={p.avatarSeed} size={isMobile ? 40 : 50} expression={p.expression} className={`filter drop-shadow-lg transition-transform hover:scale-110 ${!p.isConnected ? 'grayscale opacity-50' : ''}`} />
+                        {isDone && <div className="absolute top-0 right-0 bg-green-500 w-3 h-3 md:w-5 md:h-5 rounded-full border border-white z-10" />}
+                        <Avatar seed={p.avatarSeed} size={isMobile ? 40 : 50} expression={p.expression} className="filter drop-shadow-lg transition-transform hover:scale-110" />
                         <span className={`text-white/90 uppercase font-bold mt-1 shadow-black/50 drop-shadow-md text-center leading-tight ${isMobile ? (p.name.length > 10 ? 'text-[8px] max-w-[85px]' : 'text-[10px] max-w-[70px]') : 'text-xs max-w-[100px]'}`}>{p.name}</span>
                     </div>
                 );
@@ -61,7 +54,7 @@ const AvatarStrip = React.memo(({ players, phase, submittedLies, isMobile, onTog
     );
 });
 
-export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actions, playerId, isSpeaking, onHome }) => {
+export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actions, playerId, isSpeaking, onHome, hostDisconnected = false, roomClosed = false }) => {
     const me = state.players[playerId];
     const amAudience = state.audience[playerId];
     const isVip = state.vipId === playerId;
@@ -110,6 +103,7 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
     const [inputCode, setInputCode] = useState(state.roomCode || '');
     const [joinName, setJoinName] = useState('');
     const [codeError, setCodeError] = useState('');
+    const [rejoinCode, setRejoinCode] = useState<string | null>(null);
 
     // Mobile Reaction Bar State - Only affects "Mobile" (<768px)
     const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
@@ -134,6 +128,25 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
         setLieText('');
         setShowTruthWarning(false);
     }, [state.currentRound, state.phase]);
+
+    // Check for rejoinable session
+    useEffect(() => {
+        console.log('[OnlinePlayerView] Session check effect. isJoined:', isJoined, 'joinStep:', joinStep, 'actions available:', !!actions);
+        if (isJoined || joinStep !== 'CODE') return;
+
+        const storedCode = localStorage.getItem('bamboozle_room_code');
+        console.log('[OnlinePlayerView] Stored room code in localStorage:', storedCode);
+        if (storedCode && storedCode.length === 4) {
+            actions.checkRoomExists(storedCode, (exists: boolean) => {
+                console.log('[OnlinePlayerView] Room check result for', storedCode, ':', exists);
+                if (exists) {
+                    setRejoinCode(storedCode);
+                } else {
+                    localStorage.removeItem('bamboozle_room_code');
+                }
+            });
+        }
+    }, [isJoined, joinStep, actions]);
 
     // Auto-Join if room code exists
     useEffect(() => {
@@ -211,19 +224,51 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
                                         {codeError}
                                     </div>
                                 )}
+
+                                {rejoinCode && !inputCode && (
+                                    <motion.button
+                                        initial={{ opacity: 0, scale: 0.9 }}
+                                        animate={{ opacity: 1, scale: 1 }}
+                                        onClick={() => {
+                                            sfx.play('CLICK');
+                                            actions.joinRoom(rejoinCode, (success: boolean, error?: string) => {
+                                                if (success) {
+                                                    setJoinStep('NAME');
+                                                } else {
+                                                    setRejoinCode(null);
+                                                    localStorage.removeItem('bamboozle_room_code');
+                                                }
+                                            });
+                                        }}
+                                        className="w-full bg-white/10 hover:bg-white/20 border-2 border-dashed border-yellow-400/50 p-6 rounded-2xl flex items-center justify-between group transition-all"
+                                    >
+                                        <div className="text-left">
+                                            <p className="text-[10px] font-black text-yellow-400 uppercase tracking-widest opacity-80">{getText(state.language, 'JOIN_ACTIVE_GAME')}</p>
+                                            <p className="text-2xl font-black text-white tracking-[0.2em]">{rejoinCode}</p>
+                                        </div>
+                                        <div className="bg-yellow-400 text-black p-3 rounded-xl group-hover:scale-110 transition-transform">
+                                            <RotateCcw size={24} />
+                                        </div>
+                                    </motion.button>
+                                )}
+
                                 <button
                                     onClick={() => {
-                                        actions.joinRoom(inputCode, (success: boolean, error?: string) => {
+                                        const codeToUse = inputCode || rejoinCode;
+                                        if (!codeToUse) return;
+
+                                        actions.joinRoom(codeToUse, (success: boolean, error?: string) => {
                                             if (success) {
                                                 sfx.play('CLICK');
                                                 setJoinStep('NAME');
                                             } else {
                                                 sfx.play('FAILURE');
-                                                setCodeError(error || getText(state.language, 'JOIN_ERROR_ROOM'));
+                                                setCodeError(error || 'Room not found');
                                             }
                                         });
                                     }}
-                                    className="w-full bg-yellow-400 hover:bg-yellow-300 text-black py-4 rounded-xl font-black text-2xl shadow-lg uppercase active:scale-95 transition-transform"
+                                    disabled={!inputCode && !rejoinCode}
+                                    className="w-full bg-yellow-400 hover:bg-yellow-300 disabled:opacity-50 disabled:bg-gray-400 text-black py-6 rounded-2xl font-black text-2xl shadow-2xl transform active:scale-95 transition-all uppercase tracking-wide"
                                 >
                                     {getText(state.language, 'JOIN_BTN_ENTER')}
                                 </button>
@@ -351,40 +396,25 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
                         <div className="flex-1 flex flex-col items-center justify-center p-2">
                             <div className="grid grid-cols-3 gap-y-12 gap-x-2 w-full">
                                 {Object.values(state.players).map((p) => (
-                                    <div key={p.id} className="flex flex-col items-center relative group">
-                                        {/* KICK BUTTON (VIP Only, cannot kick self) */}
-                                        {isVip && p.id !== playerId && (
-                                            <motion.button
-                                                whileHover={{ scale: 1.1 }}
-                                                whileTap={{ scale: 0.9 }}
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    sfx.play('FAILURE');
-                                                    actions.kickPlayer(p.id);
-                                                }}
-                                                className="absolute -top-1 -right-1 z-[60] bg-red-600 text-white rounded-full p-1 shadow-lg border-2 border-white pointer-events-auto cursor-pointer"
-                                                title={getText(state.language, 'LOBBY_KICK')}
-                                            >
-                                                <XCircle size={16} />
-                                            </motion.button>
-                                        )}
-
+                                    <div key={p.id} className="flex flex-col items-center relative">
                                         {p.id === state.vipId && (
                                             <div className="absolute -top-5 z-10">
                                                 <Crown size={16} className="text-yellow-400 filter drop-shadow-md" fill="currentColor" />
                                             </div>
                                         )}
                                         <div className="relative">
-                                            <AnimatePresence>
-                                                {!p.isConnected && (
-                                                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center z-20 backdrop-blur-[2px]">
-                                                        <div className="bg-red-500/80 text-white px-2 py-0.5 rounded text-[8px] font-black flex items-center gap-1">
-                                                            <WifiOff size={8} /> {getText(state.language, 'LOBBY_WAITING')}
-                                                        </div>
-                                                    </motion.div>
-                                                )}
-                                            </AnimatePresence>
-                                            <Avatar seed={p.avatarSeed} size={80} expression={p.expression} className={`filter drop-shadow-xl transition-all ${p.isReady ? 'opacity-100 scale-110' : 'opacity-80'} ${!p.isConnected ? 'grayscale opacity-50' : ''}`} />
+                                            <Avatar seed={p.avatarSeed} size={80} expression={p.expression} className={`filter drop-shadow-xl transition-all ${p.isReady ? 'opacity-100 scale-110' : 'opacity-80'}`} />
+
+                                            {/* Remove Button - VIP can remove others in LOBBY */}
+                                            {isVip && p.id !== playerId && (
+                                                <button
+                                                    onClick={(e) => { e.stopPropagation(); actions.removePlayer(p.id); }}
+                                                    className="absolute -top-1 -right-1 w-6 h-6 bg-red-500 hover:bg-red-600 text-white text-xs rounded-full flex items-center justify-center shadow-lg border-2 border-white transition-all active:scale-95 z-50"
+                                                    title="Remove player"
+                                                >
+                                                    ✕
+                                                </button>
+                                            )}
                                         </div>
                                         <div className="font-black text-white uppercase mt-4 text-[11px] tracking-wider truncate max-w-full text-center drop-shadow-md">{p.name}</div>
                                         <div className={`text-[9px] font-black uppercase mt-1 tracking-widest ${p.isReady ? 'text-green-400' : 'text-white/30'}`}>
@@ -723,6 +753,15 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
                     </div>
                 )
             }
+
+            {/* Connection Status Overlay */}
+            <ConnectionOverlay
+                hostDisconnected={hostDisconnected}
+                roomClosed={roomClosed}
+                language={state.language}
+                roomCode={state.roomCode}
+                onHomeClick={onHome}
+            />
         </GameBackground >
     );
 };

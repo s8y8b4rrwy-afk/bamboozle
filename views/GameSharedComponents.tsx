@@ -524,3 +524,110 @@ export const LeaderboardSequence = ({ state, actions, onHome, isHost }: { state:
         </div>
     );
 };
+
+// --- CONNECTION STATUS OVERLAY ---
+export const ConnectionOverlay = ({
+    hostDisconnected,
+    roomClosed,
+    language,
+    roomCode,
+    onHomeClick
+}: {
+    hostDisconnected: boolean;
+    roomClosed: boolean;
+    language: 'en' | 'el';
+    roomCode?: string;
+    onHomeClick?: () => void;
+}) => {
+    if (!hostDisconnected && !roomClosed) return null;
+
+    const title = roomClosed
+        ? getText(language, 'CONNECTION_ROOM_CLOSED')
+        : getText(language, 'CONNECTION_HOST_DISCONNECTED');
+
+    const message = roomClosed
+        ? getText(language, 'CONNECTION_HOST_LEFT')
+        : getText(language, 'CONNECTION_WAITING_RECONNECT');
+
+    return (
+        <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[200] bg-black/90 backdrop-blur-md flex flex-col items-center justify-center p-8"
+        >
+            <motion.div
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ delay: 0.2, type: 'spring' }}
+                className="bg-gradient-to-br from-slate-800 to-slate-900 p-8 md:p-12 rounded-3xl border-4 border-white/10 shadow-2xl text-center max-w-md w-full"
+            >
+                {/* Icon */}
+                <div className="mb-6">
+                    {roomClosed ? (
+                        <div className="w-20 h-20 mx-auto bg-red-500/20 rounded-full flex items-center justify-center">
+                            <span className="text-5xl">🚫</span>
+                        </div>
+                    ) : (
+                        <motion.div
+                            animate={{ rotate: 360 }}
+                            transition={{ repeat: Infinity, duration: 2, ease: 'linear' }}
+                            className="w-20 h-20 mx-auto bg-yellow-500/20 rounded-full flex items-center justify-center"
+                        >
+                            <span className="text-5xl">⏳</span>
+                        </motion.div>
+                    )}
+                </div>
+
+                {/* Title */}
+                <h2 className="text-2xl md:text-3xl font-black text-white uppercase mb-2 tracking-tight">
+                    {title}
+                </h2>
+
+                {/* Message */}
+                <p className="text-white/60 font-bold uppercase text-sm md:text-base tracking-wider mb-6">
+                    {message}
+                </p>
+
+                {/* Room Code Display */}
+                {!roomClosed && roomCode && (
+                    <div className="bg-white/5 border border-white/10 rounded-2xl p-4 mb-6">
+                        <p className="text-white/40 text-xs font-black uppercase tracking-widest mb-1">
+                            {getText(language, 'JOIN_ENTER_CODE')}
+                        </p>
+                        <p className="text-3xl md:text-4xl font-black text-yellow-400 tracking-[0.2em]">
+                            {roomCode}
+                        </p>
+                    </div>
+                )}
+
+                {/* Dots animation for waiting */}
+                {!roomClosed && (
+                    <div className="flex justify-center gap-2 mb-4">
+                        {[0, 1, 2].map(i => (
+                            <motion.div
+                                key={i}
+                                animate={{ scale: [1, 1.5, 1], opacity: [0.3, 1, 0.3] }}
+                                transition={{ repeat: Infinity, duration: 1.5, delay: i * 0.2 }}
+                                className="w-3 h-3 bg-yellow-400 rounded-full"
+                            />
+                        ))}
+                    </div>
+                )}
+
+                {/* Home button for room closed */}
+                {roomClosed && onHomeClick && (
+                    <motion.button
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.5 }}
+                        onClick={onHomeClick}
+                        className="mt-4 bg-yellow-400 hover:bg-yellow-300 text-black px-8 py-4 rounded-2xl font-black text-xl uppercase shadow-lg active:scale-95 transition-transform"
+                    >
+                        {getText(language, 'CONNECTION_HOME')}
+                    </motion.button>
+                )}
+            </motion.div>
+        </motion.div>
+    );
+};

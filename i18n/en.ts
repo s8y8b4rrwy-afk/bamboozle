@@ -21,7 +21,6 @@ export const I18N_EN = {
     LOBBY_ADD_BOT: "+ BOT",
     LOBBY_ADD_AUDIENCE: "+ AUDIENCE",
     LOBBY_AUDIENCE_MODE: "AUDIENCE MODE",
-    LOBBY_KICK: "KICK",
 
     // Join Screen
     JOIN_ENTER_CODE: "ROOM CODE",
@@ -31,6 +30,8 @@ export const I18N_EN = {
     JOIN_BTN_PLAY: "PLAY",
     JOIN_BTN_WATCH: "WATCH",
     JOIN_BTN_CANCEL: "CANCEL",
+    JOIN_BTN_REJOIN: "REJOIN {code}",
+    JOIN_ACTIVE_GAME: "ACTIVE GAME FOUND",
     JOIN_OR: "- OR -",
     JOIN_ERROR_ROOM: "Room not found",
     JOIN_GAME_STARTED: "WATCH (GAME STARTED)",
@@ -92,4 +93,11 @@ export const I18N_EN = {
     GAME_THE_TRUTH: "THE TRUTH",
     GAME_FINAL_SCORES: "FINAL SCORES",
     GAME_STANDINGS: "STANDINGS",
+
+    // Connection Overlay
+    CONNECTION_ROOM_CLOSED: "Room Closed",
+    CONNECTION_HOST_DISCONNECTED: "Host Disconnected",
+    CONNECTION_HOST_LEFT: "The host did not return in time.",
+    CONNECTION_WAITING_RECONNECT: "Waiting for reconnection...",
+    CONNECTION_HOME: "Home",
 };

@@ -21,7 +21,6 @@ export const I18N_EL = {
     LOBBY_ADD_BOT: "+ MΠΟΤ",
     LOBBY_ADD_AUDIENCE: "+ ΚΟΙΝΟ",
     LOBBY_AUDIENCE_MODE: "ΛΕΙΤΟΥΡΓΙΑ ΚΟΙΝΟΥ",
-    LOBBY_KICK: "ΔΙΩΞΙΜΟ",
 
     // Join Screen
     JOIN_ENTER_CODE: "ΚΩΔΙΚΟΣ",
@@ -31,6 +30,8 @@ export const I18N_EL = {
     JOIN_BTN_PLAY: "ΠΑΙΞΕ",
     JOIN_BTN_WATCH: "ΠΑΡΑΚΟΛΟΥΘΗΣΕ",
     JOIN_BTN_CANCEL: "ΑΚΥΡΟ",
+    JOIN_BTN_REJOIN: "ΕΠΙΣΤΡΟΦΗ {code}",
+    JOIN_ACTIVE_GAME: "ΕΝΕΡΓΟ ΠΑΙΧΝΙΔΙ",
     JOIN_OR: "- Ή -",
     JOIN_ERROR_ROOM: "Δεν βρέθηκε δωμάτιο",
     JOIN_GAME_STARTED: "ΠΑΡΑΚΟΛΟΥΘΗΣΗ",
@@ -92,4 +93,11 @@ export const I18N_EL = {
     GAME_THE_TRUTH: "Η ΑΛΗΘΕΙΑ",
     GAME_FINAL_SCORES: "ΤΕΛΙΚΑ ΣΚΟΡ",
     GAME_STANDINGS: "ΚΑΤΑΤΑΞΗ",
+
+    // Connection Overlay
+    CONNECTION_ROOM_CLOSED: "Το Δωμάτιο Έκλεισε",
+    CONNECTION_HOST_DISCONNECTED: "Ο Host Αποσυνδέθηκε",
+    CONNECTION_HOST_LEFT: "Ο host δεν επέστρεψε εγκαίρως.",
+    CONNECTION_WAITING_RECONNECT: "Αναμονή επανασύνδεσης...",
+    CONNECTION_HOME: "Αρχική",
 };
