@@ -110,7 +110,8 @@ const INITIAL_STATE: GameState = {
   revealSubPhase: 'CARD',
   leaderboardPhase: 'INTRO',
   language: 'en',
-  usePremiumVoices: false // Default to Premium Voices OFF
+  usePremiumVoices: false, // Default to Premium Voices OFF
+  isPaused: false
 };
 
 export const useGameService = (role: 'HOST' | 'PLAYER' | 'AUDIENCE', playerName?: string, initialLanguage?: 'en' | 'el') => {
@@ -962,6 +963,57 @@ export const useGameService = (role: 'HOST' | 'PLAYER' | 'AUDIENCE', playerName?
           }
         }
         break;
+
+      case 'TOGGLE_PAUSE':
+        // DEV ONLY: Pause/Unpause
+        if (role === 'HOST') {
+          const isPausing = !next.isPaused;
+          next.isPaused = isPausing;
+
+          if (isPausing) {
+            console.log('[GameService] PAUSING GAME');
+            // Clear all timers
+            if (timerRef.current) {
+              clearInterval(timerRef.current);
+              clearTimeout(timerRef.current); // Just in case it was a timeout
+              timerRef.current = null;
+            }
+            // Stop any revealing loops
+            // We rely on the state freeze, but if a timeout is pending for next step, we clear it.
+            // (Shared timerRef handles this)
+          } else {
+            console.log('[GameService] UNPAUSING GAME');
+            // Resume logic
+            // We need to trigger resume AFTER state update, but processHostEvent is synchronous state calculation.
+            // We can use a side effect or just trust that resumeGameProgression will be called?
+            // Actually, processHostEvent updates stateRef.current. 
+            // We can't easily call "resumeGameProgression" from inside the reducer-like switch without being careful.
+            // However, resumeGameProgression uses stateRef.current.
+            // Let's set a flag or just handle it.
+            // Better approach: We need to effectuate the resume. 
+            // Since we are inside processHostEvent, we are about to broadcast.
+            // We can attach a specialized "resume" trigger outside? 
+            // Or better, just handle it in the event dispatch/processing wrapper if possible?
+            // But processHostEvent is internal.
+
+            // Simple hack: We can't call complex side-effects (like starting new intervals) easily inside here if they depend on the *new* state being fully propagated/rendered if using refs carefully.
+            // BUT, resumeGameProgression takes 'state' as arg.
+            // We can call it, but we need to ensure we don't double-set state if resumeGameProgression calls setState.
+            // resumeGameProgression DOES call setState/broadcast.
+            // So calling it here would be recursive/problematic if we are already in the "update state" flow.
+
+            // CHANGE OF PLAN: logic for RESUME needs to happen *after* the state update is committed/broadcast.
+            // But we need to do it. 
+            // We'll set a flag in the 'changed' block? No.
+
+            // Workaround: We'll defer the resume call using setTimeout(..., 0)
+            setTimeout(() => {
+              resumeGameProgression(next);
+            }, 50);
+          }
+          changed = true;
+        }
+        break;
     }
 
     if (changed) {
@@ -1718,6 +1770,9 @@ export const useGameService = (role: 'HOST' | 'PLAYER' | 'AUDIENCE', playerName?
         if (role === 'HOST') {
           processHostEvent({ type: 'TOGGLE_ONLINE_MODE', payload: null });
         }
+      },
+      sendTogglePause: () => {
+        dispatch({ type: 'TOGGLE_PAUSE', payload: null });
       }
     },
     isSpeaking: localIsNarrating, // Use local state primarily for lip sync as it reflects actual audio

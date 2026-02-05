@@ -94,6 +94,7 @@ export interface GameState {
   leaderboardPhase: 'INTRO' | 'REVEAL' | 'LEADER'; // Syncing the exact moment of score update
   language: 'en' | 'el'; // Current game language
   usePremiumVoices: boolean; // New: Toggle for Google Cloud TTS
+  isPaused: boolean; // New: Dev-only pause state
 }
 
 export type GameEvent =
@@ -114,4 +115,5 @@ export type GameEvent =
   | { type: 'TOGGLE_PREMIUM_VOICES'; payload: null } // New event
   | { type: 'PLAY_NARRATION'; payload: { text: string; key?: string } }
   | { type: 'REMOVE_PLAYER'; payload: { playerId: string } }
+  | { type: 'TOGGLE_PAUSE'; payload: null }
   | { type: 'RESTART_GAME'; payload: null };

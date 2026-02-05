@@ -2,7 +2,7 @@ import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { GameState, GamePhase, Player, Answer, Expression, Emote } from '../types';
 import { Avatar } from '../components/Avatar';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowUp } from 'lucide-react';
+import { ArrowUp, Play, Pause } from 'lucide-react';
 import { sfx } from '../services/audioService';
 import { NARRATOR_SEED } from '../constants';
 import { getText } from '../i18n';
@@ -28,11 +28,8 @@ export const getPointsConfig = (currentRound: number, totalRounds: number) => {
 
 export const getAdaptiveTextClass = (text: string, baseSize: string, lengthLimit: number = 50) => {
     if (!text) return baseSize;
+    return 'break-words';
     // Allow wrapping naturally first. Only shrink if it's really long.
-    if (text.length > lengthLimit * 2.5) return 'text-[0.6em] leading-tight'; // Very long -> smallest
-    if (text.length > lengthLimit * 1.5) return 'text-[0.8em] leading-tight'; // Long -> smaller
-    if (text.length > lengthLimit) return 'text-[0.9em] leading-tight'; // Medium
-    return baseSize; // Normal
 };
 
 export const GameBackground = ({ children, className = '' }: { children: React.ReactNode, className?: string }) => (
@@ -158,7 +155,7 @@ export const CategoryRoulette = ({ state, onSelect }: { state: GameState, onSele
                 </div>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-2 md:gap-6 w-full max-w-5xl p-4 md:p-6 pb-24 md:pb-8 overflow-y-auto flex-1 min-h-0 content-start no-scrollbar">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-2 md:gap-6 w-full max-w-5xl p-4 md:p-6 pb-24 md:pb-8 overflow-y-auto flex-1 min-h-0 content-start no-scrollbar">
                 {options.map((opt, idx) => {
                     const isSelected = selected === opt;
                     const isDimmed = selected && !isSelected;
@@ -179,7 +176,7 @@ export const CategoryRoulette = ({ state, onSelect }: { state: GameState, onSele
                                 borderColor: isSelected ? '#FFF' : 'rgba(255,255,255,0.1)'
                             }}
                             className={`
-                                p-3 md:p-6 rounded-2xl md:rounded-[2rem] border-2 backdrop-blur-md text-center font-black text-sm md:text-2xl shadow-lg flex items-center justify-center w-full aspect-[2/1] md:aspect-auto md:min-h-[10rem] relative overflow-hidden uppercase transition-all
+                                p-3 md:p-6 rounded-2xl md:rounded-[3rem] border-2 backdrop-blur-md text-center font-black text-xl md:text-2xl shadow-lg flex items-center justify-center w-full min-h-[6vh]  md:min-h-[8rem] relative overflow-hidden uppercase transition-all
                                 ${isSelected ? 'z-50 ring-4 ring-yellow-400/50 shadow-2xl' : ''}
                                 ${onSelect && !selected ? 'hover:scale-[1.02] active:scale-95 cursor-pointer hover:bg-purple-800/80 hover:border-purple-400' : ''}
                             `}
@@ -330,8 +327,8 @@ export const RevealSequence = ({ state, actions, setGalleryOverrides, isHost }: 
                                                 )}
                                             </AnimatePresence>
 
-                                            <div className="relative transform hover:scale-110 transition-transform duration-200 flex flex-col items-center">
-                                                <Avatar seed={voter.avatarSeed} size={90} expression={voterExpression} className="filter drop-shadow-lg mb-2 !w-12 !h-12 md:!w-[90px] md:!h-[90px]" />
+                                            <div className="relative flex flex-col items-center">
+                                                <Avatar seed={voter.avatarSeed} size={90} expression={voterExpression} className="filter drop-shadow-lg max-w-20" />
                                                 <motion.div
                                                     initial={{ scale: 0 }} animate={{ scale: 1 }}
                                                     className={`${isTruth ? 'bg-green-600' : 'bg-red-600'} text-white font-black px-3 py-0.5 rounded-full text-xs uppercase shadow-md border-2 border-white whitespace-nowrap z-10`}
@@ -339,7 +336,7 @@ export const RevealSequence = ({ state, actions, setGalleryOverrides, isHost }: 
                                                     {isTruth ? getText(state.language, 'GAME_TAG_SMART') : getText(state.language, 'GAME_TAG_FOOLED')}
                                                 </motion.div>
                                             </div>
-                                            <div className="font-bold mt-2 text-[10px] md:text-base opacity-90">{voter.name}</div>
+                                            <div className="font-bold mt-2 text-[10px] md:text-base break-words max-w-[80px] opacity-90">{voter.name}</div>
                                         </motion.div>
                                     )
                                 })}
@@ -353,11 +350,11 @@ export const RevealSequence = ({ state, actions, setGalleryOverrides, isHost }: 
                                         transition={{ delay: (currentAnswer.votes.length * 0.15) + (idx * 0.1), type: 'spring' }}
                                         className="flex flex-col items-center grayscale mix-blend-multiply"
                                     >
-                                        <Avatar seed={av.avatarSeed} size={70} expression={isTruth ? 'HAPPY' : 'SHOCKED'} className="filter drop-shadow-sm !w-8 !h-8 md:!w-[70px] md:!h-[70px]" />
+                                        <Avatar seed={av.avatarSeed} size={70} expression={isTruth ? 'SHOCKED' : 'HAPPY'} className="filter drop-shadow-sm max-w-20" />
                                         <div className="bg-blue-500 text-white font-black px-2 py-0.5 rounded-full mt-1 text-[10px] uppercase mb-1">
                                             {getText(state.language, 'GAME_TAG_AUDIENCE')}
                                         </div>
-                                        <div className="text-gray-500 font-bold text-xs">{av.name}</div>
+                                        <div className="text-gray-500 font-bold text-xs break-words max-w-[80px]">{av.name}</div>
                                     </motion.div>
                                 ))}
                             </>
@@ -420,7 +417,7 @@ export const RevealSequence = ({ state, actions, setGalleryOverrides, isHost }: 
                             <motion.div
                                 initial={{ scale: 3, opacity: 0 }}
                                 animate={{ scale: 1, opacity: 1 }}
-                                className="text-3xl md:text-6xl font-black text-white drop-shadow-xl tracking-widest border-8 border-white px-10 py-4 bg-green-500 rounded-3xl transform -rotate-3 uppercase shadow-2xl"
+                                className="text-2xl md:text-4xl font-black text-white drop-shadow-xl border-4 border-white px-8 py-4 bg-green-500 rounded-2xl transform -rotate-3 uppercase shadow-2xl max-h-20"
                             >
                                 {getText(state.language, 'GAME_THE_TRUTH')}
                             </motion.div>
@@ -629,5 +626,29 @@ export const ConnectionOverlay = ({
                 )}
             </motion.div>
         </motion.div>
+    );
+};
+
+// DEV PAUSE BUTTON
+export const DevPauseButton: React.FC<{ isPaused: boolean; onToggle: () => void }> = ({ isPaused, onToggle }) => {
+    // Only show in development
+    if (!import.meta.env.DEV) return null;
+
+    return (
+        <button
+            onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation(); // Prevent affecting game flow clicks
+                onToggle();
+            }}
+            className={`
+                fixed top-28 right-0 z-[9999] px-3 py-2 rounded-l-xl font-bold text-xs uppercase shadow-xl border-l-2 border-y-2 flex items-center gap-2 transition-transform hover:scale-110
+                ${isPaused ? 'bg-red-600 border-red-400 text-white' : 'bg-green-600/80 border-green-400 text-white backdrop-blur-sm'}
+            `}
+            title="Local Dev Pause"
+        >
+            {isPaused ? <Play size={16} fill="white" /> : <Pause size={16} fill="white" />}
+            {isPaused ? 'RESUME' : 'PAUSE'}
+        </button>
     );
 };

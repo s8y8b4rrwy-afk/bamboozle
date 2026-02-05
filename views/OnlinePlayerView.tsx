@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Clock, Users, CheckCircle, Lock, Play, Crown, ArrowUp, Star, Menu, X, ChevronDown, RotateCcw } from 'lucide-react';
 import { sfx } from '../services/audioService';
 import { getText } from '../i18n';
-import { RevealSequence, LeaderboardSequence, CategoryRoulette, PointsPopup, EmotePopupLayer, CountUp, GameBackground, getAdaptiveTextClass, ConnectionOverlay } from './GameSharedComponents';
+import { RevealSequence, LeaderboardSequence, CategoryRoulette, PointsPopup, EmotePopupLayer, CountUp, GameBackground, getAdaptiveTextClass, ConnectionOverlay, DevPauseButton } from './GameSharedComponents';
 
 interface OnlinePlayerViewProps {
     state: GameState;
@@ -34,7 +34,7 @@ const AvatarStrip = React.memo(({ players, phase, submittedLies, isMobile, onTog
             className={`
                 w-full z-40 shrink-0 relative transition-all duration-300
                 ${isMobile
-                    ? 'py-2 px-2 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 min-h-[4.5rem]'
+                    ? 'py-1 px-2 flex flex-wrap justify-center gap-x-1 gap-y-1 min-h-[4.5rem]'
                     : 'p-2 flex flex-wrap justify-center items-end gap-3'
                 }
             `}
@@ -44,9 +44,9 @@ const AvatarStrip = React.memo(({ players, phase, submittedLies, isMobile, onTog
                     (phase === GamePhase.VOTING && !!p.currentVote);
                 return (
                     <div key={p.id} className={`relative flex-shrink-0 flex flex-col items-center z-10 ${isMobile ? 'min-w-[50px]' : ''}`}>
-                        {isDone && <div className="absolute top-0 right-0 bg-green-500 w-3 h-3 md:w-5 md:h-5 rounded-full border border-white z-10" />}
-                        <Avatar seed={p.avatarSeed} size={isMobile ? 40 : 50} expression={p.expression} className="filter drop-shadow-lg transition-transform hover:scale-110" />
-                        <span className={`text-white/90 uppercase font-bold mt-1 shadow-black/50 drop-shadow-md text-center leading-tight ${isMobile ? (p.name.length > 10 ? 'text-[8px] max-w-[85px]' : 'text-[10px] max-w-[70px]') : 'text-xs max-w-[100px]'}`}>{p.name}</span>
+                        {isDone && <div className="absolute top-0 right-0 bg-green-500 w-3 h-3 md:w-5 md:h- rounded-full border border-white z-10" />}
+                        <Avatar seed={p.avatarSeed} size={isMobile ? 42 : 65} expression={p.expression} className="filter drop-shadow-lg transition-transform" />
+                        <span className={`text-white/90 uppercase font-bold mt-1 shadow-black/50 drop-shadow-md text-center leading-tight justify-center ${isMobile ? (p.name.length > 10 ? 'break-words text-[7px] max-w-[65px]' : 'text-[10px] max-w-[70px]') : 'break-words text-xs max-w-[120px]'}`}>{p.name}</span>
                     </div>
                 );
             })}
@@ -188,7 +188,7 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
 
     const TopBar = () => (
         <div className="flex items-center justify-between w-full px-6 pt-safe-top pb-2 z-50 shrink-0">
-            <span className="text-white/30 font-bold text-[10px] uppercase tracking-widest">Bamboozle</span>
+            <span className="text-white/30 font-bold text-sm uppercase tracking-widest">Bamboozle</span>
             <span className="text-white/30 font-bold uppercase text-sm tracking-wider">{getText(state.language, 'LOBBY_ROOM_CODE', { code: state.roomCode })}</span>
         </div>
     );
@@ -343,14 +343,15 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
     // --- MAIN GAME RENDER ---
 
     return (
-        <GameBackground className="flex flex-col h-full w-full overflow-hidden relative">
+        <GameBackground className="flex flex-col h-full w-full pb-safe-bottom pt-safe-top overflow-hidden relative">
+            <DevPauseButton isPaused={state.isPaused} onToggle={actions.sendTogglePause} />
             <EmotePopupLayer emotes={state.emotes} />
             <TopBar />
 
             {/* GLOBAL NARRATOR - Static Flow */}
             <div
-                className={`w-full flex justify-center mt-2 z-10 shrink-0 transform transition-all duration-500 relative
-                    ${state.phase === GamePhase.WRITING ? 'scale-90' : 'scale-100'}
+                className={`w-full flex justify-center z-10 shrink-0 transform transition-all duration-500 relative
+                    ${state.phase === GamePhase.WRITING ? 'scale-80' : 'scale-100'}
                     ${state.phase === GamePhase.LOBBY ? 'hidden' : 'flex'}
                 `}
             >
@@ -380,7 +381,7 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
                                     </div>
                                     <div className="z-10 flex flex-col gap-1 items-end">
                                         <div className="flex items-center gap-1.5 bg-black/40 px-2 py-0.5 rounded border border-white/10">
-                                            <span className="text-white font-bold text-[8px] uppercase">{getText(state.language, 'LOBBY_ROUNDS')}</span>
+                                            <span className="text-white font-bold text-xs uppercase">{getText(state.language, 'LOBBY_ROUNDS')}</span>
                                             <span className="text-yellow-400 font-mono font-black text-xs">{state.totalRounds}</span>
                                         </div>
                                         <div className="flex items-center gap-1.5 bg-black/40 px-2 py-0.5 rounded border border-white/10">
@@ -535,7 +536,7 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
                             </div>
 
                             {/* Fact Card */}
-                            <div className="w-full bg-white text-purple-900 p-4 md:p-6 rounded-2xl md:rounded-3xl shadow-xl border-b-4 md:border-b-8 border-purple-300 relative z-10 min-h-[15vh] flex items-center justify-center">
+                            <div className="w-full bg-white text-purple-900 p-4 md:p-6 rounded-2xl md:rounded-3xl shadow-xl border-b-4 md:border-b-8 border-purple-300 relative z-10 min-h-[13vh] flex items-center justify-center">
                                 <p className={`font-black leading-tight uppercase text-center break-words ${getAdaptiveTextClass(state.currentQuestion?.fact.replace('<BLANK>', '________') || '', 'text-base md:text-2xl', 80)}`}>
                                     {state.currentQuestion?.fact.replace('<BLANK>', '________')}
                                 </p>
@@ -595,17 +596,17 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
                 {state.phase === GamePhase.VOTING && (
                     <div className="flex-1 flex flex-col items-center w-full h-full overflow-hidden relative">
                         {/* Fixed Header */}
-                        <div className="shrink-0 w-full max-w-md p-4 pb-2 flex flex-col items-center z-10">
+                        <div className="shrink-0 w-full max-w-md p-3 pb-2 flex flex-col items-center z-10">
                             {/* Timer */}
                             <div className="flex justify-center mb-4 relative z-30">
                                 <div className="flex items-center gap-2 bg-black/60 backdrop-blur-md px-4 py-1 rounded-full border border-white/20 shadow-lg">
-                                    <Clock size={16} className="text-yellow-400 animate-pulse" />
-                                    <span className="font-mono font-bold text-xl text-white">{state.timeLeft}s</span>
+                                    <Clock size={18} className="text-yellow-400 animate-pulse" />
+                                    <span className="font-mono font-bold text-md text-white">{state.timeLeft}s</span>
                                 </div>
                             </div>
 
-                            <div className="w-full bg-purple-800/50 p-4 rounded-xl border border-white/10 backdrop-blur-sm shadow-md text-center max-h-[20vh] overflow-y-auto">
-                                <p className={`font-bold text-white leading-tight uppercase ${getAdaptiveTextClass(state.currentQuestion?.fact.replace('<BLANK>', '________') || '', 'text-lg', 60)}`}>
+                            <div className="w-full bg-purple-800/50 p-4 mb-4 justify-center items-center rounded-xl border border-white/10 backdrop-blur-sm shadow-md text-center max-h-[20vh] min-h-[10vh] overflow-y-auto">
+                                <p className={`font-bold text-white leading-tight uppercase ${getAdaptiveTextClass(state.currentQuestion?.fact.replace('<BLANK>', '________') || '', 'text-lg', 75)}`}>
                                     {state.currentQuestion?.fact.replace('<BLANK>', '________')}
                                 </p>
                             </div>
@@ -616,7 +617,7 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
                             ref={answersRef}
                             className="flex-1 w-full overflow-y-auto px-4 pb-4 no-scrollbar flex justify-center"
                         >
-                            <div className="grid grid-cols-1 gap-3 w-full max-w-md pb-8">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 w-full pb-8 max-h-[35vh] min-h-[15vh]">
                                 {state.roundAnswers.filter(a => !a.authorIds.includes(playerId)).map((ans, idx) => {
                                     const iVoted = amAudience ? ans.audienceVotes.includes(playerId) : me?.currentVote === ans.id;
                                     return (
@@ -634,7 +635,7 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
                                             }}
                                             disabled={iVoted && !amAudience}
                                             className={`
-                                                  w-full p-4 rounded-xl border-b-4 md:border-b-8 font-black shadow-lg transition-all active:scale-95 uppercase relative overflow-hidden min-h-[80px] flex items-center justify-center
+                                                  w-full p-4 rounded-xl border-b-4 md:border-b-8 font-black shadow-lg transition-all active:scale-95 uppercase relative overflow-hidden min-h-[50px] flex items-center justify-center
                                                   ${iVoted
                                                     ? 'bg-blue-600 border-blue-800 text-white'
                                                     : 'bg-white border-blue-200 text-indigo-950 hover:bg-blue-50'
@@ -643,7 +644,7 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
                                               `}
                                         >
                                             <div className="relative z-10 flex flex-col w-full justify-center items-center h-full px-2">
-                                                <span className={`leading-tight text-center w-full break-words whitespace-normal drop-shadow-sm ${getAdaptiveTextClass(ans.text, 'text-lg md:text-2xl', 30)}`}>{ans.text}</span>
+                                                <span className={`leading-tight text-center w-full break-words whitespace-normal drop-shadow-sm ${getAdaptiveTextClass(ans.text, 'text-md :text-lg', 30)}`}>{ans.text}</span>
                                             </div>
 
                                             {/* Audience Indicator - Absolute Top Right */}
@@ -679,7 +680,7 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
 
                 {/* 5. REVEAL & LEADERBOARD (Shared) */}
                 {state.phase === GamePhase.REVEAL && (
-                    <div className="flex-1 flex flex-col items-center justify-center p-2 md:p-4 min-h-0 w-full">
+                    <div className="flex-1 flex flex-col items-center justify-center p-2 md:p-4 min-h-0 max-h-[60vh] w-full">
                         <RevealSequence state={state} actions={actions} setGalleryOverrides={() => { }} isHost={isVip} />
                     </div>
                 )}
@@ -719,7 +720,7 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
             {/* PERSISTENT BOTTOM BAR (Avatar Strip + Emotes) - With Safe Area support */}
             {
                 state.phase !== GamePhase.LOBBY && state.phase !== GamePhase.LEADERBOARD && state.phase !== GamePhase.GAME_OVER && (
-                    <div className="pb-safe-bottom z-50 transition-all duration-300">
+                    <div className="pb-safe-bottom z-50 transition-all duration-300 justify-center">
                         <AvatarStrip
                             players={Object.values(state.players)}
                             phase={state.phase}

@@ -24,7 +24,8 @@ import {
     RevealSequence,
     LeaderboardSequence,
     GameBackground,
-    getAdaptiveTextClass
+    getAdaptiveTextClass,
+    DevPauseButton
 } from './GameSharedComponents';
 
 export const HostView: React.FC<HostViewProps> = ({ state, actions, onHome, debugMode, isSpeaking }) => {
@@ -185,6 +186,7 @@ export const HostView: React.FC<HostViewProps> = ({ state, actions, onHome, debu
 
     return (
         <GameBackground>
+            <DevPauseButton isPaused={state.isPaused} onToggle={actions.sendTogglePause} />
 
             {/* Emotes Overlay */}
             <EmotePopupLayer emotes={state.emotes} />
