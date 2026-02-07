@@ -146,12 +146,12 @@ export const CategoryRoulette = ({ state, onSelect }: { state: GameState, onSele
     const selected = state.categorySelection?.selected;
 
     return (
-        <div className="flex flex-col items-center justify-center h-full w-full z-30 relative px-4 md:px-12 py-safe min-h-0">
-            <div className="mb-4 md:mb-12 text-center max-w-2xl mx-auto flex-shrink-0 pt-4 md:pt-0">
-                <h2 className="text-sm md:text-3xl text-purple-200 uppercase tracking-widest font-black drop-shadow-sm mb-2 md:mb-4">{getText(state.language, 'GAME_CATEGORY_SELECTION')}</h2>
+        <div className="flex flex-col items-center justify-center h-full w-full z-30 relative px-4 py-safe">
+            <div className="mt-4 text-center max-w-2xl mx-auto flex-shrink-0 pt-4 md:pt-0">
+                <h2 className="text-sm md:text-3xl text-purple-200 uppercase tracking-widest font-black drop-shadow-sm mb-2">{getText(state.language, 'GAME_CATEGORY_SELECTION')}</h2>
                 <div className="flex flex-col items-center">
                     <span className="text-yellow-400 font-black text-2xl md:text-6xl uppercase tracking-tighter drop-shadow-xl">{selectorName}</span>
-                    <span className="text-white text-xs md:text-2xl font-black uppercase tracking-[0.3em] opacity-50">{onSelect ? getText(state.language, 'GAME_PICK_CATEGORY') : getText(state.language, 'GAME_IS_CHOOSING')}</span>
+                    <span className="text-white text-xs md:text-2xl font-black uppercase tracking-[0.3em] mb-2 opacity-50">{onSelect ? getText(state.language, 'GAME_PICK_CATEGORY') : getText(state.language, 'GAME_IS_CHOOSING')}</span>
                 </div>
             </div>
 
@@ -176,8 +176,8 @@ export const CategoryRoulette = ({ state, onSelect }: { state: GameState, onSele
                                 borderColor: isSelected ? '#FFF' : 'rgba(255,255,255,0.1)'
                             }}
                             className={`
-                                p-3 md:p-6 rounded-2xl md:rounded-[3rem] border-2 backdrop-blur-md text-center font-black text-xl md:text-2xl shadow-lg flex items-center justify-center w-full min-h-[6vh]  md:min-h-[8rem] relative overflow-hidden uppercase transition-all
-                                ${isSelected ? 'z-50 ring-4 ring-yellow-400/50 shadow-2xl' : ''}
+                                p-3 md:p-6 rounded-2xl md:rounded-[3rem] border-2 backdrop-blur-md text-center font-black text-xl md:text-2xl shadow-lg flex items-center justify-center w-full min-h-[6vh] h-min  md:min-h-[8rem] relative overflow-hidden uppercase transition-all
+                                ${isSelected ? 'z-50 ring-4 ring-yellow-400/50 shadow-2xl hover:scale' : ''}
                                 ${onSelect && !selected ? 'hover:scale-[1.02] active:scale-95 cursor-pointer hover:bg-purple-800/80 hover:border-purple-400' : ''}
                             `}
                         >
@@ -299,7 +299,7 @@ export const RevealSequence = ({ state, actions, setGalleryOverrides, isHost }: 
                             : 'bg-white border-gray-200 text-black shadow-[0_20px_60px_-15px_rgba(255,255,255,0.4)]'}
                   `}
                 >
-                    <h2 className={`font-black mb-2 md:mb-8 leading-none drop-shadow-sm line-clamp-3 md:line-clamp-none overflow-hidden ${getAdaptiveTextClass(currentAnswer.text, 'text-lg md:text-5xl', 40)}`}>{currentAnswer.text}</h2>
+                    <h2 className={`font-black mb-2 md:mb-4 leading-none drop-shadow-sm line-clamp-3 md:line-clamp-none overflow-hiddn ${getAdaptiveTextClass(currentAnswer.text, 'text-lg md:text-5xl', 40)}`}>{currentAnswer.text}</h2>
 
                     {/* Voters Container */}
                     <div className="w-full flex flex-wrap items-center justify-center gap-2 md:gap-6 mb-2 md:mb-8 min-h-[4rem] relative flex-shrink-0">

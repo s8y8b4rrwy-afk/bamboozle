@@ -343,7 +343,7 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
     // --- MAIN GAME RENDER ---
 
     return (
-        <GameBackground className="flex flex-col h-full w-full pb-safe-bottom pt-safe-top overflow-hidden relative">
+        <GameBackground className="flex flex-col h-full w-full pb-safe-bottom overflow-y-auto  relative">
             <DevPauseButton isPaused={state.isPaused} onToggle={actions.sendTogglePause} />
             <EmotePopupLayer emotes={state.emotes} />
             <TopBar />
@@ -360,7 +360,7 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
 
             {/* MAIN CONTENT AREA - FlexGrow to fill space */}
             <div className={`
-                flex-1 relative flex flex-col w-full max-w-4xl mx-auto min-h-0 justify-center
+                flex-1 relative flex flex-col w-full max-w-4xl mx-auto min-h-0 pb-safe-bottom justify-center
                 ${(state.phase === GamePhase.VOTING) ? 'overflow-hidden' : 'overflow-y-auto no-scrollbar'}
             `}>
 
@@ -386,7 +386,7 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
                                         </div>
                                         <div className="flex items-center gap-1.5 bg-black/40 px-2 py-0.5 rounded border border-white/10">
                                             <Users size={10} className="text-blue-400" />
-                                            <span className="text-white font-mono font-black text-[10px]">{audienceCount}</span>
+                                            <span className="text-white font-mono font-black text-xs">{audienceCount}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -436,10 +436,10 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
 
                         {/* Lobby Controls - Natural Flow */}
                         {me && (
-                            <div className="w-full flex flex-col gap-3 mt-8 pb-safe-bottom z-20 shrink-0">
+                            <div className="w-full flex flex-col gap-4 mt-8 pb-safe-bottom z-20 shrink-0">
                                 <button
                                     onClick={actions.sendToggleReady}
-                                    className={`w-full py-4 rounded-xl font-black text-xl shadow-lg uppercase transition-all transform active:scale-95 ${me?.isReady ? 'bg-gray-700 text-gray-400' : 'bg-green-500 text-white'}`}
+                                    className={`w-full py-4 rounded-xl font-black text-xl shadow-lg uppercase transition-all mtransform active:scale-95 ${me?.isReady ? 'bg-gray-700 text-gray-400' : 'bg-green-500 text-white'}`}
                                 >
                                     {me?.isReady ? getText(state.language, 'LOBBY_IS_READY') : getText(state.language, 'LOBBY_READY_UP')}
                                 </button>
@@ -464,7 +464,7 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
                                             </div>
                                         </div>
 
-                                        <div className="grid grid-cols-2 gap-3">
+                                        <div className="grid grid-cols-2 gap-4">
                                             <button
                                                 onClick={actions.addBot}
                                                 className="bg-blue-600/50 hover:bg-blue-600 py-3 rounded-xl text-xs font-bold uppercase"
@@ -615,9 +615,9 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
                         {/* Answers Grid - Scrollable */}
                         <div
                             ref={answersRef}
-                            className="flex-1 w-full overflow-y-auto px-4 pb-4 no-scrollbar flex justify-center"
+                            className="flex-1 w-full overflow-y-auto px-2 pb-4 no-scrollbar flex justify-center"
                         >
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 w-full pb-8 max-h-[35vh] min-h-[15vh]">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 w-full pb-8 max-h-[35vh] md:max-h-[10vh] min-h-[vh]">
                                 {state.roundAnswers.filter(a => !a.authorIds.includes(playerId)).map((ans, idx) => {
                                     const iVoted = amAudience ? ans.audienceVotes.includes(playerId) : me?.currentVote === ans.id;
                                     return (
@@ -720,7 +720,7 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
             {/* PERSISTENT BOTTOM BAR (Avatar Strip + Emotes) - With Safe Area support */}
             {
                 state.phase !== GamePhase.LOBBY && state.phase !== GamePhase.LEADERBOARD && state.phase !== GamePhase.GAME_OVER && (
-                    <div className="pb-safe-bottom z-50 transition-all duration-300 justify-center">
+                    <div className="pb-safe-bottom z-50 mb-2 transition-all duration-300 justify-center">
                         <AvatarStrip
                             players={Object.values(state.players)}
                             phase={state.phase}
@@ -742,12 +742,12 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
                                     initial={{ height: 0, opacity: 0 }}
                                     animate={{ height: 'auto', opacity: 1 }}
                                     exit={{ height: 0, opacity: 0 }}
-                                    className="grid grid-cols-4 gap-2 px-4 pb-2 w-full max-w-sm mx-auto z-20 relative overflow-hidden"
+                                    className="grid grid-cols-4 gap-2 px-4 py-4 w-full max-w-sm mx-auto z-20 relative overflow-hidden"
                                 >
-                                    <button onClick={() => handleEmote('LAUGH')} className="bg-white/10 p-3 rounded-xl hover:bg-white/20 text-2xl active:scale-95 transition border border-white/5 aspect-square flex items-center justify-center">😂</button>
-                                    <button onClick={() => handleEmote('SHOCK')} className="bg-white/10 p-3 rounded-xl hover:bg-white/20 text-2xl active:scale-95 transition border border-white/5 aspect-square flex items-center justify-center">😮</button>
-                                    <button onClick={() => handleEmote('LOVE')} className="bg-white/10 p-3 rounded-xl hover:bg-white/20 text-2xl active:scale-95 transition border border-white/5 aspect-square flex items-center justify-center">❤️</button>
-                                    <button onClick={() => handleEmote('TOMATO')} className="bg-white/10 p-3 rounded-xl hover:bg-white/20 text-2xl active:scale-95 transition border border-white/5 aspect-square flex items-center justify-center">🍅</button>
+                                    <button onClick={() => handleEmote('LAUGH')} className="bg-white/10 p-3 rounded-xl hover:bg-white/20 text-3xl transition border border-white/5 aspect-square flex items-center justify-center">😂</button>
+                                    <button onClick={() => handleEmote('SHOCK')} className="bg-white/10 p-3 rounded-xl hover:bg-white/20 text-3xl transition border border-white/5 aspect-square flex items-center justify-center">😮</button>
+                                    <button onClick={() => handleEmote('LOVE')} className="bg-white/10 p-3 rounded-xl hover:bg-white/20 text-3xl  transition border border-white/5 aspect-square flex items-center justify-center">❤️</button>
+                                    <button onClick={() => handleEmote('TOMATO')} className="bg-white/10 p-3 rounded-xl hover:bg-white/20 text-3xl transition border border-white/5 aspect-square flex items-center justify-center">🍅</button>
                                 </motion.div>
                             )}
                         </AnimatePresence>
