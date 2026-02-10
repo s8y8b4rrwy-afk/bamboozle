@@ -35,11 +35,16 @@ export const ChangelogModal: React.FC<ChangelogModalProps> = ({ isOpen, onClose,
 
             try {
                 // Fetch server version
-                const versionResponse = await fetch(`${serverUrl}/api/version`);
-                if (versionResponse.ok) {
-                    const versionData = await versionResponse.json();
-                    setServerVersion(versionData.version);
-                } else {
+                try {
+                    const versionResponse = await fetch(`${serverUrl}/api/version`);
+                    if (versionResponse.ok) {
+                        const versionData = await versionResponse.json();
+                        setServerVersion(versionData.version);
+                    } else {
+                        setServerVersion('Unknown');
+                    }
+                } catch (versionError) {
+                    console.error('Error fetching server version:', versionError);
                     setServerVersion('Unknown');
                 }
 
