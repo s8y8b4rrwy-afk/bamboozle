@@ -5,6 +5,7 @@ import { ROUND_TIMER_SECONDS } from '../constants';
 import { getQuestions, Language } from '../i18n/questions';
 import { getNarratorPhrase, getBotNames } from '../i18n/narrator';
 import { sfx } from './audioService';
+import { ProgressionManager } from './ProgressionManager';
 
 // Helper to generate IDs
 const generateId = () => Math.random().toString(36).substr(2, 9);
@@ -194,6 +195,9 @@ export const useGameService = (role: 'HOST' | 'PLAYER' | 'AUDIENCE', playerName?
   const isHostRef = useRef<boolean>(role === 'HOST'); // Track if we're acting as host (can change via reclaim)
   const activeAudioRef = useRef<HTMLAudioElement | null>(null);
 
+  // Progression Manager (Ref to keep it stable)
+  const progressionManager = useRef<ProgressionManager | null>(null);
+
   const stopSpeech = () => {
     window.speechSynthesis.cancel();
     if (activeAudioRef.current) {
@@ -312,6 +316,7 @@ export const useGameService = (role: 'HOST' | 'PLAYER' | 'AUDIENCE', playerName?
       utterance.onend = () => {
         setLocalIsNarrating(false);
         clearTimeout(safetyTimeout);
+        progressionManager.current?.onAudioEnded();
       };
 
       utterance.onerror = (e) => {
@@ -483,6 +488,7 @@ export const useGameService = (role: 'HOST' | 'PLAYER' | 'AUDIENCE', playerName?
       audio.onended = () => {
         setLocalIsNarrating(false);
         if (activeAudioRef.current === audio) activeAudioRef.current = null;
+        progressionManager.current?.onAudioEnded();
       };
 
       // Failsafe
@@ -978,35 +984,21 @@ export const useGameService = (role: 'HOST' | 'PLAYER' | 'AUDIENCE', playerName?
               clearTimeout(timerRef.current); // Just in case it was a timeout
               timerRef.current = null;
             }
-            // Stop any revealing loops
-            // We rely on the state freeze, but if a timeout is pending for next step, we clear it.
-            // (Shared timerRef handles this)
+            // Pause Progression Manager (Reveal Phase)
+            if (progressionManager.current) {
+              progressionManager.current.pause();
+            }
           } else {
             console.log('[GameService] UNPAUSING GAME');
-            // Resume logic
-            // We need to trigger resume AFTER state update, but processHostEvent is synchronous state calculation.
-            // We can use a side effect or just trust that resumeGameProgression will be called?
-            // Actually, processHostEvent updates stateRef.current. 
-            // We can't easily call "resumeGameProgression" from inside the reducer-like switch without being careful.
-            // However, resumeGameProgression uses stateRef.current.
-            // Let's set a flag or just handle it.
-            // Better approach: We need to effectuate the resume. 
-            // Since we are inside processHostEvent, we are about to broadcast.
-            // We can attach a specialized "resume" trigger outside? 
-            // Or better, just handle it in the event dispatch/processing wrapper if possible?
-            // But processHostEvent is internal.
 
-            // Simple hack: We can't call complex side-effects (like starting new intervals) easily inside here if they depend on the *new* state being fully propagated/rendered if using refs carefully.
-            // BUT, resumeGameProgression takes 'state' as arg.
-            // We can call it, but we need to ensure we don't double-set state if resumeGameProgression calls setState.
-            // resumeGameProgression DOES call setState/broadcast.
-            // So calling it here would be recursive/problematic if we are already in the "update state" flow.
+            // Resume Progression Manager (Reveal Phase)
+            if (progressionManager.current) {
+              progressionManager.current.resume();
+            }
 
-            // CHANGE OF PLAN: logic for RESUME needs to happen *after* the state update is committed/broadcast.
-            // But we need to do it. 
-            // We'll set a flag in the 'changed' block? No.
-
-            // Workaround: We'll defer the resume call using setTimeout(..., 0)
+            // Resume Standard Game Logic
+            // Workaround: We'll defer the logic resume call using setTimeout(..., 0)
+            // This handles non-progression phases (Voting/Writing/Category)
             setTimeout(() => {
               resumeGameProgression(next);
             }, 50);
@@ -1353,19 +1345,30 @@ export const useGameService = (role: 'HOST' | 'PLAYER' | 'AUDIENCE', playerName?
   };
 
   const startRevealPhase = (state: GameState) => {
-    state.phase = GamePhase.REVEAL;
+    // 0. Stop any existing timer (Voting/Writing)
     if (timerRef.current) clearInterval(timerRef.current);
+    timerRef.current = null; // Clear ref
 
-    // Points Logic (Existing)
+    // 1. Points & Vote Aggregation Logic
     const multiplier = state.currentRound >= state.totalRounds ? 3 : (state.currentRound === state.totalRounds - 1 ? 2 : 1);
     const TRUTH_POINTS = 1000 * multiplier;
     const BASE_LIE_POINTS = TRUTH_POINTS / 2;
+
+    // Reset player votes on answers (we re-aggregate from player.currentVote)
+    state.roundAnswers.forEach(a => {
+      a.votes = []; // Clear old player votes
+    });
 
     Object.values(state.players).forEach((p: Player) => {
       if (!p.currentVote) return;
       const votedAnswer = state.roundAnswers.find(a => a.id === p.currentVote);
       if (votedAnswer) {
-        votedAnswer.votes.push(p.id);
+        // Add voter if not already present (safety)
+        if (!votedAnswer.votes.includes(p.id)) {
+          votedAnswer.votes.push(p.id);
+        }
+
+        // Award Points
         if (votedAnswer.authorIds.includes('SYSTEM')) {
           p.lastRoundScore += TRUTH_POINTS;
           p.score += TRUTH_POINTS;
@@ -1381,140 +1384,62 @@ export const useGameService = (role: 'HOST' | 'PLAYER' | 'AUDIENCE', playerName?
       }
     });
 
-    // --- NEW REVEAL LOGIC ---
-    // 1. Generate Order
-    const truth = state.roundAnswers.find(a => a.authorIds.includes('SYSTEM'));
-    const relevantAnswers = state.roundAnswers.filter(a =>
-      a.authorIds.includes('SYSTEM') || a.votes.length > 0
-    );
-    const lies = relevantAnswers.filter(a => !a.authorIds.includes('SYSTEM'));
-    // Shuffle lies deterministically or randomly (randomly is fine as it's done once by host)
-    const shuffledLies = shuffle(lies);
-    const sequence = [...shuffledLies, truth!].filter(Boolean);
+    // Audience Votes are already tracked in roundAnswers.audienceVotes live during voting.
+    // No need to re-aggregate here unless we want to validate. We'll skip re-aggregation to avoid duplication bugs.
 
-    state.revealOrder = sequence.map(a => a.id);
+
+    // 2. Determine Reveal Order:
+    // Check if we already have an order (and we are not at start)
+    // We force regeneration if revealStep is 0 to ensure fresh logic is applied
+    // 2. Determine Reveal Order:
+    // Check if we already have an order (and we are not at start)
+    let order = state.revealOrder;
+
+    // Only regenerate if NO order exists OR we are NOT in REVEAL phase (e.g. transitioning from Voting)
+    const shouldRegenerate = !order || order.length === 0 || state.phase !== GamePhase.REVEAL;
+
+    if (shouldRegenerate) {
+      // Filter for Relevant Answers: SYSTEM (Truth) OR Has Player Votes
+      const relevantAnswers = state.roundAnswers.filter(a => {
+        const hasVotes = a.votes && a.votes.length > 0;
+        const isTruth = a.authorIds.includes('SYSTEM');
+        // Lies are only revealed if PLAYERS voted for them. Audience is irrelevant for selection.
+        return isTruth || hasVotes;
+      });
+
+      const truth = relevantAnswers.find(a => a.authorIds.includes('SYSTEM'));
+      const lies = relevantAnswers.filter(a => !a.authorIds.includes('SYSTEM'));
+
+      // Shuffle lies
+      const shuffledLies = shuffle(lies);
+
+      // Sequence: Lies first, then Truth
+      const sequence = [...shuffledLies];
+      if (truth) sequence.push(truth);
+
+      order = sequence.map(a => a.id);
+    }
+
+    state.revealOrder = order;
+    // Only reset step if we generated new order (implied by the check above, but safer to be explicit)
+    // Always reset step to 0 when determining order or restarting phase logic
     state.revealStep = 0;
+    state.phase = GamePhase.REVEAL;
     state.revealSubPhase = 'CARD';
 
-    // Broadcast Initial State
+    stateRef.current = state;
+    setState(state);
     broadcastState(state);
 
-    // 2. Start Recursive Step Loop
-    runRevealStep(state);
+    // Start Progression Manager
+    if (progressionManager.current) {
+      progressionManager.current.startRevealPhase(state);
+    }
   };
 
+  // Legacy runRevealStep removed - replaced by ProgressionManager
   const runRevealStep = (state: GameState) => {
-    if (timerRef.current) clearInterval(timerRef.current);
-
-    // Check if we are done
-    if (state.revealStep >= state.revealOrder.length) {
-      startLeaderboardPhase();
-      return;
-    }
-
-    const currentAnswerId = state.revealOrder[state.revealStep];
-    const currentAnswer = state.roundAnswers.find(a => a.id === currentAnswerId);
-
-    if (!currentAnswer) {
-      // Should not happen, but skip if bad data
-      state.revealStep++;
-      runRevealStep(state);
-      return;
-    }
-
-    const isTruth = currentAnswer.authorIds.includes('SYSTEM');
-    const voters = currentAnswer.votes.map(vid => state.players[vid]).filter(Boolean);
-    const voterNames = joinNames(voters.map(v => v.name), state.language);
-    // const authors = currentAnswer.authorIds.map(id => state.players[id]).filter(Boolean);
-
-    // Helper to advance after delay
-    const advance = (delay: number, nextFn: () => void) => {
-      timerRef.current = window.setTimeout(nextFn, delay);
-    };
-
-    const updateAndBroadcast = (s: GameState) => {
-      stateRef.current = s;
-      setState(s);
-      broadcastState(s);
-    };
-
-    // SEQUENCE FLOW:
-    // 1. CARD Display (Already set before calling this or at end of previous)
-    // - Speak Lie/Truth Text
-    sfx.play('POP');
-    speak(getNarratorPhrase(state.language, 'REVEAL_CARD_INTRO', { text: currentAnswer.text }), false, `REVEAL_CARD_${currentAnswerId}`);
-
-    // Wait for text read (approx 2s) + delay -> Go to VOTERS
-    advance(2500, () => {
-      state.revealSubPhase = 'VOTERS';
-      updateAndBroadcast(state);
-
-      // VOTERS Logic
-      // Check triggers for SFX/Speech
-      if (voters.length > 0) {
-        if (isTruth) {
-          sfx.play('SUCCESS');
-          speak(getNarratorPhrase(state.language, 'REVEAL_CORRECT_GROUP', { names: voterNames }), false, `CORRECT_${currentAnswerId}`);
-        } else {
-          sfx.play('FAILURE');
-          if (currentAnswer.audienceVotes.length > 2) {
-            speak(getNarratorPhrase(state.language, 'PLAYER_FOOLED_BY_AUDIENCE', { names: voterNames }), false, `FOOLED_AUD_${currentAnswerId}`);
-          } else {
-            speak(getNarratorPhrase(state.language, 'REVEAL_FOOLED_GROUP', { names: voterNames }), false, `FOOLED_${currentAnswerId}`);
-          }
-        }
-      } else {
-        if (isTruth) speak(getNarratorPhrase(state.language, 'REVEAL_NOBODY', {}), false, `NOBODY_${currentAnswerId}`);
-      }
-
-      // Wait -> Go to AUTHOR
-      // Wait -> Go to AUTHOR
-      advance(3000, () => { // Give time for voter reaction speech
-        state.revealSubPhase = 'AUTHOR';
-        updateAndBroadcast(state);
-
-        // AUTHOR Logic
-        let speechText = '';
-
-        if (isTruth) {
-          sfx.play('REVEAL');
-          const intro = getNarratorPhrase(state.language, 'REVEAL_TRUTH_INTRO', {});
-          const fullFact = state.currentQuestion?.fact.replace('<BLANK>', currentAnswer.text) || currentAnswer.text;
-          speechText = `${intro} ${fullFact}`;
-          speak(speechText, false, `TRUTH_${currentAnswerId}`);
-        } else {
-          const authors = currentAnswer.authorIds.map(id => state.players[id]).filter(Boolean);
-          if (authors.length > 0) {
-            if (authors.length === 1) {
-              speechText = getNarratorPhrase(state.language, 'REVEAL_LIAR', { name: authors[0].name });
-              speak(speechText, false, `LIAR_${currentAnswerId}`);
-            } else {
-              const names = joinNames(authors.map(a => a.name), state.language);
-              speechText = getNarratorPhrase(state.language, 'REVEAL_LIAR_JINX', { names: names });
-              speak(speechText, false, `LIAR_JINX_${currentAnswerId}`);
-            }
-          } else if (currentAnswer.authorIds.includes('HOST_BOT')) {
-            // HOST LIE REVEAL
-            sfx.play('FAILURE');
-            speechText = getNarratorPhrase(state.language, 'REVEAL_HOST_LIE', { names: voterNames });
-            speak(speechText, false, `HOST_LIE_${currentAnswerId}`);
-          }
-        }
-
-        // Calculate duration based on text length
-        // Approx 450ms per word (slower reading) + 3s buffer to let it sink in
-        const wordCount = speechText.split(' ').length;
-        const duration = Math.max(4000, wordCount * 450 + 1000);
-
-        // Wait -> Next Step
-        advance(duration, () => {
-          state.revealStep++;
-          state.revealSubPhase = 'CARD'; // Reset for next
-          updateAndBroadcast(state);
-          runRevealStep(state);
-        });
-      });
-    });
+    // no-op, kept just in case but shouldn't be called
   };
 
   const startTimer = (seconds: number, onComplete: () => void) => {
@@ -1561,9 +1486,7 @@ export const useGameService = (role: 'HOST' | 'PLAYER' | 'AUDIENCE', playerName?
     }, 1000);
   };
 
-  const broadcastState = (newState: GameState) => {
-    socketRef.current?.emit('gameStateUpdate', { roomCode: newState.roomCode, gameState: newState });
-  };
+
 
   const resumeGameProgression = (state: GameState) => {
     if (!isHostRef.current) return;
@@ -1607,8 +1530,10 @@ export const useGameService = (role: 'HOST' | 'PLAYER' | 'AUDIENCE', playerName?
         });
       }
     } else if (state.phase === GamePhase.REVEAL) {
-      // For reveal, we can safely just run the current step again
-      runRevealStep(state);
+      // Resume Progression
+      if (progressionManager.current) {
+        progressionManager.current.startRevealPhase(state);
+      }
     } else if (state.phase === GamePhase.INTRO) {
       // If we were reading the question intro, jump to writing to avoid freeze
       startWritingPhase(state);
@@ -1621,6 +1546,34 @@ export const useGameService = (role: 'HOST' | 'PLAYER' | 'AUDIENCE', playerName?
       startLeaderboardPhase();
     }
   };
+
+  // Broadcast State Helper
+  const broadcastState = (newState: GameState) => {
+    if (isHostRef.current) {
+      socketRef.current?.emit('gameStateUpdate', { roomCode: newState.roomCode, gameState: newState });
+    }
+  };
+
+  // Init Progression Manager (Late init to capture dependencies)
+  useEffect(() => {
+    if (!progressionManager.current) {
+      progressionManager.current = new ProgressionManager(
+        (fn) => setState(prev => {
+          const next = fn(prev);
+          stateRef.current = next;
+          return next;
+        }),
+        dispatch, // We might need to wrap this if dispatch isn't stable, but it's a const function
+        (text, force, key) => speak(text, force, key),
+        () => stateRef.current,
+        broadcastState
+      );
+
+      progressionManager.current.setOnRevealFinished(() => {
+        startLeaderboardPhase();
+      });
+    }
+  }, []);
 
   const dispatch = (event: GameEvent) => {
     // Debug log

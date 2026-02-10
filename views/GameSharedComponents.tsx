@@ -1,5 +1,5 @@
-import React, { useEffect, useState, useMemo, useRef } from 'react';
-import { GameState, GamePhase, Player, Answer, Expression, Emote } from '../types';
+import React, { useEffect, useState, useRef } from 'react';
+import { GameState, GamePhase, Player, Expression, Emote } from '../types';
 import { Avatar } from '../components/Avatar';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowUp, Play, Pause } from 'lucide-react';
@@ -7,7 +7,13 @@ import { sfx } from '../services/audioService';
 import { NARRATOR_SEED } from '../constants';
 import { getText } from '../i18n';
 
-// Helper: Join names with "and"
+// --- Helper Functions ---
+
+/**
+ * Joins a list of names into a natural language string.
+ * @param names Array of names to join.
+ * @returns A string like "Alice, Bob and Charlie".
+ */
 export const joinNames = (names: string[]) => {
     if (names.length === 0) return '';
     if (names.length === 1) return names[0];
@@ -15,6 +21,12 @@ export const joinNames = (names: string[]) => {
     return names.slice(0, -1).join(', ') + ' and ' + names[names.length - 1];
 };
 
+/**
+ * Calculates the point values for the current round.
+ * @param currentRound The current round number (1-based).
+ * @param totalRounds The total number of rounds in the game.
+ * @returns Object containing points for 'truth' (fooling others) and 'lie' (tricking others).
+ */
 export const getPointsConfig = (currentRound: number, totalRounds: number) => {
     let multiplier = 1;
     if (currentRound === totalRounds) multiplier = 3;
@@ -26,12 +38,24 @@ export const getPointsConfig = (currentRound: number, totalRounds: number) => {
     };
 };
 
+/**
+ * Returns a CSS class for text sizing based on length.
+ * @param text The text to measure.
+ * @param baseSize The default text size class (e.g., 'text-2xl').
+ * @param lengthLimit The character limit before shrinking occurs.
+ * @returns The tailwind class string.
+ */
 export const getAdaptiveTextClass = (text: string, baseSize: string, lengthLimit: number = 50) => {
     if (!text) return baseSize;
     return 'break-words';
-    // Allow wrapping naturally first. Only shrink if it's really long.
+    // Note: Future implementation could dynamically scale font size here
 };
 
+// --- Functional Components ---
+
+/**
+ * The standard animated background for the game views.
+ */
 export const GameBackground = ({ children, className = '' }: { children: React.ReactNode, className?: string }) => (
     <div className={`relative w-full h-full bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900 overflow-hidden text-white selection:bg-pink-500 font-display flex flex-col ${className}`}>
         <div className="absolute inset-0 z-0 opacity-10 pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle, #ffffff 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
@@ -39,6 +63,9 @@ export const GameBackground = ({ children, className = '' }: { children: React.R
     </div>
 );
 
+/**
+ * An animated counter that counts up from a start value to an end value.
+ */
 export const CountUp = ({ value, from }: { value: number; from: number }) => {
     const [displayValue, setDisplayValue] = useState(isNaN(from) ? 0 : from);
 
@@ -71,7 +98,9 @@ export const CountUp = ({ value, from }: { value: number; from: number }) => {
     return <span>{displayValue}</span>;
 };
 
-// --- POINTS POPUP ANIMATION ---
+/**
+ * A popup animation showing points earned (+1000 PTS).
+ */
 export const PointsPopup = ({ amount, label = 'PTS', placement = 'bottom' }: { amount: number, label?: string, placement?: 'top' | 'bottom' }) => {
     useEffect(() => {
         sfx.play('SUCCESS');
@@ -97,7 +126,9 @@ export const PointsPopup = ({ amount, label = 'PTS', placement = 'bottom' }: { a
     );
 };
 
-// --- EMOTE AVATAR POPUP ---
+/**
+ * Renders floating emotes (reactions) from other players.
+ */
 export const EmotePopupLayer = ({ emotes }: { emotes: Emote[] }) => {
     return (
         <div className="absolute inset-0 z-[60] pointer-events-none overflow-hidden">
@@ -138,7 +169,9 @@ export const EmotePopupLayer = ({ emotes }: { emotes: Emote[] }) => {
     );
 };
 
-// --- CATEGORY ROULETTE ---
+/**
+ * Component for selecting a category when it's a player's turn.
+ */
 export const CategoryRoulette = ({ state, onSelect }: { state: GameState, onSelect?: (category: string) => void }) => {
     const selectorId = state.categorySelection?.selectorId;
     const selectorName = selectorId ? state.players[selectorId]?.name : 'Someone';
@@ -191,10 +224,10 @@ export const CategoryRoulette = ({ state, onSelect }: { state: GameState, onSele
     );
 };
 
+/**
+ * Handles the animated reveal sequence of answers, votes, and authors.
+ */
 export const RevealSequence = ({ state, actions, setGalleryOverrides, isHost }: { state: GameState, actions: any, setGalleryOverrides: (o: Record<string, Expression>) => void, isHost: boolean }) => {
-    // --- REFACTORED TO BE PURELY STATE DRIVEN ---
-    // The Host now drives the sequence via GameState updates (revealStep, revealSubPhase)
-
     // Safety check - if data is missing or out of sync
     if (!state.revealOrder || state.revealOrder.length === 0) {
         return <div className="flex h-full items-center justify-center text-4xl font-black text-white/20 uppercase">{getText(state.language, 'GAME_WAITING_HOST')}</div>;
@@ -205,8 +238,6 @@ export const RevealSequence = ({ state, actions, setGalleryOverrides, isHost }: 
     if (!currentAnswerId) return null;
 
     const currentAnswer = state.roundAnswers.find(a => a.id === currentAnswerId);
-
-    // Should verify phase consistency
     const phase = state.revealSubPhase || 'CARD';
 
     useEffect(() => {
@@ -244,14 +275,10 @@ export const RevealSequence = ({ state, actions, setGalleryOverrides, isHost }: 
 
     if (!currentAnswer) return <div className="flex h-full items-center justify-center text-4xl font-black text-white/50">{getText(state.language, 'GAME_LOADING')}</div>;
 
-
-
     const isTruth = currentAnswer.authorIds.includes('SYSTEM');
     const authors = currentAnswer.authorIds.map(id => state.players[id]).filter(Boolean);
     const factParts = state.currentQuestion?.fact.split('<BLANK>') || ['', ''];
-    const showFilledFact = isTruth && phase === 'AUTHOR';
-
-    // Points logic
+    const showFilledFact = isTruth && (phase === 'AUTHOR' || phase === 'VOTERS');
     const pointsConfig = getPointsConfig(state.currentRound, state.totalRounds);
     const audienceVoters = currentAnswer.audienceVotes.map(id => state.audience[id]).filter(Boolean);
 
@@ -303,7 +330,7 @@ export const RevealSequence = ({ state, actions, setGalleryOverrides, isHost }: 
 
                     {/* Voters Container */}
                     <div className="w-full flex flex-wrap items-center justify-center gap-2 md:gap-6 mb-2 md:mb-8 min-h-[4rem] relative flex-shrink-0">
-                        {phase !== 'CARD' && (
+                        {phase !== 'CARD' && phase !== 'INTRO' && !(isTruth && phase === 'AUTHOR') && (
                             <>
                                 {/* Player Voters */}
                                 {currentAnswer.votes.map((vid, idx) => {
@@ -360,7 +387,7 @@ export const RevealSequence = ({ state, actions, setGalleryOverrides, isHost }: 
                             </>
                         )}
 
-                        {phase !== 'CARD' && currentAnswer.votes.length === 0 && audienceVoters.length === 0 && (
+                        {phase !== 'CARD' && phase !== 'INTRO' && !(isTruth && phase === 'AUTHOR') && currentAnswer.votes.length === 0 && audienceVoters.length === 0 && (
                             <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} className="text-gray-400 font-black italic text-3xl md:text-4xl uppercase tracking-tighter opacity-30 select-none">
                                 {getText(state.language, 'GAME_NO_TAKERS')}
                             </motion.div>
@@ -413,7 +440,7 @@ export const RevealSequence = ({ state, actions, setGalleryOverrides, isHost }: 
                                 </div>
                             </motion.div>
                         )}
-                        {phase === 'AUTHOR' && isTruth && (
+                        {(phase === 'AUTHOR' || phase === 'VOTERS') && isTruth && (
                             <motion.div
                                 initial={{ scale: 3, opacity: 0 }}
                                 animate={{ scale: 1, opacity: 1 }}
@@ -430,13 +457,15 @@ export const RevealSequence = ({ state, actions, setGalleryOverrides, isHost }: 
     );
 };
 
+/**
+ * Animated leaderboard showing sorted player scores.
+ */
 export const LeaderboardSequence = ({ state, actions, onHome, isHost }: { state: GameState, actions: any, onHome: () => void, isHost: boolean }) => {
     const [sortedPlayers, setSortedPlayers] = useState<Player[]>([]);
     const [showNewScores, setShowNewScores] = useState(false);
 
     useEffect(() => {
         // Create a defensive copy before sorting to avoid mutating state/props
-        // Filter out any undefined/null players just in case
         const players = Object.values(state.players || {}).filter(Boolean);
 
         // Helper for sorting
@@ -459,10 +488,7 @@ export const LeaderboardSequence = ({ state, actions, onHome, isHost }: { state:
             setShowNewScores(false);
             setSortedPlayers(initialSort);
         }
-    }, [state.phase, state.leaderboardPhase, state.players]); // Correct dependency array
-
-    // Cleanup: Removed the duplicate useEffects that were causing conflicts
-
+    }, [state.phase, state.leaderboardPhase, state.players]);
 
     const getRankEmotion = (p: Player, currentIdx: number): Expression => {
         if (!showNewScores) return 'NEUTRAL';
@@ -515,14 +541,15 @@ export const LeaderboardSequence = ({ state, actions, onHome, isHost }: { state:
                     </AnimatePresence>
                 </ul>
             </div>
-
-            {/* HOST VIEW NO LONGER SHOWS CONTROLS IN GAME OVER - THEY ARE ON VIP PHONE */}
-
         </div>
     );
 };
 
-// --- CONNECTION STATUS OVERLAY ---
+// --- Connection & Dev Tools ---
+
+/**
+ * Overlay shown when the host disconnects or the room is closed.
+ */
 export const ConnectionOverlay = ({
     hostDisconnected,
     roomClosed,
@@ -629,7 +656,9 @@ export const ConnectionOverlay = ({
     );
 };
 
-// DEV PAUSE BUTTON
+/**
+ * A handy floating button only visible in Development mode to pause the game.
+ */
 export const DevPauseButton: React.FC<{ isPaused: boolean; onToggle: () => void }> = ({ isPaused, onToggle }) => {
     // Only show in development
     if (!import.meta.env.DEV) return null;
