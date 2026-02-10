@@ -7,10 +7,12 @@ export const AVATAR_COLORS = [
 ];
 
 export const ROUND_TIMER_SECONDS = {
-  WRITING: 45,
+  WRITING: 30,
   VOTING: 25,
   REVEAL: 120, // High fallback limit; UI drives the actual transition now
   LEADERBOARD: 15
 };
 
 export const NARRATOR_SEED = "NarratorGirl";
+
+export const GITHUB_REPO = "s8y8b4rrwy-afk/bamboozle";
