@@ -194,6 +194,15 @@ export const useGameService = (role: 'HOST' | 'PLAYER' | 'AUDIENCE', playerName?
   const lastSyncRef = useRef<number>(0);
   const isHostRef = useRef<boolean>(role === 'HOST'); // Track if we're acting as host (can change via reclaim)
   const activeAudioRef = useRef<HTMLAudioElement | null>(null);
+  const premiumAudioQueueRef = useRef<{
+    type: 'REMOTE' | 'LOCAL',
+    audioUrl?: string,
+    text: string,
+    requestId?: string
+  }[]>([]);
+  const isPlayingPremiumRef = useRef<boolean>(false);
+  const processedRequestsRef = useRef<Set<string>>(new Set());
+  const pendingFallbacksRef = useRef<Map<string, any>>(new Map());
 
   // Progression Manager (Ref to keep it stable)
   const progressionManager = useRef<ProgressionManager | null>(null);
@@ -204,6 +213,11 @@ export const useGameService = (role: 'HOST' | 'PLAYER' | 'AUDIENCE', playerName?
       activeAudioRef.current.pause();
       activeAudioRef.current = null;
     }
+    premiumAudioQueueRef.current = [];
+    isPlayingPremiumRef.current = false;
+    processedRequestsRef.current.clear();
+    pendingFallbacksRef.current.forEach(timer => clearTimeout(timer));
+    pendingFallbacksRef.current.clear();
     setLocalIsNarrating(false);
   };
 
@@ -250,9 +264,12 @@ export const useGameService = (role: 'HOST' | 'PLAYER' | 'AUDIENCE', playerName?
 
   // --- AUDIO / TTS ENGINE ---
   // --- AUDIO / TTS ENGINE ---
-  const internalSpeak = (text: string, force: boolean = false, dedupKey?: string) => {
+  const internalSpeak = (text: string, force: boolean = false, dedupKey?: string, onComplete?: () => void) => {
     // Valid text check
-    if (!text) return;
+    if (!text) {
+      onComplete?.();
+      return;
+    }
 
     if ('speechSynthesis' in window) {
       const now = Date.now();
@@ -260,6 +277,7 @@ export const useGameService = (role: 'HOST' | 'PLAYER' | 'AUDIENCE', playerName?
 
       // Debounce: If same key/text spoken within 1 second, skip
       if (!force && speechDedupRef.current[key] && now - speechDedupRef.current[key] < 1000) {
+        onComplete?.();
         return;
       }
       speechDedupRef.current[key] = now;
@@ -277,22 +295,15 @@ export const useGameService = (role: 'HOST' | 'PLAYER' | 'AUDIENCE', playerName?
       const wordCount = text.split(' ').length;
       const estimatedDuration = Math.max(2000, wordCount * 500);
 
-      // Clear previous fallback if it exists (using a ref for this would be best, but we'll rely on the dedicated timer below not conflicting too much)
-      // Ideally we'd store `narratorTimeoutRef` but for now we'll set a new one. 
-      // A safety timeout to ensure we don't get stuck talking forever.
       const safetyTimeout = setTimeout(() => {
         setLocalIsNarrating(false);
+        onComplete?.();
       }, estimatedDuration + 1000);
 
       const utterance = new SpeechSynthesisUtterance(text);
 
       // Voice Selection with Retry Logic
       let voices = window.speechSynthesis.getVoices();
-      if (voices.length === 0) {
-        // Try to wait for voices? Or just proceed with default
-        // Chrome loads voices async. We might be using default.
-      }
-
       const preferred = voices.find(v => v.name.includes('Google US English')) ||
         voices.find(v => v.lang.includes('en-US')) ||
         voices[0];
@@ -317,22 +328,77 @@ export const useGameService = (role: 'HOST' | 'PLAYER' | 'AUDIENCE', playerName?
         setLocalIsNarrating(false);
         clearTimeout(safetyTimeout);
         progressionManager.current?.onAudioEnded();
+        onComplete?.();
       };
 
       utterance.onerror = (e) => {
         console.warn('Speech Error:', e);
-        // If not allowed, we KEEP isNarrating true (via optimistic) until safety timeout clears it
-        // so the user still sees the "talking" even if they don't hear it.
-        // Unless it was canceled.
         if (e.error === 'canceled') {
           setLocalIsNarrating(false);
           clearTimeout(safetyTimeout);
+        } else {
+          // Force completion on other errors so queue doesn't hang
+          clearTimeout(safetyTimeout);
+          setLocalIsNarrating(false);
+          onComplete?.();
         }
       };
 
       console.log('[TTS] Speaking:', text);
       window.speechSynthesis.speak(utterance);
+    } else {
+      onComplete?.();
     }
+  };
+
+  const playNextPremium = () => {
+    if (premiumAudioQueueRef.current.length === 0) {
+      isPlayingPremiumRef.current = false;
+      setLocalIsNarrating(false);
+      return;
+    }
+
+    const task = premiumAudioQueueRef.current.shift()!;
+    isPlayingPremiumRef.current = true;
+
+    if (task.type === 'LOCAL') {
+      console.log('[Audio] Playing LOCAL from queue:', task.text);
+      internalSpeak(task.text, false, undefined, () => {
+        playNextPremium();
+      });
+      return;
+    }
+
+    // REMOTE Logic
+    console.log('[Audio] Playing REMOTE from queue:', task.text);
+    const audioUrl = task.audioUrl!;
+    const fullUrl = audioUrl.startsWith('http') ? audioUrl : `${SOCKET_URL}${audioUrl}`;
+    const audio = new Audio(fullUrl);
+    activeAudioRef.current = audio;
+
+    audio.onplay = () => {
+      setLocalIsNarrating(true);
+    };
+
+    audio.play().catch(e => {
+      console.warn('[Audio] Failed to play remote audio:', e, 'URL:', fullUrl);
+      playNextPremium();
+    });
+
+    audio.onended = () => {
+      if (activeAudioRef.current === audio) activeAudioRef.current = null;
+      progressionManager.current?.onAudioEnded();
+      playNextPremium();
+    };
+
+    // Failsafe
+    setTimeout(() => {
+      if (activeAudioRef.current === audio) {
+        console.warn('[Audio] Failsafe: advancing queue');
+        activeAudioRef.current = null;
+        playNextPremium();
+      }
+    }, 10000);
   };
 
   const checkRoomExists = (roomCode: string, callback: (exists: boolean) => void) => {
@@ -356,29 +422,48 @@ export const useGameService = (role: 'HOST' | 'PLAYER' | 'AUDIENCE', playerName?
         }
         speechDedupRef.current[key] = now;
 
-        console.log('[TTS] Requesting premium voice from server...');
+        const requestId = generateId();
+        console.log('[TTS] Requesting premium voice from server...', requestId);
 
-        // Start a fallback timer. If server doesn't respond in 4s, use local TTS.
+        // Start a per-request fallback timer.
         const fallbackTimer = setTimeout(() => {
-          console.warn('[TTS] Server took too long to respond. Falling back to local voice.');
-          internalSpeak(text, force, dedupKey);
+          if (!processedRequestsRef.current.has(requestId)) {
+            console.warn(`[TTS] Request ${requestId} timed out. Falling back to local voice.`);
+            processedRequestsRef.current.add(requestId);
+            pendingFallbacksRef.current.delete(requestId);
+
+            // Queue the LOCAL fallback
+            premiumAudioQueueRef.current.push({ type: 'LOCAL', text, requestId });
+            if (!isPlayingPremiumRef.current) {
+              playNextPremium();
+            }
+
+            // Sync fallback to other players
+            processHostEvent({
+              type: 'PLAY_NARRATION',
+              payload: { text, key: dedupKey, requestId }
+            });
+          }
         }, 4000);
+
+        pendingFallbacksRef.current.set(requestId, fallbackTimer);
 
         socketRef.current?.emit('requestNarrator', {
           roomCode: stateRef.current.roomCode,
           text,
-          language: stateRef.current.language
+          language: stateRef.current.language,
+          requestId
         });
-
-        // Store the timer so we can cancel it if 'playAudio' arrives for this text
-        // (Simplified: just global ref for now is fine since narration is sequential)
-        (window as any)._lastTTSFallback = fallbackTimer;
       }
       // Players do nothing; they wait for 'playAudio' event
     } else {
       // Fallback or Premium Disabled: Use Local Web Speech API
       if (isHostRef.current) {
-        processHostEvent({ type: 'PLAY_NARRATION', payload: { text, key: dedupKey } });
+        const requestId = generateId();
+        processHostEvent({
+          type: 'PLAY_NARRATION',
+          payload: { text, key: dedupKey, requestId }
+        });
       } else {
         // Players: only speak if in online mode
         if (stateRef.current.isOnlineMode) {
@@ -424,7 +509,18 @@ export const useGameService = (role: 'HOST' | 'PLAYER' | 'AUDIENCE', playerName?
     // Listen for Host Events (Narration)
     socket.on('hostEvent', (event: GameEvent) => {
       if (event.type === 'PLAY_NARRATION') {
-        internalSpeak(event.payload.text, false, event.payload.key);
+        const { text, key, requestId } = event.payload;
+
+        // Use ID to prevent double-speaking if premium arrived just before this sync
+        if (requestId && processedRequestsRef.current.has(requestId)) {
+          return;
+        }
+        if (requestId) processedRequestsRef.current.add(requestId);
+
+        premiumAudioQueueRef.current.push({ type: 'LOCAL', text, requestId });
+        if (!isPlayingPremiumRef.current) {
+          playNextPremium();
+        }
       }
     });
 
@@ -458,46 +554,72 @@ export const useGameService = (role: 'HOST' | 'PLAYER' | 'AUDIENCE', playerName?
       }
     });
 
-    // LISTEN FOR SERVER AUDIO BROADCASTS
-    socket.on('playAudio', ({ audioUrl, text }: { audioUrl: string, text: string }) => {
-      console.log('[Audio] Received broadcast:', text, audioUrl);
-
-      // Cancel the Host's fallback timer if audio arrived
-      if ((window as any)._lastTTSFallback) {
-        clearTimeout((window as any)._lastTTSFallback);
-        (window as any)._lastTTSFallback = null;
+    const playNextPremium = () => {
+      if (premiumAudioQueueRef.current.length === 0) {
+        isPlayingPremiumRef.current = false;
+        setLocalIsNarrating(false);
+        return;
       }
 
-      // Use the current socket URL base if audioUrl is relative
-      const fullUrl = audioUrl.startsWith('http') ? audioUrl : `${SOCKET_URL}${audioUrl}`;
+      isPlayingPremiumRef.current = true;
+      const { audioUrl, text } = premiumAudioQueueRef.current.shift()!;
 
+      console.log('[Audio] Playing from queue:', text);
+      const fullUrl = audioUrl.startsWith('http') ? audioUrl : `${SOCKET_URL}${audioUrl}`;
       const audio = new Audio(fullUrl);
       activeAudioRef.current = audio;
 
-      // Better Lip-Sync: Only start narrating when audio actually begins
       audio.onplay = () => {
         setLocalIsNarrating(true);
       };
 
       audio.play().catch(e => {
         console.warn('[Audio] Failed to play remote audio:', e, 'URL:', fullUrl);
-        // We don't automatically fallback here to avoid double-speaking 
-        // if the fallback timer already fired.
+        // Advance to next if failed
+        playNextPremium();
       });
 
       audio.onended = () => {
-        setLocalIsNarrating(false);
         if (activeAudioRef.current === audio) activeAudioRef.current = null;
         progressionManager.current?.onAudioEnded();
+        playNextPremium();
       };
 
-      // Failsafe
+      // Failsafe: if audio gets stuck for 10s, advance
       setTimeout(() => {
         if (activeAudioRef.current === audio) {
-          setLocalIsNarrating(false);
+          console.warn('[Audio] Failsafe: advancing queue after 10s timeout');
           activeAudioRef.current = null;
+          playNextPremium();
         }
       }, 10000);
+    };
+
+    // LISTEN FOR SERVER AUDIO BROADCASTS
+    socket.on('playAudio', ({ audioUrl, text, requestId }: { audioUrl: string, text: string, requestId: string }) => {
+      console.log('[Audio] Received broadcast:', text, requestId);
+
+      if (requestId) {
+        // Cancel the Host's fallback timer if audio arrived
+        const pending = pendingFallbacksRef.current.get(requestId);
+        if (pending) {
+          clearTimeout(pending);
+          pendingFallbacksRef.current.delete(requestId);
+        }
+
+        // If already processed (by fallback timer), discard
+        if (processedRequestsRef.current.has(requestId)) {
+          console.log('[Audio] Already processed (fallback), ignoring remote.');
+          return;
+        }
+        processedRequestsRef.current.add(requestId);
+      }
+
+      // Add to queue
+      premiumAudioQueueRef.current.push({ type: 'REMOTE', audioUrl, text, requestId });
+      if (!isPlayingPremiumRef.current) {
+        playNextPremium();
+      }
     });
 
     return () => {
@@ -1020,8 +1142,21 @@ export const useGameService = (role: 'HOST' | 'PLAYER' | 'AUDIENCE', playerName?
       if (next.isOnlineMode) {
         socketRef.current?.emit('hostEvent', { roomCode: next.roomCode, event });
       }
-      // Play locally for Host
-      internalSpeak(event.payload.text, false, event.payload.key);
+
+      const { text, requestId } = event.payload;
+      // Play locally for Host (Queued)
+      if (requestId) {
+        if (!processedRequestsRef.current.has(requestId)) {
+          processedRequestsRef.current.add(requestId);
+          premiumAudioQueueRef.current.push({ type: 'LOCAL', text, requestId });
+          if (!isPlayingPremiumRef.current) {
+            playNextPremium();
+          }
+        }
+      } else {
+        // Fallback for missing ID (shouldn't happen with new code)
+        internalSpeak(text, false, event.payload.key);
+      }
     }
   };
 

@@ -178,20 +178,15 @@ io.on('connection', (socket) => {
   });
 
   // --- TTS LOGIC ---
-  socket.on('requestNarrator', async ({ roomCode, text, language }) => {
+  socket.on('requestNarrator', async ({ roomCode, text, language, requestId }) => {
     try {
-      console.log(`[TTS Req] Room: ${roomCode}, Text: "${text}"`);
+      console.log(`[TTS Req] Room: ${roomCode}, Text: "${text}", ReqId: ${requestId}`);
       // Only accept from Host (simple check via rooms map)
       if (!rooms[roomCode]) return; // Invalid room
 
       // Generate (or get from cache)
       const result = await ttsService.getAudio(text, language || 'en', roomCode);
 
-      // Construct public URL
-      // In local dev this is http://localhost:3001
-      // In Prod/Railway this will be the deployed URL
-      // We can infer it from the socket handshake headers or just send relative path if client handles it?
-      // Better to send relative path: '/audio/CODE/FILE.mp3' and let Client prepend their known server URL.
       // Construct public URL
       const audioUrl = `/audio/${roomCode}/${result.file}`;
 
@@ -202,6 +197,7 @@ io.on('connection', (socket) => {
         io.in(roomCode).emit('playAudio', {
           audioUrl,
           text,
+          requestId,
           hash: null
         });
       } else {
@@ -209,6 +205,7 @@ io.on('connection', (socket) => {
         socket.emit('playAudio', {
           audioUrl,
           text,
+          requestId,
           hash: null
         });
       }

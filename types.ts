@@ -35,6 +35,7 @@ export interface AudienceMember {
   name: string;
   avatarSeed: string;
   isBot?: boolean;
+  currentVote?: string;
 }
 
 export interface Emote {
@@ -90,7 +91,7 @@ export interface GameState {
   recentCategories: string[]; // Track categories shown in the previous round to ensure variety
   revealOrder: string[]; // Array of Answer IDs in the order they should be revealed
   revealStep: number; // Current index in the revealOrder
-  revealSubPhase: 'CARD' | 'VOTERS' | 'AUTHOR'; // Current sub-phase of the reveal animation
+  revealSubPhase: 'INTRO' | 'CARD' | 'VOTERS' | 'AUTHOR'; // Current sub-phase of the reveal animation
   leaderboardPhase: 'INTRO' | 'REVEAL' | 'LEADER'; // Syncing the exact moment of score update
   language: 'en' | 'el'; // Current game language
   usePremiumVoices: boolean; // New: Toggle for Google Cloud TTS
@@ -113,7 +114,7 @@ export type GameEvent =
   | { type: 'TOGGLE_ONLINE_MODE'; payload: null }
   | { type: 'TOGGLE_LANGUAGE'; payload: null } // New event
   | { type: 'TOGGLE_PREMIUM_VOICES'; payload: null } // New event
-  | { type: 'PLAY_NARRATION'; payload: { text: string; key?: string } }
+  | { type: 'PLAY_NARRATION'; payload: { text: string; key?: string; requestId?: string } }
   | { type: 'REMOVE_PLAYER'; payload: { playerId: string } }
   | { type: 'TOGGLE_PAUSE'; payload: null }
   | { type: 'RESTART_GAME'; payload: null };
