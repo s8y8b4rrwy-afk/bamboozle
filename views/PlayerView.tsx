@@ -205,6 +205,16 @@ export const PlayerView: React.FC<PlayerViewProps> = ({ state, actions, playerId
                             >
                                 {getText(state.language, 'JOIN_BTN_ENTER')}
                             </button>
+
+                            <button
+                                onClick={() => {
+                                    sfx.play('CLICK');
+                                    window.location.reload();
+                                }}
+                                className="w-full bg-white/10 hover:bg-white/20 text-white py-4 rounded-2xl font-bold text-lg border border-white/20 uppercase tracking-wide transform active:scale-95 transition-all flex items-center justify-center gap-2"
+                            >
+                                <Home size={20} /> Cancel
+                            </button>
                         </motion.div>
                     )}
 
