@@ -144,8 +144,17 @@ export const PlayerView: React.FC<PlayerViewProps> = ({ state, actions, playerId
                                     className="w-full p-4 text-center text-4xl font-black rounded-xl uppercase tracking-[0.5em] bg-white text-black placeholder-gray-300 border-4 border-transparent focus:border-yellow-400 outline-none transition-all shadow-xl"
                                     maxLength={4}
                                     value={inputCode}
+                                    autoComplete="off"
+                                    autoCorrect="off"
+                                    autoCapitalize="characters"
+                                    spellCheck={false}
+                                    inputMode="text"
                                     onChange={(e) => {
                                         setInputCode(e.target.value.toUpperCase());
+                                        setCodeError('');
+                                    }}
+                                    onCompositionEnd={(e) => {
+                                        setInputCode((e.target as HTMLInputElement).value.toUpperCase());
                                         setCodeError('');
                                     }}
                                 />
@@ -237,7 +246,13 @@ export const PlayerView: React.FC<PlayerViewProps> = ({ state, actions, playerId
                                     placeholder="NICKNAME"
                                     className="w-full p-5 text-center text-2xl font-black rounded-2xl bg-white text-black placeholder-gray-300 uppercase shadow-lg border-4 border-transparent focus:border-purple-400 outline-none"
                                     value={joinName}
+                                    autoComplete="nickname"
+                                    autoCorrect="off"
+                                    autoCapitalize="characters"
+                                    spellCheck={false}
+                                    inputMode="text"
                                     onChange={e => setJoinName(e.target.value.toUpperCase())}
+                                    onCompositionEnd={(e) => setJoinName((e.target as HTMLInputElement).value.toUpperCase())}
                                     maxLength={12}
                                 />
                             </div>
@@ -617,7 +632,13 @@ export const PlayerView: React.FC<PlayerViewProps> = ({ state, actions, playerId
                         className="w-full p-6 rounded-[2rem] text-2xl font-black h-48 resize-none focus:ring-4 focus:ring-yellow-400 outline-none bg-white text-black placeholder-gray-300 uppercase shadow-inner leading-snug"
                         placeholder="MAKE IT BELIEVABLE..."
                         value={lieText}
+                        autoComplete="off"
+                        autoCorrect="off"
+                        autoCapitalize="characters"
+                        spellCheck={false}
+                        inputMode="text"
                         onChange={e => setLieText(e.target.value.toUpperCase())}
+                        onCompositionEnd={(e) => setLieText((e.target as HTMLTextAreaElement).value.toUpperCase())}
                     />
                 </div>
 

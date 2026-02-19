@@ -234,8 +234,17 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
                                     className="w-full p-6 text-center text-4xl md:text-5xl font-black rounded-2xl uppercase tracking-[0.2em] bg-white text-black placeholder-gray-300 border-4 border-transparent focus:border-yellow-400 outline-none shadow-xl"
                                     maxLength={4}
                                     value={inputCode}
+                                    autoComplete="off"
+                                    autoCorrect="off"
+                                    autoCapitalize="characters"
+                                    spellCheck={false}
+                                    inputMode="text"
                                     onChange={(e) => {
                                         setInputCode(e.target.value.toUpperCase());
+                                        setCodeError('');
+                                    }}
+                                    onCompositionEnd={(e) => {
+                                        setInputCode((e.target as HTMLInputElement).value.toUpperCase());
                                         setCodeError('');
                                     }}
                                 />
@@ -310,7 +319,13 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
                                     placeholder={getText(state.language, 'JOIN_ENTER_NAME')}
                                     className="w-full p-4 text-center text-2xl font-black rounded-xl bg-white text-black placeholder-gray-400 uppercase shadow-lg"
                                     value={joinName}
+                                    autoComplete="nickname"
+                                    autoCorrect="off"
+                                    autoCapitalize="characters"
+                                    spellCheck={false}
+                                    inputMode="text"
                                     onChange={e => setJoinName(e.target.value.toUpperCase())}
+                                    onCompositionEnd={(e) => setJoinName((e.target as HTMLInputElement).value.toUpperCase())}
                                     maxLength={12}
                                 />
 
@@ -597,7 +612,13 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
                                                 className="w-full bg-black/20 text-white p-4 rounded-xl text-base md:text-lg font-bold uppercase outline-none focus:ring-2 focus:ring-yellow-400 placeholder-white/30 text-center shadow-inner"
                                                 placeholder={getText(state.language, 'PROMPT_LIE_HERE')}
                                                 value={lieText}
+                                                autoComplete="off"
+                                                autoCorrect="off"
+                                                autoCapitalize="characters"
+                                                spellCheck={false}
+                                                inputMode="text"
                                                 onChange={e => setLieText(e.target.value.toUpperCase())}
+                                                onCompositionEnd={(e) => setLieText((e.target as HTMLInputElement).value.toUpperCase())}
                                                 maxLength={50}
                                             />
 

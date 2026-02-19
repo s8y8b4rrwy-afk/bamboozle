@@ -398,6 +398,26 @@ export const useGameService = (role: 'HOST' | 'PLAYER' | 'AUDIENCE', playerName?
 
     activeAudioRef.current = audio;
 
+    // Brand the iOS Now Playing widget (Dynamic Island / Control Center / Lock Screen).
+    // iOS will always show the widget for HTMLAudioElement playback — we can't suppress it,
+    // but we CAN control what it displays and disable all transport controls.
+    if ('mediaSession' in navigator) {
+      navigator.mediaSession.metadata = new MediaMetadata({
+        title: 'Bamboozle',
+        artist: 'Narrator',
+        album: 'Live Game',
+      });
+      // Disable transport controls — they don't make sense for a narrator
+      const noop = () => { };
+      navigator.mediaSession.setActionHandler('play', noop);
+      navigator.mediaSession.setActionHandler('pause', noop);
+      navigator.mediaSession.setActionHandler('stop', noop);
+      navigator.mediaSession.setActionHandler('previoustrack', null);
+      navigator.mediaSession.setActionHandler('nexttrack', null);
+      navigator.mediaSession.setActionHandler('seekbackward', null);
+      navigator.mediaSession.setActionHandler('seekforward', null);
+    }
+
     audio.onplay = () => {
       setLocalIsNarrating(true);
     };
