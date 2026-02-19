@@ -130,41 +130,70 @@ export const PointsPopup = ({ amount, label = 'PTS', placement = 'bottom' }: { a
  * Renders floating emotes (reactions) from other players.
  */
 export const EmotePopupLayer = ({ emotes }: { emotes: Emote[] }) => {
-    return (
-        <div className="absolute inset-0 z-[60] pointer-events-none overflow-hidden">
-            <AnimatePresence>
-                {emotes.map((e) => {
-                    // Determine expression based on emote type
-                    let expression: Expression = 'HAPPY';
-                    if (e.type === 'SHOCK') expression = 'SHOCKED';
-                    if (e.type === 'TOMATO') expression = 'ANGRY';
-                    if (e.type === 'LOVE') expression = 'HAPPY';
+    // Keep a local copy so emotes finish their animation even after server removes them
+    const [localEmotes, setLocalEmotes] = useState<(Emote & { addedAt: number })[]>([]);
+    const seenIds = useRef<Set<string>>(new Set());
+    const ANIM_DURATION = 3200; // ms — must match CSS animation below
 
-                    return (
-                        <motion.div
-                            key={e.id}
-                            initial={{ y: '100%', x: `${e.x}%`, scale: 0.3, opacity: 0 }}
-                            animate={{ y: '-50vh', scale: 0.5, opacity: 1 }}
-                            exit={{ y: '-80vh', opacity: 0, scale: 0.4 }}
-                            transition={{ duration: 2.5, ease: "easeOut" }}
-                            className="absolute bottom-0 flex flex-col items-center justify-center"
-                        >
-                            <div className="relative">
-                                <Avatar seed={e.senderSeed || 'guest'} size={120} expression={expression} className="filter drop-shadow-2xl" />
-                                <div className="absolute -top-4 -right-4 text-4xl bg-white rounded-full p-1 shadow-md">
-                                    {e.type === 'LAUGH' && '😂'}
-                                    {e.type === 'SHOCK' && '😮'}
-                                    {e.type === 'LOVE' && '❤️'}
-                                    {e.type === 'TOMATO' && '🍅'}
-                                </div>
+    useEffect(() => {
+        emotes.forEach(e => {
+            if (!seenIds.current.has(e.id)) {
+                seenIds.current.add(e.id);
+                const entry = { ...e, addedAt: Date.now() };
+                setLocalEmotes(prev => [...prev, entry]);
+                // Remove after animation finishes
+                setTimeout(() => {
+                    setLocalEmotes(prev => prev.filter(le => le.id !== e.id));
+                    seenIds.current.delete(e.id);
+                }, ANIM_DURATION + 200);
+            }
+        });
+    }, [emotes]);
+
+    return (
+        <div className="fixed inset-0 z-[60] pointer-events-none overflow-hidden">
+            <style>{`
+                @keyframes emote-burst {
+                    0%   { transform: translate(-50%, 0) scale(0);    opacity: 0; }
+                    12%  { transform: translate(-50%, -5vh) scale(0.7); opacity: 1; }
+                    20%  { transform: translate(-50%, -10vh) scale(0.55); opacity: 1; }
+                    85%  { opacity: 1; }
+                    100% { transform: translate(-50%, -75vh) scale(0.45); opacity: 0; }
+                }
+            `}</style>
+            {localEmotes.map((e) => {
+                let expression: Expression = 'HAPPY';
+                if (e.type === 'SHOCK') expression = 'SHOCKED';
+                if (e.type === 'TOMATO') expression = 'ANGRY';
+
+                const emojis: Record<string, string> = { LAUGH: '😂', SHOCK: '😮', LOVE: '❤️', TOMATO: '🍅' };
+
+                return (
+                    <div
+                        key={e.id}
+                        className="absolute flex flex-col items-center"
+                        style={{
+                            // Pin to the avatar's exact position in the viewport
+                            left: `${e.x}%`,
+                            bottom: `${e.y}%`,
+                            // Scale up from the avatar's centre-bottom
+                            transformOrigin: 'bottom center',
+                            animation: `emote-burst ${ANIM_DURATION}ms cubic-bezier(0.22, 1, 0.36, 1) forwards`,
+                            willChange: 'transform, opacity',
+                        }}
+                    >
+                        <div className="relative">
+                            <Avatar seed={e.senderSeed || 'guest'} size={120} expression={expression} className="filter drop-shadow-2xl" />
+                            <div className="absolute -top-4 -right-4 text-4xl bg-white rounded-full p-1 shadow-md">
+                                {emojis[e.type] ?? '😂'}
                             </div>
-                            <div className="bg-black/60 text-white px-3 py-1 rounded-full text-sm font-bold mt-2 backdrop-blur-sm uppercase">
-                                {e.senderName}
-                            </div>
-                        </motion.div>
-                    );
-                })}
-            </AnimatePresence>
+                        </div>
+                        <div className="bg-black/60 text-white px-3 py-1 rounded-full text-sm font-bold mt-2 backdrop-blur-sm uppercase whitespace-nowrap">
+                            {e.senderName}
+                        </div>
+                    </div>
+                );
+            })}
         </div>
     );
 };

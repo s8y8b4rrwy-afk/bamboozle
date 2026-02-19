@@ -43,7 +43,8 @@ export interface Emote {
   type: 'LAUGH' | 'SHOCK' | 'LOVE' | 'TOMATO';
   senderName: string; // For display
   senderSeed: string; // For avatar display
-  x: number; // Random start position %
+  x: number; // Horizontal origin, % of viewport width
+  y: number; // Vertical origin, % from bottom of viewport
   createdAt: number; // For cleanup
 }
 
@@ -108,7 +109,7 @@ export type GameEvent =
   | { type: 'SUBMIT_LIE'; payload: { playerId: string; text: string } }
   | { type: 'SUBMIT_VOTE'; payload: { playerId: string; answerId: string } }
   | { type: 'SUBMIT_AUDIENCE_VOTE'; payload: { playerId: string; answerId: string } }
-  | { type: 'SEND_EMOTE'; payload: { type: 'LAUGH' | 'SHOCK' | 'LOVE' | 'TOMATO'; senderName: string; senderSeed: string } }
+  | { type: 'SEND_EMOTE'; payload: { type: 'LAUGH' | 'SHOCK' | 'LOVE' | 'TOMATO'; senderName: string; senderSeed: string; x?: number; y?: number } }
   | { type: 'START_GAME'; payload: { rounds: number } }
   | { type: 'SELECT_CATEGORY'; payload: { category: string } }
   | { type: 'TOGGLE_ONLINE_MODE'; payload: null }

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { GameState, GamePhase, Player, Answer, Expression } from '../types';
 import { Avatar } from '../components/Avatar';
 import { Narrator } from '../components/Narrator';
@@ -19,15 +19,12 @@ interface OnlinePlayerViewProps {
     roomClosed?: boolean;
 }
 
-const AvatarStrip = React.memo(({ players, phase, submittedLies, isMobile, onToggleReactions }: {
+const AvatarStrip = React.memo(({ players, isMobile, onToggleReactions }: {
     players: Player[],
-    phase: GamePhase,
-    submittedLies: Record<string, string>,
     isMobile: boolean,
     onToggleReactions: () => void
 }) => {
-    // During lobby we show full grid, so skip strip
-    if (phase === GamePhase.LOBBY) return null;
+    if (players.length === 0) return null;
 
     return (
         <div
@@ -41,11 +38,8 @@ const AvatarStrip = React.memo(({ players, phase, submittedLies, isMobile, onTog
             `}
         >
             {players.map(p => {
-                const isDone = (phase === GamePhase.WRITING && !!submittedLies[p.id]) ||
-                    (phase === GamePhase.VOTING && !!p.currentVote);
                 return (
-                    <div key={p.id} className={`relative flex-shrink-0 flex flex-col items-center z-10 ${isMobile ? 'min-w-[50px]' : ''}`}>
-                        {isDone && <div className="absolute top-0 right-0 bg-green-500 w-3 h-3 md:w-5 md:h- rounded-full border border-white z-10" />}
+                    <div key={p.id} data-player-id={p.id} className={`relative flex-shrink-0 flex flex-col items-center z-10 ${isMobile ? 'min-w-[50px]' : ''}`}>
                         <Avatar seed={p.avatarSeed} size={isMobile ? 42 : 65} expression={p.expression} className="filter drop-shadow-lg transition-transform" />
                         <span className={`text-white/90 uppercase font-bold mt-1 shadow-black/50 drop-shadow-md text-center leading-tight justify-center ${isMobile ? (p.name.length > 10 ? 'break-words text-[7px] max-w-[65px]' : 'text-[10px] max-w-[70px]') : 'break-words text-xs max-w-[120px]'}`}>{p.name}</span>
                     </div>
@@ -158,10 +152,20 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
     }, [state.roomCode, joinStep]);
 
     const handleEmote = (type: 'LAUGH' | 'SHOCK' | 'LOVE' | 'TOMATO') => {
-        actions.unlockAudio();
         const name = me ? me.name : (amAudience ? amAudience.name : 'Unknown');
         const seed = me ? me.avatarSeed : (amAudience ? amAudience.avatarSeed : 'unknown');
-        actions.sendEmote(type, name, seed);
+
+        // Measure avatar position so the emote originates from the right spot
+        let xPct = 50;
+        let yPct = 15;
+        const avatarEl = document.querySelector(`[data-player-id="${playerId}"]`);
+        if (avatarEl) {
+            const rect = avatarEl.getBoundingClientRect();
+            xPct = ((rect.left + rect.width / 2) / window.innerWidth) * 100;
+            yPct = ((window.innerHeight - (rect.top + rect.height / 2)) / window.innerHeight) * 100;
+        }
+
+        actions.sendEmote(type, name, seed, xPct, yPct);
         sfx.play('CLICK');
 
         if (type === 'SHOCK') setMyEmoteExpression('SHOCKED');
@@ -171,6 +175,15 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
 
         if (isMobile) resetReactionTimer();
     };
+    const toggleReactions = useCallback(() => {
+        if (showReactions) {
+            setShowReactions(false);
+            if (reactionTimerRef.current) clearTimeout(reactionTimerRef.current);
+        } else {
+            setShowReactions(true);
+            resetReactionTimer();
+        }
+    }, [showReactions]);
 
     const submitLie = () => {
         if (!state.currentQuestion) return;
@@ -739,37 +752,48 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
             {/* PERSISTENT BOTTOM BAR (Avatar Strip + Emotes) - With Safe Area support */}
             {
                 state.phase !== GamePhase.LOBBY && state.phase !== GamePhase.LEADERBOARD && state.phase !== GamePhase.GAME_OVER && (
-                    <div className="pb-safe-bottom z-50 mb-2 transition-all duration-300 justify-center">
+                    <div className="pb-safe-bottom z-50 mb-2 justify-center bg-transparent">
                         <AvatarStrip
                             players={Object.values(state.players)}
-                            phase={state.phase}
-                            submittedLies={state.submittedLies}
                             isMobile={isMobile}
-                            onToggleReactions={() => {
-                                if (showReactions) {
-                                    setShowReactions(false);
-                                    if (reactionTimerRef.current) clearTimeout(reactionTimerRef.current);
-                                } else {
-                                    setShowReactions(true);
-                                    resetReactionTimer();
-                                }
-                            }}
+                            onToggleReactions={toggleReactions}
                         />
-                        <AnimatePresence>
-                            {(showReactions) && (
-                                <motion.div
-                                    initial={{ height: 0, opacity: 0 }}
-                                    animate={{ height: 'auto', opacity: 1 }}
-                                    exit={{ height: 0, opacity: 0 }}
-                                    className="grid grid-cols-4 gap-2 px-4 py-4 w-full max-w-sm mx-auto z-20 relative overflow-hidden"
-                                >
-                                    <button onClick={() => handleEmote('LAUGH')} className="bg-white/10 p-3 rounded-xl hover:bg-white/20 text-3xl transition border border-white/5 aspect-square flex items-center justify-center">😂</button>
-                                    <button onClick={() => handleEmote('SHOCK')} className="bg-white/10 p-3 rounded-xl hover:bg-white/20 text-3xl transition border border-white/5 aspect-square flex items-center justify-center">😮</button>
-                                    <button onClick={() => handleEmote('LOVE')} className="bg-white/10 p-3 rounded-xl hover:bg-white/20 text-3xl  transition border border-white/5 aspect-square flex items-center justify-center">❤️</button>
-                                    <button onClick={() => handleEmote('TOMATO')} className="bg-white/10 p-3 rounded-xl hover:bg-white/20 text-3xl transition border border-white/5 aspect-square flex items-center justify-center">🍅</button>
-                                </motion.div>
-                            )}
-                        </AnimatePresence>
+                        {/* Reaction panel - grid-template-rows trick: collapses to 0 and pushes avatars up, GPU-smooth */}
+                        <div
+                            style={{
+                                display: 'grid',
+                                gridTemplateRows: showReactions ? '1fr' : '0fr',
+                                transition: 'grid-template-rows 200ms ease',
+                            }}
+                        >
+                            <div
+                                style={{
+                                    overflow: 'hidden',
+                                    opacity: showReactions ? 1 : 0,
+                                    transform: showReactions ? 'translateY(0)' : 'translateY(8px)',
+                                    transition: 'opacity 160ms ease, transform 160ms ease',
+                                    willChange: 'transform, opacity',
+                                }}
+                            >
+                                <div className="grid grid-cols-4 gap-2 px-4 py-3 w-full max-w-sm mx-auto">
+                                    {(['😂', '😮', '❤️', '🍅'] as const).map((emoji, i) => {
+                                        const types = ['LAUGH', 'SHOCK', 'LOVE', 'TOMATO'] as const;
+                                        return (
+                                            <button
+                                                key={emoji}
+                                                onClick={() => handleEmote(types[i])}
+                                                className="bg-white/10 p-3 rounded-xl text-3xl border border-white/5 aspect-square flex items-center justify-center active:scale-90"
+                                                style={{ transition: 'transform 100ms ease, background-color 120ms ease' }}
+                                                onMouseEnter={e => (e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.2)')}
+                                                onMouseLeave={e => (e.currentTarget.style.backgroundColor = '')}
+                                            >
+                                                {emoji}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 )
             }

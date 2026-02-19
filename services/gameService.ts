@@ -204,6 +204,7 @@ export const useGameService = (role: 'HOST' | 'PLAYER' | 'AUDIENCE', playerName?
   const isPlayingPremiumRef = useRef<boolean>(false);
   const processedRequestsRef = useRef<Set<string>>(new Set());
   const pendingFallbacksRef = useRef<Map<string, any>>(new Map());
+  const audioUnlockedRef = useRef<boolean>(false); // Guard: only unlock once per session
 
   // Initialize Narrator Audio Element (helps with Safari reuse)
   useEffect(() => {
@@ -438,7 +439,13 @@ export const useGameService = (role: 'HOST' | 'PLAYER' | 'AUDIENCE', playerName?
   }, [SOCKET_URL, internalSpeak]);
 
   const unlockAudio = useCallback(() => {
-    console.log('[Audio] Unlocking for Safari...');
+    // Guard: audio context only needs unlocking once after the first user gesture.
+    // Calling this repeatedly (e.g. on every emote) would pause the narrator mid-speech.
+    if (audioUnlockedRef.current) return;
+    audioUnlockedRef.current = true;
+
+    console.log('[Audio] Unlocking for Safari (one-time)...');
+
     // 1. Resume SFX context
     sfx.unlock();
 
@@ -447,14 +454,14 @@ export const useGameService = (role: 'HOST' | 'PLAYER' | 'AUDIENCE', playerName?
       window.speechSynthesis.resume();
     }
 
-    // 3. Play a tiny silent sound on the shared narrator element
+    // 3. Warm up the shared narrator audio element — but ONLY if it's not already playing.
+    //    Never touch it mid-playback or we'll interrupt the narrator.
     const audio = narratorAudioRef.current;
-    if (audio) {
-      // Smallest possible silent mp3/wav or just brief playback
+    if (audio && audio.paused && !isPlayingPremiumRef.current) {
       audio.play().then(() => {
         audio.pause();
         console.log('[Audio] Shared element unlocked');
-      }).catch(e => console.warn('[Audio] Initial unlock failed:', e));
+      }).catch(e => console.warn('[Audio] Initial unlock failed (safe to ignore):', e));
     }
   }, []);
 
@@ -650,8 +657,7 @@ export const useGameService = (role: 'HOST' | 'PLAYER' | 'AUDIENCE', playerName?
 
   // --- BOT BRAIN (Players & Audience) ---
   useEffect(() => {
-    if (role !== 'HOST') return;
-    if (state.hostId !== playerId) return;
+    if (!isHostRef.current) return; // Only the active host drives bots
 
     // 1. Player Bots
     const bots = (Object.values(state.players) as Player[]).filter(p => p.isBot);
@@ -735,7 +741,7 @@ export const useGameService = (role: 'HOST' | 'PLAYER' | 'AUDIENCE', playerName?
       }
     }
 
-  }, [state.timeLeft, state.phase, state.hostId, playerId, state.categorySelection]);
+  }, [state.timeLeft, state.phase, state.categorySelection]);
 
   // --- HOST LOGIC ---
   const processHostEvent = (event: GameEvent) => {
@@ -1019,7 +1025,8 @@ export const useGameService = (role: 'HOST' | 'PLAYER' | 'AUDIENCE', playerName?
           type: event.payload.type,
           senderName: event.payload.senderName,
           senderSeed: event.payload.senderSeed,
-          x: Math.random() * 80 + 10,
+          x: event.payload.x ?? Math.random() * 80 + 10, // Use avatar position if provided
+          y: event.payload.y ?? 15, // Default to near-bottom if not provided
           createdAt: Date.now()
         };
         if (event.payload.type === 'LAUGH') sfx.play('POP');
@@ -1760,13 +1767,14 @@ export const useGameService = (role: 'HOST' | 'PLAYER' | 'AUDIENCE', playerName?
             processHostEvent(event);
           });
 
-          // Ensure host is VIP if they're a player
+          // Ensure host is VIP and hostId is correct
           const updatedState = { ...response.state };
+          updatedState.hostId = playerId; // Reassign hostId to the reclaiming client
           if (updatedState.players[playerId]) {
             updatedState.vipId = playerId;
-            stateRef.current = updatedState;
-            setState(updatedState);
           }
+          stateRef.current = updatedState;
+          setState(updatedState);
 
           // Broadcast the current state to sync all players
           socketRef.current?.emit('gameStateUpdate', { roomCode, gameState: stateRef.current });
@@ -1812,7 +1820,7 @@ export const useGameService = (role: 'HOST' | 'PLAYER' | 'AUDIENCE', playerName?
   const sendLie = (text: string) => dispatch({ type: 'SUBMIT_LIE', payload: { playerId, text } });
   const sendVote = (answerId: string) => dispatch({ type: 'SUBMIT_VOTE', payload: { playerId, answerId } });
   const sendAudienceVote = (answerId: string) => dispatch({ type: 'SUBMIT_AUDIENCE_VOTE', payload: { playerId, answerId } });
-  const sendEmote = (type: 'LAUGH' | 'SHOCK' | 'LOVE' | 'TOMATO', senderName: string, senderSeed: string) => dispatch({ type: 'SEND_EMOTE', payload: { type, senderName, senderSeed } });
+  const sendEmote = (type: 'LAUGH' | 'SHOCK' | 'LOVE' | 'TOMATO', senderName: string, senderSeed: string, x?: number, y?: number) => dispatch({ type: 'SEND_EMOTE', payload: { type, senderName, senderSeed, x, y } });
 
   const removePlayer = (targetPlayerId: string) => dispatch({ type: 'REMOVE_PLAYER', payload: { playerId: targetPlayerId } });
 
