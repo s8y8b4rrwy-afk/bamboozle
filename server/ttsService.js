@@ -3,38 +3,28 @@ const path = require('path');
 const md5 = require('md5');
 const util = require('util');
 const textToSpeech = require('@google-cloud/text-to-speech');
+const { Storage } = require('@google-cloud/storage');
 
-// Initialize Google Cloud TTS Client
-let clientOptions = {};
+// Initialize Google Cloud Clients
+const googleConfig = {};
+const credentialsJson = process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON || process.env.GOOGLE_CREDENTIALS_JSON;
 
-// BULLETPROOF RAILWAY AUTH: 
-// If the JSON string is in the environment, write it to a temp file
-// and point the library to it. This is safer than passing objects.
-if (process.env.GOOGLE_CREDENTIALS_JSON) {
+if (credentialsJson) {
     try {
-        const creds = JSON.parse(process.env.GOOGLE_CREDENTIALS_JSON);
-        const tempCredsPath = path.join('/tmp', 'google-auth.json');
-        fs.writeFileSync(tempCredsPath, JSON.stringify(creds));
-        process.env.GOOGLE_APPLICATION_CREDENTIALS = tempCredsPath;
-        console.log('[TTS] Successfully wrote credentials to', tempCredsPath);
+        googleConfig.credentials = JSON.parse(credentialsJson);
+        console.log('[TTS] Using credentials from environment variable.');
     } catch (e) {
-        console.error('[TTS] Failed to process GOOGLE_CREDENTIALS_JSON:', e);
+        console.error('[TTS] Failed to parse GOOGLE_CREDENTIALS:', e.message);
     }
-} else {
-    console.log('[TTS] Warning: No GOOGLE_CREDENTIALS_JSON found. Expecting GOOGLE_APPLICATION_CREDENTIALS file.');
 }
 
-const client = new textToSpeech.TextToSpeechClient();
+const ttsClient = new textToSpeech.TextToSpeechClient(googleConfig);
+const storage = new Storage(googleConfig);
 
-const CACHE_DIR = '/tmp/bamboozle_audio_cache';
+// We default to a bucket, but this should be set in .env
+const BUCKET_NAME = process.env.GCS_BUCKET_NAME || 'bamboozle-audio-assets';
 
-// Ensure base cache dir exists
-if (!fs.existsSync(CACHE_DIR)) {
-    fs.mkdirSync(CACHE_DIR, { recursive: true });
-}
-
-// Voice Configuration Map
-// Strategy: Use Neural2 for highest quality, Wavenet for balance.
+// Determine Voice Configuration
 const VOICE_CONFIG = {
     'en': { languageCode: 'en-US', name: 'en-US-Neural2-F', ssmlGender: 'FEMALE' },
     'el': { languageCode: 'el-GR', name: 'el-GR-Wavenet-A', ssmlGender: 'FEMALE' }
@@ -44,38 +34,45 @@ const getVoiceConfig = (lang) => {
     return VOICE_CONFIG[lang] || VOICE_CONFIG['en'];
 };
 
+// Memory Cache for Hit Tracking (optional, resets on restart)
+const stats = {
+    generated: 0,
+    servedFromCache: 0,
+    errors: 0
+};
+
 const ttsService = {
     /**
-     * Generates audio for the given text, caches it in the room folder, and returns the URL path.
+     * Generates audio for the given text, uploads to GCS, and returns the public URL.
+     * Checks GCS first to avoid regeneration.
      * @param {string} text - The text to speak
-     * @param {string} language - Language code (e.g., 'en', 'el')
-     * @param {string} roomCode - The room code for isolation
-     * @returns {Promise<{file: string, isHit: boolean}>}
+     * @param {string} language - Language code
+     * @param {string} roomCode - (Deprecated for storage, used for logging)
+     * @returns {Promise<{url: string, isHit: boolean}>}
      */
     getAudio: async (text, language, roomCode) => {
         try {
-            if (!text || !roomCode) throw new Error('Text and RoomCode are required');
+            if (!text) throw new Error('Text is required');
 
-            // 1. Create room directory if needed
-            const roomDir = path.join(CACHE_DIR, roomCode);
-            if (!fs.existsSync(roomDir)) {
-                fs.mkdirSync(roomDir, { recursive: true });
-            }
-
-            // 2. Generate Hash
+            // 1. Generate Consistent Hash
             const hash = md5(`${text}-${language}`);
             const filename = `${hash}.mp3`;
-            const filePath = path.join(roomDir, filename);
+            const bucket = storage.bucket(BUCKET_NAME);
+            const file = bucket.file(filename);
+            const publicUrl = `https://storage.googleapis.com/${BUCKET_NAME}/${filename}`;
 
-            // 3. Check Cache
-            if (fs.existsSync(filePath)) {
-                console.log(`[TTS] Cache HIT for "${text}" in room ${roomCode}`);
-                return { file: filename, isHit: true };
+            // 2. Check GCS Cache (Optimistic check via metadata/exists)
+            const [exists] = await file.exists();
+            if (exists) {
+                console.log(`[TTS] CACHE HIT: "${text.substring(0, 30)}..."`);
+                stats.servedFromCache++;
+                return { file: filename, url: publicUrl, isHit: true };
             }
 
-            console.log(`[TTS] Cache MISS for "${text}" in room ${roomCode}. Calling Google...`);
+            console.log(`[TTS] GENERATING: "${text.substring(0, 30)}..."`);
+            stats.generated++;
 
-            // 4. API Call
+            // 3. Generate Audio via Google TTS
             const voiceConfig = getVoiceConfig(language);
             const request = {
                 input: { text: text },
@@ -87,37 +84,58 @@ const ttsService = {
                 audioConfig: {
                     audioEncoding: 'MP3',
                     pitch: 0,
-                    speakingRate: 1.1 // Slightly faster for a more energetic feel
+                    speakingRate: 1.1
                 },
             };
 
-            const [response] = await client.synthesizeSpeech(request);
+            const [response] = await ttsClient.synthesizeSpeech(request);
 
-            // 5. Write to File
-            const writeFile = util.promisify(fs.writeFile);
-            await writeFile(filePath, response.audioContent, 'binary');
+            // 4. Upload to GCS
+            await file.save(response.audioContent, {
+                metadata: {
+                    contentType: 'audio/mpeg',
+                    cacheControl: 'public, max-age=31536000', // Cache for 1 year
+                },
+                resumable: false
+            });
 
-            return { file: filename, isHit: false };
+            // Make it public? 
+            // If the bucket is not uniformly public, we might need:
+            // await file.makePublic(); 
+            // BUT for performance, we assume the bucket is configured as public readable.
+
+            return { file: filename, url: publicUrl, isHit: false };
 
         } catch (error) {
-            console.error('[TTS] Error generating speech:', error);
+            console.error('[TTS] Error generating/uploading speech:', error);
+            stats.errors++;
             throw error;
         }
     },
 
     /**
-     * Deletes the cache folder for a specific room.
-     * @param {string} roomCode 
+     * Returns current usage stats.
      */
-    cleanupRoom: (roomCode) => {
+    getStats: () => {
+        return stats;
+    },
+
+    /**
+     * Deletes the cache (Dangerous).
+     */
+    clearCache: async () => {
         try {
-            const roomDir = path.join(CACHE_DIR, roomCode);
-            if (fs.existsSync(roomDir)) {
-                fs.rmSync(roomDir, { recursive: true, force: true });
-                console.log(`[TTS] Cleaned up cache for room ${roomCode}`);
-            }
+            const [files] = await storage.bucket(BUCKET_NAME).getFiles();
+            // Delete in parallel chunks (limit concurrency if needed, but GCS handles it well)
+            // For simplicity:
+            const deletePromises = files.map(f => f.delete());
+            await Promise.all(deletePromises);
+
+            console.log(`[TTS] Cleared ${files.length} files from GCS.`);
+            return { deleted: files.length };
         } catch (e) {
-            console.error(`[TTS] Failed to cleanup room ${roomCode}:`, e);
+            console.error('[TTS] Failed to clear cache:', e);
+            throw e;
         }
     }
 };
