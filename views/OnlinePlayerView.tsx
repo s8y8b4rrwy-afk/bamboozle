@@ -7,6 +7,8 @@ import { Clock, Users, CheckCircle, Lock, Play, Crown, ArrowUp, Star, Menu, X, C
 
 import { sfx } from '../services/audioService';
 import { getText } from '../i18n';
+import { Button } from '../components/ui/Button';
+import { Input } from '../components/ui/Input';
 import { RevealSequence, LeaderboardSequence, CategoryRoulette, PointsPopup, EmotePopupLayer, CountUp, GameBackground, getAdaptiveTextClass, ConnectionOverlay, DevPauseButton } from './GameSharedComponents';
 
 interface OnlinePlayerViewProps {
@@ -19,9 +21,8 @@ interface OnlinePlayerViewProps {
     roomClosed?: boolean;
 }
 
-const AvatarStrip = React.memo(({ players, isMobile, onToggleReactions }: {
+const AvatarStrip = React.memo(({ players, onToggleReactions }: {
     players: Player[],
-    isMobile: boolean,
     onToggleReactions: () => void
 }) => {
     if (players.length === 0) return null;
@@ -29,19 +30,13 @@ const AvatarStrip = React.memo(({ players, isMobile, onToggleReactions }: {
     return (
         <div
             onClick={onToggleReactions}
-            className={`
-                w-full z-40 shrink-0 relative transition-all duration-300
-                ${isMobile
-                    ? 'py-1 px-2 flex flex-wrap justify-center gap-x-1 gap-y-1 min-h-[4.5rem]'
-                    : 'p-2 flex flex-wrap justify-center items-end gap-3'
-                }
-            `}
+            className="w-full z-40 shrink-0 relative transition-all duration-300 py-1 px-2 flex flex-wrap justify-center items-end gap-3 md:gap-6 lg:gap-8 min-h-[4rem]"
         >
             {players.map(p => {
                 return (
-                    <div key={p.id} data-player-id={p.id} className={`relative flex-shrink-0 flex flex-col items-center z-10 ${isMobile ? 'min-w-[50px]' : ''}`}>
-                        <Avatar seed={p.avatarSeed} size={isMobile ? 42 : 65} expression={p.expression} className="filter drop-shadow-lg transition-transform" />
-                        <span className={`text-white/90 uppercase font-bold mt-1 shadow-black/50 drop-shadow-md text-center leading-tight justify-center ${isMobile ? (p.name.length > 10 ? 'break-words text-[7px] max-w-[65px]' : 'text-[10px] max-w-[70px]') : 'break-words text-xs max-w-[120px]'}`}>{p.name}</span>
+                    <div key={p.id} data-player-id={p.id} className="relative flex-shrink-0 flex flex-col items-center z-10 w-10 md:w-14">
+                        <Avatar seed={p.avatarSeed} size={80} expression={p.expression} className="!w-8 !h-8 md:!w-12 md:!h-12 filter drop-shadow-lg transition-transform" />
+                        <span className="text-white/90 uppercase font-black mt-1 shadow-black/50 drop-shadow-md text-center leading-none justify-center text-[7px] md:text-[9px] break-words line-clamp-2 w-full">{p.name}</span>
                     </div>
                 );
             })}
@@ -228,17 +223,12 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
                         {joinStep === 'CODE' && (
                             <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="space-y-6">
                                 <p className="text-center text-white/70 mb-2 uppercase font-bold tracking-widest text-sm">{getText(state.language, 'JOIN_ENTER_CODE')}</p>
-                                <input
-                                    type="text"
+                                <Input
+                                    variant="default"
                                     placeholder={getText(state.language, 'JOIN_PLACEHOLDER_CODE')}
-                                    className="w-full p-6 text-center text-4xl md:text-5xl font-black rounded-2xl uppercase tracking-[0.2em] bg-white text-black placeholder-gray-300 border-4 border-transparent focus:border-yellow-400 outline-none shadow-xl"
+                                    className="p-6 text-center text-4xl md:text-5xl font-black uppercase tracking-[0.2em] shadow-xl"
                                     maxLength={4}
                                     value={inputCode}
-                                    autoComplete="off"
-                                    autoCorrect="off"
-                                    autoCapitalize="characters"
-                                    spellCheck={false}
-                                    inputMode="text"
                                     onChange={(e) => {
                                         setInputCode(e.target.value.toUpperCase());
                                         setCodeError('');
@@ -281,7 +271,7 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
                                     </motion.button>
                                 )}
 
-                                <button
+                                <Button
                                     onClick={() => {
                                         const codeToUse = inputCode || rejoinCode;
                                         if (!codeToUse) return;
@@ -298,13 +288,17 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
                                         });
                                     }}
                                     disabled={!inputCode && !rejoinCode}
-                                    className="w-full bg-yellow-400 hover:bg-yellow-300 disabled:opacity-50 disabled:bg-gray-400 text-black py-6 rounded-2xl font-black text-2xl shadow-2xl transform active:scale-95 transition-all uppercase tracking-wide"
+                                    variant="primary"
+                                    size="lg"
+                                    fullWidth
                                 >
                                     {getText(state.language, 'JOIN_BTN_ENTER')}
-                                </button>
-                                <button onClick={() => { sfx.play('CLICK'); onHome(); }} className="w-full text-center text-white/40 text-xs hover:text-white uppercase mt-6 font-bold py-4">
-                                    {getText(state.language, 'JOIN_BTN_CANCEL')}
-                                </button>
+                                </Button>
+                                <div className="mt-4">
+                                    <Button onClick={() => { sfx.play('CLICK'); onHome(); }} variant="ghost" size="sm" fullWidth className="text-white/40 hover:text-white">
+                                        {getText(state.language, 'JOIN_BTN_CANCEL')}
+                                    </Button>
+                                </div>
                             </motion.div>
                         )}
 
@@ -314,60 +308,62 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
                                     <span className="bg-black/20 text-white/60 text-xs font-bold px-3 py-1 rounded-full uppercase">{getText(state.language, 'LOBBY_ROOM_CODE', { code: state.roomCode })}</span>
                                 </div>
 
-                                <input
-                                    type="text"
+                                <Input
+                                    variant="default"
                                     placeholder={getText(state.language, 'JOIN_ENTER_NAME')}
-                                    className="w-full p-4 text-center text-2xl font-black rounded-xl bg-white text-black placeholder-gray-400 uppercase shadow-lg"
+                                    className="p-4 text-center text-2xl font-black shadow-lg"
                                     value={joinName}
-                                    autoComplete="nickname"
-                                    autoCorrect="off"
-                                    autoCapitalize="characters"
-                                    spellCheck={false}
-                                    inputMode="text"
                                     onChange={e => setJoinName(e.target.value.toUpperCase())}
                                     onCompositionEnd={(e) => setJoinName((e.target as HTMLInputElement).value.toUpperCase())}
                                     maxLength={12}
                                 />
 
-                                <div className="space-y-3 pt-4">
+                                <div className="space-y-4 pt-4">
                                     {state.phase === GamePhase.LOBBY ? (
                                         <>
-                                            <button
+                                            <Button
                                                 disabled={!joinName || Object.keys(state.players).length >= 6}
                                                 onClick={() => { sfx.play('CLICK'); actions.sendJoin(joinName, joinName); }}
-                                                className="w-full bg-green-500 hover:bg-green-400 text-white py-4 rounded-xl font-black text-2xl shadow-lg transform transition active:scale-95 disabled:opacity-50 uppercase flex items-center justify-center gap-2"
+                                                variant="success"
+                                                size="lg"
+                                                fullWidth
                                             >
                                                 {getText(state.language, 'JOIN_BTN_PLAY')}
-                                            </button>
+                                            </Button>
 
-                                            <div className="text-center text-white/20 font-bold uppercase text-xs my-2">{getText(state.language, 'JOIN_OR')}</div>
+                                            <div className="text-center text-white/20 font-bold uppercase text-xs">{getText(state.language, 'JOIN_OR')}</div>
 
-                                            <button
+                                            <Button
                                                 disabled={!joinName}
                                                 onClick={() => { sfx.play('CLICK'); actions.sendJoinAudience(joinName, joinName); }}
-                                                className="w-full bg-blue-600 hover:bg-blue-500 text-white py-3 rounded-xl font-bold text-lg shadow-lg flex items-center justify-center gap-2 transform transition active:scale-95 disabled:opacity-50 uppercase"
+                                                variant="secondary"
+                                                size="md"
+                                                fullWidth
                                             >
-                                                <Users size={20} /> {getText(state.language, 'JOIN_BTN_WATCH')}
-                                            </button>
+                                                <Users size={20} className="mr-2" /> {getText(state.language, 'JOIN_BTN_WATCH')}
+                                            </Button>
                                         </>
                                     ) : (
-                                        <button
+                                        <Button
                                             disabled={!joinName}
                                             onClick={() => {
-                                                // Game in progress -> sendJoin will divert to Audience automatically
                                                 sfx.play('CLICK');
                                                 actions.sendJoin(joinName, joinName);
                                             }}
-                                            className="w-full bg-blue-600 hover:bg-blue-500 text-white py-4 rounded-xl font-black text-xl shadow-lg transform transition active:scale-95 disabled:opacity-50 uppercase flex items-center justify-center gap-2"
+                                            variant="secondary"
+                                            size="lg"
+                                            fullWidth
                                         >
-                                            <Users size={24} /> {getText(state.language, 'JOIN_GAME_STARTED')}
-                                        </button>
+                                            <Users size={24} className="mr-2" /> {getText(state.language, 'JOIN_GAME_STARTED')}
+                                        </Button>
                                     )}
                                 </div>
 
-                                <button onClick={() => { sfx.play('CLICK'); onHome(); }} className="w-full text-center text-white/40 text-xs hover:text-white uppercase mt-6 font-bold py-4">
-                                    {getText(state.language, 'JOIN_BTN_CANCEL')}
-                                </button>
+                                <div className="mt-4">
+                                    <Button onClick={() => { sfx.play('CLICK'); onHome(); }} variant="ghost" size="sm" fullWidth className="text-white/40 hover:text-white">
+                                        {getText(state.language, 'JOIN_BTN_CANCEL')}
+                                    </Button>
+                                </div>
                             </motion.div>
                         )}
                     </div>
@@ -386,159 +382,166 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
 
             {/* GLOBAL NARRATOR - Static Flow */}
             <div
-                className={`w-full flex justify-center z-10 shrink-0 transform transition-all duration-500 relative
-                    ${state.phase === GamePhase.WRITING ? 'scale-80' : 'scale-100'}
+                className={`w-full flex justify-center z-10 shrink-0 transform transition-transform duration-500 relative origin-top py-2
+                    ${state.phase === GamePhase.WRITING ? 'scale-75' : 'scale-100'}
                     ${state.phase === GamePhase.LOBBY ? 'hidden' : 'flex'}
                 `}
             >
-                <Narrator isSpeaking={isSpeaking} />
+                <Narrator isSpeaking={isSpeaking} size={70} />
             </div>
 
             {/* MAIN CONTENT AREA - FlexGrow to fill space */}
             <div className={`
-                flex-1 relative flex flex-col w-full max-w-4xl mx-auto min-h-0 pb-safe-bottom justify-center
+                flex-1 relative flex flex-col w-full max-w-6xl mx-auto min-h-0 pb-safe-bottom justify-center
                 ${(state.phase === GamePhase.VOTING) ? 'overflow-hidden' : 'overflow-y-auto no-scrollbar'}
             `}>
 
                 {/* 1. LOBBY */}
                 {state.phase === GamePhase.LOBBY && (
-                    <div className="flex-1 flex flex-col w-full max-w-md mx-auto p-4 relative min-h-full">
-                        {/* A. DASHBOARD (Fixed Top) */}
-                        <div className="shrink-0 animate-fade-in-up pb-4 pt-2">
-                            <div className="w-full flex flex-row items-center gap-2">
-                                <Narrator isSpeaking={isSpeaking} size={70} className="shrink-0" />
-                                <div className="flex-1 bg-indigo-950 border-4 border-yellow-400 shadow-[4px_4px_0px_0px_#FACC15] rounded-xl p-3 flex flex-row items-center justify-between relative overflow-hidden">
-                                    <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-20" />
-                                    <div className="z-10 flex flex-col items-start leading-none">
-                                        <span className="text-yellow-400/80 font-black uppercase tracking-widest text-[8px]">{getText(state.language, 'JOIN_ENTER_CODE')}</span>
-                                        <span className="text-3xl md:text-4xl font-black text-white tracking-[0.1em] drop-shadow-[2px_2px_0px_rgba(0,0,0,1)] font-mono">
-                                            {state.roomCode}
-                                        </span>
-                                    </div>
-                                    <div className="z-10 flex flex-col gap-1 items-end">
-                                        <div className="flex items-center gap-1.5 bg-black/40 px-2 py-0.5 rounded border border-white/10">
-                                            <span className="text-white font-bold text-xs uppercase">{getText(state.language, 'LOBBY_ROUNDS')}</span>
-                                            <span className="text-yellow-400 font-mono font-black text-xs">{state.totalRounds}</span>
+                    <div className="flex-1 flex flex-col md:flex-row w-full max-w-6xl mx-auto p-4 md:p-8 gap-4 md:gap-16 lg:gap-24 relative min-h-full md:items-center">
+                        {/* LEFT COLUMN: Dashboard & Grid */}
+                        <div className="flex-1 flex flex-col w-full max-w-md md:max-w-xl mx-auto">
+                            {/* A. DASHBOARD (Fixed Top) */}
+                            <div className="shrink-0 animate-fade-in-up pb-4 pt-2">
+                                <div className="w-full flex flex-row items-center gap-2">
+                                    <Narrator isSpeaking={isSpeaking} size={70} className="shrink-0" />
+                                    <div className="flex-1 bg-indigo-950 border-4 border-yellow-400 shadow-[4px_4px_0px_0px_#FACC15] rounded-xl p-3 flex flex-row items-center justify-between relative overflow-hidden">
+                                        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-20" />
+                                        <div className="z-10 flex flex-col items-start leading-none">
+                                            <span className="text-yellow-400/80 font-black uppercase tracking-widest text-[8px]">{getText(state.language, 'JOIN_ENTER_CODE')}</span>
+                                            <span className="text-3xl md:text-4xl font-black text-white tracking-[0.1em] drop-shadow-[2px_2px_0px_rgba(0,0,0,1)] font-mono">
+                                                {state.roomCode}
+                                            </span>
                                         </div>
-                                        <div className="flex items-center gap-1.5 bg-black/40 px-2 py-0.5 rounded border border-white/10">
-                                            <Users size={10} className="text-blue-400" />
-                                            <span className="text-white font-mono font-black text-xs">{audienceCount}</span>
+                                        <div className="z-10 flex flex-col gap-1 items-end">
+                                            <div className="flex items-center gap-1.5 bg-black/40 px-2 py-0.5 rounded border border-white/10">
+                                                <span className="text-white font-bold text-xs uppercase">{getText(state.language, 'LOBBY_ROUNDS')}</span>
+                                                <span className="text-yellow-400 font-mono font-black text-xs">{state.totalRounds}</span>
+                                            </div>
+                                            <div className="flex items-center gap-1.5 bg-black/40 px-2 py-0.5 rounded border border-white/10">
+                                                <Users size={10} className="text-blue-400" />
+                                                <span className="text-white font-mono font-black text-xs">{audienceCount}</span>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
+
+                            {/* B. CENTERED PLAYER GRID */}
+                            <div className="flex-1 flex flex-col items-center justify-center p-2">
+                                <div className="grid grid-cols-3 gap-y-12 gap-x-2 w-full">
+                                    {Object.values(state.players).map((p) => (
+                                        <div key={p.id} className="flex flex-col items-center relative">
+                                            {p.id === state.vipId && (
+                                                <div className="absolute -top-5 z-10">
+                                                    <Crown size={16} className="text-yellow-400 filter drop-shadow-md" fill="currentColor" />
+                                                </div>
+                                            )}
+                                            <div className="relative">
+                                                <Avatar seed={p.avatarSeed} size={80} expression={p.expression} className={`filter drop-shadow-xl transition-all ${p.isReady ? 'opacity-100 scale-110' : 'opacity-80'}`} />
+
+                                                {/* Remove Button - VIP can remove others in LOBBY */}
+                                                {isVip && p.id !== playerId && (
+                                                    <button
+                                                        onClick={(e) => { e.stopPropagation(); actions.removePlayer(p.id); }}
+                                                        className="absolute -top-1 -right-1 w-6 h-6 bg-red-500 hover:bg-red-600 text-white text-xs rounded-full flex items-center justify-center shadow-lg border-2 border-white transition-all active:scale-95 z-50"
+                                                        title="Remove player"
+                                                    >
+                                                        ✕
+                                                    </button>
+                                                )}
+                                            </div>
+                                            <div className="font-black text-white uppercase mt-4 text-[11px] tracking-wider truncate max-w-full text-center drop-shadow-md">{p.name}</div>
+                                            <div className={`text-[9px] font-black uppercase mt-1 tracking-widest ${p.isReady ? 'text-green-400' : 'text-white/30'}`}>
+                                                {p.isReady ? getText(state.language, 'LOBBY_READY') : getText(state.language, 'LOBBY_WAITING')}
+                                            </div>
+                                        </div>
+                                    ))}
+                                    {Array.from({ length: Math.max(0, 6 - Object.values(state.players).length) }).map((_, i) => (
+                                        <div key={`empty-${i}`} className="flex flex-col items-center opacity-20">
+                                            <div className="w-[80px] h-[80px] rounded-full border-2 border-dashed border-white/40 flex items-center justify-center">
+                                                <Users size={24} className="text-white/20" />
+                                            </div>
+                                            <div className="mt-4 w-16 h-2 bg-white/10 rounded-full" />
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
                         </div>
 
-                        {/* B. CENTERED PLAYER GRID */}
-                        <div className="flex-1 flex flex-col items-center justify-center p-2">
-                            <div className="grid grid-cols-3 gap-y-12 gap-x-2 w-full">
-                                {Object.values(state.players).map((p) => (
-                                    <div key={p.id} className="flex flex-col items-center relative">
-                                        {p.id === state.vipId && (
-                                            <div className="absolute -top-5 z-10">
-                                                <Crown size={16} className="text-yellow-400 filter drop-shadow-md" fill="currentColor" />
+                        {/* RIGHT COLUMN: Lobby Controls */}
+                        <div className="w-full md:w-96 flex flex-col justify-center shrink-0 max-w-md mx-auto z-20 md:mt-0">
+                            {me && (
+                                <div className="w-full flex flex-col gap-3 md:gap-4 mt-6 md:mt-0 pb-safe-bottom md:pb-0">
+                                    <Button
+                                        onClick={actions.sendToggleReady}
+                                        variant={me?.isReady ? 'secondary' : 'success'}
+                                        className={`w-full ${me?.isReady ? '!bg-gray-700 !text-gray-400 !border-gray-800' : ''}`}
+                                        size="lg"
+                                    >
+                                        {me?.isReady ? getText(state.language, 'LOBBY_IS_READY') : getText(state.language, 'LOBBY_READY_UP')}
+                                    </Button>
+                                    {isVip && (
+                                        <div className="flex flex-col gap-4 w-full">
+                                            <div className="flex items-center justify-between bg-black/40 p-3 rounded-xl border border-white/10">
+                                                <span className="font-bold text-white uppercase text-sm">{getText(state.language, 'LOBBY_ROUNDS')}</span>
+                                                <div className="flex items-center gap-4">
+                                                    <button
+                                                        onClick={() => actions.sendUpdateRounds(Math.max(1, state.totalRounds - 1))}
+                                                        className="w-8 h-8 flex items-center justify-center bg-white/10 hover:bg-white/20 rounded-lg text-white font-bold"
+                                                    >
+                                                        -
+                                                    </button>
+                                                    <span className="text-xl font-black text-yellow-400 w-4 text-center">{state.totalRounds}</span>
+                                                    <button
+                                                        onClick={() => actions.sendUpdateRounds(Math.min(10, state.totalRounds + 1))}
+                                                        className="w-8 h-8 flex items-center justify-center bg-white/10 hover:bg-white/20 rounded-lg text-white font-bold"
+                                                    >
+                                                        +
+                                                    </button>
+                                                </div>
                                             </div>
-                                        )}
-                                        <div className="relative">
-                                            <Avatar seed={p.avatarSeed} size={80} expression={p.expression} className={`filter drop-shadow-xl transition-all ${p.isReady ? 'opacity-100 scale-110' : 'opacity-80'}`} />
 
-                                            {/* Remove Button - VIP can remove others in LOBBY */}
-                                            {isVip && p.id !== playerId && (
+                                            <div className="grid grid-cols-2 gap-4">
                                                 <button
-                                                    onClick={(e) => { e.stopPropagation(); actions.removePlayer(p.id); }}
-                                                    className="absolute -top-1 -right-1 w-6 h-6 bg-red-500 hover:bg-red-600 text-white text-xs rounded-full flex items-center justify-center shadow-lg border-2 border-white transition-all active:scale-95 z-50"
-                                                    title="Remove player"
+                                                    onClick={actions.addBot}
+                                                    className="bg-blue-600/50 hover:bg-blue-600 py-3 rounded-xl text-xs font-bold uppercase"
+                                                    disabled={Object.keys(state.players).length >= 6}
                                                 >
-                                                    ✕
+                                                    {getText(state.language, 'LOBBY_ADD_BOT')}
+                                                </button>
+                                                <button
+                                                    onClick={() => { sfx.play('CLICK'); onHome(); }}
+                                                    className="bg-red-600/50 hover:bg-red-600 py-3 rounded-xl text-xs font-bold uppercase flex items-center justify-center gap-2"
+                                                >
+                                                    <Home size={14} /> Home
+                                                </button>
+                                            </div>
+                                            {import.meta.env.DEV && (
+                                                <button
+                                                    onClick={actions.addAudienceBot}
+                                                    className="w-full bg-indigo-600/30 hover:bg-indigo-600/50 py-2 rounded-xl text-[10px] font-bold uppercase border border-white/10"
+                                                >
+                                                    + Audience (Dev)
                                                 </button>
                                             )}
+
+                                            <button
+                                                disabled={!Object.values(state.players).every(p => p.isReady) || Object.values(state.players).length === 0}
+                                                onClick={() => {
+                                                    actions.unlockAudio();
+                                                    actions.sendStartGame(state.totalRounds);
+                                                }}
+                                                className="w-full bg-yellow-400 text-black py-3 rounded-xl font-black text-lg shadow-xl uppercase disabled:opacity-50 disabled:grayscale"
+                                            >
+                                                {getText(state.language, 'LOBBY_START_GAME')}
+                                            </button>
                                         </div>
-                                        <div className="font-black text-white uppercase mt-4 text-[11px] tracking-wider truncate max-w-full text-center drop-shadow-md">{p.name}</div>
-                                        <div className={`text-[9px] font-black uppercase mt-1 tracking-widest ${p.isReady ? 'text-green-400' : 'text-white/30'}`}>
-                                            {p.isReady ? getText(state.language, 'LOBBY_READY') : getText(state.language, 'LOBBY_WAITING')}
-                                        </div>
-                                    </div>
-                                ))}
-                                {Array.from({ length: Math.max(0, 6 - Object.values(state.players).length) }).map((_, i) => (
-                                    <div key={`empty-${i}`} className="flex flex-col items-center opacity-20">
-                                        <div className="w-[80px] h-[80px] rounded-full border-2 border-dashed border-white/40 flex items-center justify-center">
-                                            <Users size={24} className="text-white/20" />
-                                        </div>
-                                        <div className="mt-4 w-16 h-2 bg-white/10 rounded-full" />
-                                    </div>
-                                ))}
-                            </div>
+                                    )}
+                                </div>
+                            )}
+                            {amAudience && <div className="w-full text-center text-white/50 font-bold uppercase pb-safe-bottom md:pb-0 mt-8 md:mt-0">{getText(state.language, 'LOBBY_AUDIENCE_MODE')}</div>}
                         </div>
-
-                        {/* Lobby Controls - Natural Flow */}
-                        {me && (
-                            <div className="w-full flex flex-col gap-4 mt-8 pb-safe-bottom z-20 shrink-0">
-                                <button
-                                    onClick={actions.sendToggleReady}
-                                    className={`w-full py-4 rounded-xl font-black text-xl shadow-lg uppercase transition-all mtransform active:scale-95 ${me?.isReady ? 'bg-gray-700 text-gray-400' : 'bg-green-500 text-white'}`}
-                                >
-                                    {me?.isReady ? getText(state.language, 'LOBBY_IS_READY') : getText(state.language, 'LOBBY_READY_UP')}
-                                </button>
-                                {isVip && (
-                                    <div className="flex flex-col gap-4 w-full">
-                                        <div className="flex items-center justify-between bg-black/40 p-3 rounded-xl border border-white/10">
-                                            <span className="font-bold text-white uppercase text-sm">{getText(state.language, 'LOBBY_ROUNDS')}</span>
-                                            <div className="flex items-center gap-4">
-                                                <button
-                                                    onClick={() => actions.sendUpdateRounds(Math.max(1, state.totalRounds - 1))}
-                                                    className="w-8 h-8 flex items-center justify-center bg-white/10 hover:bg-white/20 rounded-lg text-white font-bold"
-                                                >
-                                                    -
-                                                </button>
-                                                <span className="text-xl font-black text-yellow-400 w-4 text-center">{state.totalRounds}</span>
-                                                <button
-                                                    onClick={() => actions.sendUpdateRounds(Math.min(10, state.totalRounds + 1))}
-                                                    className="w-8 h-8 flex items-center justify-center bg-white/10 hover:bg-white/20 rounded-lg text-white font-bold"
-                                                >
-                                                    +
-                                                </button>
-                                            </div>
-                                        </div>
-
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <button
-                                                onClick={actions.addBot}
-                                                className="bg-blue-600/50 hover:bg-blue-600 py-3 rounded-xl text-xs font-bold uppercase"
-                                                disabled={Object.keys(state.players).length >= 6}
-                                            >
-                                                {getText(state.language, 'LOBBY_ADD_BOT')}
-                                            </button>
-                                            <button
-                                                onClick={() => { sfx.play('CLICK'); onHome(); }}
-                                                className="bg-red-600/50 hover:bg-red-600 py-3 rounded-xl text-xs font-bold uppercase flex items-center justify-center gap-2"
-                                            >
-                                                <Home size={14} /> Home
-                                            </button>
-                                        </div>
-                                        {import.meta.env.DEV && (
-                                            <button
-                                                onClick={actions.addAudienceBot}
-                                                className="w-full bg-indigo-600/30 hover:bg-indigo-600/50 py-2 rounded-xl text-[10px] font-bold uppercase border border-white/10"
-                                            >
-                                                + Audience (Dev)
-                                            </button>
-                                        )}
-
-                                        <button
-                                            disabled={!Object.values(state.players).every(p => p.isReady) || Object.values(state.players).length === 0}
-                                            onClick={() => {
-                                                actions.unlockAudio();
-                                                actions.sendStartGame(state.totalRounds);
-                                            }}
-                                            className="w-full bg-yellow-400 text-black py-3 rounded-xl font-black text-lg shadow-xl uppercase disabled:opacity-50 disabled:grayscale"
-                                        >
-                                            {getText(state.language, 'LOBBY_START_GAME')}
-                                        </button>
-                                    </div>
-                                )}
-                            </div>
-                        )}
-                        {amAudience && <div className="w-full text-center text-white/50 font-bold uppercase pb-safe-bottom mt-8">{getText(state.language, 'LOBBY_AUDIENCE_MODE')}</div>}
                     </div>
                 )}
 
@@ -607,16 +610,11 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
                                 <div className="w-full mt-2 flex flex-col gap-3">
                                     {me && !state.submittedLies[playerId] ? (
                                         <>
-                                            <input
-                                                type="text"
-                                                className="w-full bg-black/20 text-white p-4 rounded-xl text-base md:text-lg font-bold uppercase outline-none focus:ring-2 focus:ring-yellow-400 placeholder-white/30 text-center shadow-inner"
+                                            <Input
+                                                variant="transparent"
+                                                className="p-4 text-base md:text-lg font-bold text-center"
                                                 placeholder={getText(state.language, 'PROMPT_LIE_HERE')}
                                                 value={lieText}
-                                                autoComplete="off"
-                                                autoCorrect="off"
-                                                autoCapitalize="characters"
-                                                spellCheck={false}
-                                                inputMode="text"
                                                 onChange={e => setLieText(e.target.value.toUpperCase())}
                                                 onCompositionEnd={(e) => setLieText((e.target as HTMLInputElement).value.toUpperCase())}
                                                 maxLength={50}
@@ -629,13 +627,15 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
                                                 </div>
                                             </div>
 
-                                            <button
+                                            <Button
                                                 onClick={submitLie}
                                                 disabled={!lieText.trim()}
-                                                className="w-full bg-yellow-400 hover:bg-yellow-300 text-black py-4 rounded-xl font-black text-xl uppercase shadow-lg active:scale-95 disabled:opacity-50 transition-transform"
+                                                variant="primary"
+                                                size="lg"
+                                                fullWidth
                                             >
                                                 {getText(state.language, 'PROMPT_SUBMIT')}
-                                            </button>
+                                            </Button>
                                         </>
                                     ) : me && (
                                         <div className="mt-4 bg-green-500/20 text-green-400 px-6 py-8 rounded-xl font-black uppercase flex flex-col items-center gap-2 border border-green-500/50">
@@ -673,9 +673,9 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
                         {/* Answers Grid - Scrollable */}
                         <div
                             ref={answersRef}
-                            className="flex-1 w-full overflow-y-auto px-2 pb-4 no-scrollbar flex justify-center"
+                            className="flex-1 w-full overflow-y-auto px-2 pb-4 no-scrollbar flex justify-center min-h-0"
                         >
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 w-full pb-8 max-h-[35vh] md:max-h-[10vh] min-h-[vh]">
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 w-full pb-8 h-max">
                                 {state.roundAnswers.filter(a => !a.authorIds.includes(playerId)).map((ans, idx) => {
                                     const iVoted = amAudience ? ans.audienceVotes.includes(playerId) : me?.currentVote === ans.id;
                                     return (
@@ -738,7 +738,7 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
 
                 {/* 5. REVEAL & LEADERBOARD (Shared) */}
                 {state.phase === GamePhase.REVEAL && (
-                    <div className="flex-1 flex flex-col items-center justify-center p-2 md:p-4 min-h-0 max-h-[60vh] w-full">
+                    <div className="flex-1 flex flex-col items-center p-2 md:p-3 min-h-0 w-full overflow-hidden">
                         <RevealSequence state={state} actions={actions} setGalleryOverrides={() => { }} isHost={isVip} />
                     </div>
                 )}
@@ -778,10 +778,9 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
             {/* PERSISTENT BOTTOM BAR (Avatar Strip + Emotes) - With Safe Area support */}
             {
                 state.phase !== GamePhase.LOBBY && state.phase !== GamePhase.LEADERBOARD && state.phase !== GamePhase.GAME_OVER && (
-                    <div className="pb-safe-bottom z-50 mb-2 justify-center bg-transparent">
+                    <div className="pb-safe-bottom z-50 py-1 justify-center bg-transparent">
                         <AvatarStrip
                             players={Object.values(state.players)}
-                            isMobile={isMobile}
                             onToggleReactions={toggleReactions}
                         />
                         {/* Reaction panel - grid-template-rows trick: collapses to 0 and pushes avatars up, GPU-smooth */}

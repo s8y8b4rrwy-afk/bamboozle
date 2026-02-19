@@ -118,10 +118,10 @@ export const PointsPopup = ({ amount, label = 'PTS', placement = 'bottom' }: { a
             transition={{ type: "spring", stiffness: 200, damping: 10 }}
             className={`${positionClass} z-[100] flex flex-col items-center pointer-events-none w-full`}
         >
-            <div className="text-3xl md:text-6xl font-black text-yellow-400 drop-shadow-[0_4px_4px_rgba(0,0,0,0.8)] stroke-black" style={{ WebkitTextStroke: '1px black' }}>
+            <div className="text-xl md:text-4xl font-black text-yellow-500 drop-shadow-[0_4px_4px_rgba(0,0,0,0.8)] stroke-black" style={{ WebkitTextStroke: '1px black' }}>
                 +{amount}
             </div>
-            <div className="text-sm md:text-xl font-bold text-white bg-black/80 px-3 py-1 rounded-full uppercase border-2 border-yellow-400 transform -rotate-3">{label}</div>
+            <div className="text-[10px] md:text-sm font-bold text-white bg-black/80 px-2 py-0.5 rounded-full uppercase border-2 border-yellow-400 transform -rotate-3 mt-1 md:mt-2">{label}</div>
         </motion.div>
     );
 };
@@ -217,14 +217,14 @@ export const CategoryRoulette = ({ state, onSelect }: { state: GameState, onSele
     return (
         <div className="flex flex-col items-center justify-center h-full w-full z-30 relative px-4 py-safe">
             <div className="mt-4 text-center max-w-2xl mx-auto flex-shrink-0 pt-4 md:pt-0">
-                <h2 className="text-sm md:text-3xl text-purple-200 uppercase tracking-widest font-black drop-shadow-sm mb-2">{getText(state.language, 'GAME_CATEGORY_SELECTION')}</h2>
+                <h2 className="text-xs md:text-xl text-purple-200 uppercase tracking-widest font-black drop-shadow-sm mb-2">{getText(state.language, 'GAME_CATEGORY_SELECTION')}</h2>
                 <div className="flex flex-col items-center">
-                    <span className="text-yellow-400 font-black text-2xl md:text-6xl uppercase tracking-tighter drop-shadow-xl">{selectorName}</span>
-                    <span className="text-white text-xs md:text-2xl font-black uppercase tracking-[0.3em] mb-2 opacity-50">{onSelect ? getText(state.language, 'GAME_PICK_CATEGORY') : getText(state.language, 'GAME_IS_CHOOSING')}</span>
+                    <span className="text-yellow-400 font-black text-2xl md:text-4xl uppercase tracking-tighter drop-shadow-xl">{selectorName}</span>
+                    <span className="text-white text-[10px] md:text-lg font-black uppercase tracking-[0.3em] mb-2 opacity-50">{onSelect ? getText(state.language, 'GAME_PICK_CATEGORY') : getText(state.language, 'GAME_IS_CHOOSING')}</span>
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-2 md:gap-6 w-full max-w-5xl p-4 md:p-6 pb-24 md:pb-8 overflow-y-auto flex-1 min-h-0 content-start no-scrollbar">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4 w-full max-w-5xl p-4 md:p-6 pb-24 md:pb-8 overflow-y-auto flex-1 content-start md:content-center no-scrollbar">
                 {options.map((opt, idx) => {
                     const isSelected = selected === opt;
                     const isDimmed = selected && !isSelected;
@@ -245,7 +245,7 @@ export const CategoryRoulette = ({ state, onSelect }: { state: GameState, onSele
                                 borderColor: isSelected ? '#FFF' : 'rgba(255,255,255,0.1)'
                             }}
                             className={`
-                                p-3 md:p-6 rounded-2xl md:rounded-[3rem] border-2 backdrop-blur-md text-center font-black text-xl md:text-2xl shadow-lg flex items-center justify-center w-full min-h-[6vh] h-min  md:min-h-[8rem] relative overflow-hidden uppercase transition-all
+                                p-3 md:p-4 lg:p-6 rounded-2xl md:rounded-3xl border-2 backdrop-blur-md text-center font-black text-lg md:text-xl lg:text-2xl shadow-lg flex items-center justify-center w-full min-h-[4rem] md:min-h-[6rem] relative overflow-hidden uppercase transition-all
                                 ${isSelected ? 'z-50 ring-4 ring-yellow-400/50 shadow-2xl hover:scale' : ''}
                                 ${onSelect && !selected ? 'hover:scale-[1.02] active:scale-95 cursor-pointer hover:bg-purple-800/80 hover:border-purple-400' : ''}
                             `}
@@ -319,9 +319,9 @@ export const RevealSequence = ({ state, actions, setGalleryOverrides, isHost }: 
     const audienceVoters = currentAnswer.audienceVotes.map(id => state.audience[id]).filter(Boolean);
 
     return (
-        <div className="flex flex-col items-center justify-center h-full w-full max-w-6xl mx-auto relative z-20 px-4 md:px-6 py-safe">
-            <div className="mb-2 md:mb-10 text-center bg-black/40 px-4 md:px-10 py-2 md:py-6 rounded-3xl backdrop-blur-xl border border-white/10 w-full shadow-2xl skew-y-1 flex-shrink-0">
-                <p className="text-sm md:text-3xl font-bold text-gray-100 leading-relaxed uppercase tracking-wide">
+        <div className="flex flex-col items-center justify-start flex-1 min-h-0 w-full max-w-6xl mx-auto relative z-20 px-2 md:px-4 pt-1 gap-6 md:gap-8">
+            <div className="shrink-0 text-center bg-black/40 px-3 md:px-6 py-2 rounded-xl md:rounded-2xl backdrop-blur-xl border border-white/10 w-full max-w-3xl mx-auto shadow-2xl skew-y-1">
+                <p className="text-[11px] md:text-lg font-bold text-gray-100 leading-snug uppercase tracking-wide">
                     {factParts[0]}
                     <AnimatePresence mode="wait">
                         {showFilledFact ? (
@@ -356,140 +356,163 @@ export const RevealSequence = ({ state, actions, setGalleryOverrides, isHost }: 
                     animate={{ scale: 1, opacity: 1, rotate: 0 }}
                     exit={{ scale: 1.2, opacity: 0 }}
                     transition={{ type: 'spring', bounce: 0.4 }}
-                    className={`relative w-full max-w-4xl mx-auto p-4 md:p-14 rounded-[2rem] md:rounded-[2.5rem] border-4 md:border-[6px] shadow-xl md:shadow-2xl flex flex-col items-center text-center transition-colors duration-500 uppercase flex-1 min-h-0 h-full justify-between pt-10 pb-8
+                    className={`relative w-full min-h-0 flex-1 max-w-xl mx-auto rounded-3xl md:rounded-[2rem] border-4 flex flex-col items-center justify-between text-center transition-colors duration-500 uppercase overflow-hidden shadow-2xl
                       ${isTruth && phase === 'AUTHOR'
                             ? 'bg-green-600 border-green-300 text-white shadow-[0_20px_60px_-15px_rgba(22,163,74,0.6)]'
                             : 'bg-white border-gray-200 text-black shadow-[0_20px_60px_-15px_rgba(255,255,255,0.4)]'}
                   `}
                 >
-                    <h2 className={`font-black mb-2 md:mb-4 leading-none drop-shadow-sm line-clamp-3 md:line-clamp-none overflow-hiddn ${getAdaptiveTextClass(currentAnswer.text, 'text-lg md:text-5xl', 40)}`}>{currentAnswer.text}</h2>
+                    <div className="w-full h-full flex flex-col items-center p-4 md:p-6 gap-2">
+                        {/* Area 1: The Answer Text — fixed height at top */}
+                        <div className="shrink-0 w-full flex items-center justify-center py-2">
+                            <h2 className={`font-black leading-tight drop-shadow-sm break-words line-clamp-3 text-center ${getAdaptiveTextClass(currentAnswer.text, 'text-xl md:text-3xl lg:text-4xl', 40)}`}>
+                                {currentAnswer.text}
+                            </h2>
+                        </div>
 
-                    {/* Voters Container */}
-                    <div className="w-full flex flex-wrap items-center justify-center gap-2 md:gap-6 mb-2 md:mb-8 min-h-[4rem] relative flex-shrink-0">
-                        {phase !== 'CARD' && phase !== 'INTRO' && !(isTruth && phase === 'AUTHOR') && (
-                            <>
-                                {/* Player Voters */}
-                                {currentAnswer.votes.map((vid, idx) => {
-                                    const voter = state.players[vid];
-                                    let voterExpression: Expression = 'NEUTRAL';
-                                    if (phase === 'VOTERS') voterExpression = isTruth ? 'HAPPY' : 'SHOCKED';
-                                    else if (phase === 'AUTHOR') voterExpression = isTruth ? 'HAPPY' : 'SAD';
+                        {/* Area 2: Voters — centered in flex-1 */}
+                        <div className="flex-1 w-full flex flex-wrap items-center justify-center content-center gap-3 md:gap-6 min-h-0 overflow-y-auto no-scrollbar">
+                            {phase !== 'CARD' && phase !== 'INTRO' && !(isTruth && phase === 'AUTHOR') && (
+                                <>
+                                    {/* Player Voters */}
+                                    {currentAnswer.votes.map((vid, idx) => {
+                                        const voter = state.players[vid];
+                                        let voterExpression: Expression = 'NEUTRAL';
+                                        if (phase === 'VOTERS') voterExpression = isTruth ? 'HAPPY' : 'SHOCKED';
+                                        else if (phase === 'AUTHOR') voterExpression = isTruth ? 'HAPPY' : 'SAD';
 
-                                    return (
+                                        return (
+                                            <motion.div
+                                                key={vid}
+                                                initial={{ y: -40, opacity: 0, scale: 0.5 }}
+                                                animate={{ y: 0, opacity: 1, scale: 1 }}
+                                                transition={{ delay: idx * 0.15, type: 'spring' }}
+                                                className="flex flex-col items-center group shrink-0"
+                                            >
+                                                {/* Inline points label directly above avatar */}
+                                                <AnimatePresence>
+                                                    {phase === 'VOTERS' && isTruth && (
+                                                        <motion.div
+                                                            key="pts"
+                                                            initial={{ scale: 0, opacity: 0, y: 10 }}
+                                                            animate={{ scale: 1, opacity: 1, y: 0 }}
+                                                            className="text-yellow-500 font-black text-sm md:text-base drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)] mb-0.5 leading-none"
+                                                            style={{ WebkitTextStroke: '0.5px black' }}
+                                                        >
+                                                            +{pointsConfig.truth}
+                                                        </motion.div>
+                                                    )}
+                                                </AnimatePresence>
+
+                                                <div className="flex flex-col items-center">
+                                                    <Avatar seed={voter.avatarSeed} size={80} expression={voterExpression} className="filter drop-shadow-lg !w-14 !h-14 md:!w-[70px] md:!h-[70px]" />
+                                                    <div className="font-bold mt-1 text-[10px] md:text-xs break-words max-w-[64px] md:max-w-[80px] opacity-90 text-center leading-tight">{voter.name}</div>
+                                                    <motion.div
+                                                        initial={{ scale: 0 }} animate={{ scale: 1 }}
+                                                        className={`${isTruth ? 'bg-green-600' : 'bg-red-600'} text-white font-black px-2 py-0.5 rounded-full text-[9px] md:text-[11px] uppercase shadow-md border-2 border-white whitespace-nowrap mt-1`}
+                                                    >
+                                                        {isTruth ? getText(state.language, 'GAME_TAG_SMART') : getText(state.language, 'GAME_TAG_FOOLED')}
+                                                    </motion.div>
+                                                </div>
+                                            </motion.div>
+                                        )
+                                    })}
+
+                                    {/* Audience Ghost Voters */}
+                                    {audienceVoters.map((av, idx) => (
                                         <motion.div
-                                            key={vid}
-                                            initial={{ y: -40, opacity: 0, scale: 0.5 }}
-                                            animate={{ y: 0, opacity: 1, scale: 1 }}
-                                            transition={{ delay: idx * 0.15, type: 'spring' }}
-                                            className="flex flex-col items-center relative group"
+                                            key={av.id}
+                                            initial={{ y: -40, opacity: 0 }}
+                                            animate={{ y: 0, opacity: 0.6 }}
+                                            transition={{ delay: (currentAnswer.votes.length * 0.15) + (idx * 0.1), type: 'spring' }}
+                                            className="flex flex-col items-center grayscale mix-blend-multiply shrink-0"
                                         >
-                                            {/* Points Animation for Voters */}
-                                            <AnimatePresence>
-                                                {phase === 'VOTERS' && isTruth && (
-                                                    <PointsPopup amount={pointsConfig.truth} label={getText(state.language, 'GAME_PTS')} />
-                                                )}
-                                            </AnimatePresence>
-
-                                            <div className="relative flex flex-col items-center">
-                                                <Avatar seed={voter.avatarSeed} size={90} expression={voterExpression} className="filter drop-shadow-lg max-w-20" />
-                                                <motion.div
-                                                    initial={{ scale: 0 }} animate={{ scale: 1 }}
-                                                    className={`${isTruth ? 'bg-green-600' : 'bg-red-600'} text-white font-black px-3 py-0.5 rounded-full text-xs uppercase shadow-md border-2 border-white whitespace-nowrap z-10`}
-                                                >
-                                                    {isTruth ? getText(state.language, 'GAME_TAG_SMART') : getText(state.language, 'GAME_TAG_FOOLED')}
-                                                </motion.div>
+                                            <Avatar seed={av.avatarSeed} size={50} expression={isTruth ? 'SHOCKED' : 'HAPPY'} className="filter drop-shadow-sm !w-10 !h-10 md:!w-[50px] md:!h-[50px] z-0" />
+                                            <div className="bg-blue-500 text-white font-black px-2 py-0.5 rounded-full -mt-2 text-[7px] md:text-[9px] uppercase mb-1 z-10">
+                                                {getText(state.language, 'GAME_TAG_AUDIENCE')}
                                             </div>
-                                            <div className="font-bold mt-2 text-[10px] md:text-base break-words max-w-[80px] opacity-90">{voter.name}</div>
+                                            <div className="text-gray-500 font-bold text-[8px] md:text-[10px] break-words max-w-[50px] md:max-w-[60px] text-center leading-tight">{av.name}</div>
                                         </motion.div>
-                                    )
-                                })}
+                                    ))}
+                                </>
+                            )}
 
-                                {/* Audience Ghost Voters */}
-                                {audienceVoters.map((av, idx) => (
+                            {phase !== 'CARD' && phase !== 'INTRO' && !(isTruth && phase === 'AUTHOR') && currentAnswer.votes.length === 0 && audienceVoters.length === 0 && (
+                                <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} className="text-gray-400 font-black italic text-lg md:text-2xl uppercase tracking-tighter opacity-30 select-none">
+                                    {getText(state.language, 'GAME_NO_TAKERS')}
+                                </motion.div>
+                            )}
+                        </div>
+
+                        {/* Area 3: Author Box at bottom of card — inline (no absolute) */}
+                        <div className="shrink-0 w-full flex flex-wrap items-center justify-center gap-2 pb-1">
+                            {/* Written by player(s) — with inline lie bonus points */}
+                            {phase === 'AUTHOR' && !isTruth && authors.length > 0 && authors.map((author, idx) => (
+                                <div key={author.id} className="flex flex-col items-center gap-1">
+                                    {/* Points inline above the badge */}
+                                    <AnimatePresence>
+                                        {currentAnswer.votes.length > 0 && (
+                                            <motion.div
+                                                key="lie-pts"
+                                                initial={{ scale: 0, opacity: 0, y: 6 }}
+                                                animate={{ scale: 1, opacity: 1, y: 0 }}
+                                                className="text-yellow-500 font-black text-sm md:text-base drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)] leading-none"
+                                                style={{ WebkitTextStroke: '0.5px black' }}
+                                            >
+                                                +{pointsConfig.lie * currentAnswer.votes.length} <span className="text-[9px] md:text-xs font-bold text-yellow-300">LIE BONUS</span>
+                                            </motion.div>
+                                        )}
+                                    </AnimatePresence>
                                     <motion.div
-                                        key={av.id}
-                                        initial={{ y: -40, opacity: 0 }}
-                                        animate={{ y: 0, opacity: 0.6 }}
-                                        transition={{ delay: (currentAnswer.votes.length * 0.15) + (idx * 0.1), type: 'spring' }}
-                                        className="flex flex-col items-center grayscale mix-blend-multiply"
+                                        initial={{ scale: 0, rotate: 10 }}
+                                        animate={{ scale: 1, rotate: 0 }}
+                                        transition={{ delay: idx * 0.1, type: "spring" }}
+                                        className="flex items-center gap-1.5 md:gap-2 bg-purple-900 text-white pl-1 pr-3 md:pl-2 md:pr-5 py-1 md:py-1.5 rounded-full border-[2px] md:border-[3px] border-purple-400 uppercase shadow-xl"
                                     >
-                                        <Avatar seed={av.avatarSeed} size={70} expression={isTruth ? 'SHOCKED' : 'HAPPY'} className="filter drop-shadow-sm max-w-20" />
-                                        <div className="bg-blue-500 text-white font-black px-2 py-0.5 rounded-full mt-1 text-[10px] uppercase mb-1">
-                                            {getText(state.language, 'GAME_TAG_AUDIENCE')}
+                                        <div className="border-[2px] border-white rounded-full overflow-hidden shadow-sm shrink-0">
+                                            <Avatar seed={author.avatarSeed} size={40} expression={'SMUG'} className="!w-7 !h-7 md:!w-10 md:!h-10" />
                                         </div>
-                                        <div className="text-gray-500 font-bold text-xs break-words max-w-[80px]">{av.name}</div>
+                                        <div className="text-left flex flex-col justify-center max-w-[90px] md:max-w-[130px]">
+                                            <span className="text-[6px] md:text-[8px] font-black tracking-widest text-purple-200 mb-0.5 block truncate">{getText(state.language, 'GAME_WRITTEN_BY')}</span>
+                                            <span className="text-[11px] md:text-[15px] font-black leading-none block truncate">{author.name}</span>
+                                        </div>
                                     </motion.div>
-                                ))}
-                            </>
-                        )}
+                                </div>
+                            ))}
+                            {/* Written by bot */}
+                            {phase === 'AUTHOR' && !isTruth && currentAnswer.authorIds.includes('HOST_BOT') && (
+                                <motion.div
+                                    key="HOST_BOT"
+                                    initial={{ scale: 0, rotate: -5 }}
+                                    animate={{ scale: 1, rotate: 0 }}
+                                    transition={{ delay: 0.1, type: "spring" }}
+                                    className="flex items-center gap-1.5 md:gap-2 bg-gray-900 text-white pl-1 pr-3 md:pl-2 md:pr-5 py-1 md:py-1.5 rounded-full border-[2px] md:border-[3px] border-gray-400 uppercase shadow-xl"
+                                >
+                                    <div className="border-[2px] border-white rounded-full overflow-hidden shadow-sm shrink-0">
+                                        <Avatar seed={NARRATOR_SEED} size={40} expression={'SMUG'} className="!w-7 !h-7 md:!w-10 md:!h-10" />
+                                    </div>
+                                    <div className="text-left flex flex-col justify-center">
+                                        <span className="text-[6px] md:text-[8px] font-black tracking-widest text-gray-400 mb-0.5 block">{getText(state.language, 'GAME_WRITTEN_BY')}</span>
+                                        <span className="text-[11px] md:text-[15px] font-black leading-none block text-gray-200">{getText(state.language, 'GAME_NARRATOR_NAME')}</span>
+                                    </div>
+                                </motion.div>
+                            )}
 
-                        {phase !== 'CARD' && phase !== 'INTRO' && !(isTruth && phase === 'AUTHOR') && currentAnswer.votes.length === 0 && audienceVoters.length === 0 && (
-                            <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} className="text-gray-400 font-black italic text-3xl md:text-4xl uppercase tracking-tighter opacity-30 select-none">
-                                {getText(state.language, 'GAME_NO_TAKERS')}
-                            </motion.div>
-                        )}
+                            {/* THE TRUTH badge */}
+                            {(phase === 'AUTHOR' || phase === 'VOTERS') && isTruth && (
+                                <motion.div
+                                    initial={{ scale: 3, opacity: 0 }}
+                                    animate={{ scale: 1, opacity: 1 }}
+                                    className="text-[13px] md:text-xl font-black text-white drop-shadow-xl border-[2px] md:border-4 border-white px-4 md:px-8 py-1.5 md:py-3 bg-green-500 rounded-xl md:rounded-2xl uppercase shadow-xl transform -rotate-2"
+                                >
+                                    {getText(state.language, 'GAME_THE_TRUTH')}
+                                </motion.div>
+                            )}
+                        </div>
                     </div>
-
-                    <div className="flex-none min-h-[5rem] w-full flex items-center justify-center gap-4 md:gap-6 relative mt-2 md:mt-4">
-                        {phase === 'AUTHOR' && !isTruth && authors.length > 0 && authors.map((author, idx) => (
-                            <motion.div
-                                key={author.id}
-                                initial={{ scale: 0, rotate: 10 }}
-                                animate={{ scale: 1, rotate: 0 }}
-                                transition={{ delay: idx * 0.1, type: "spring" }}
-                                className="flex items-center gap-2 md:gap-4 bg-purple-900 text-white pl-2 pr-4 md:pl-4 md:pr-8 py-2 md:py-3 rounded-full border-2 md:border-4 border-purple-400 uppercase relative shadow-2xl"
-                            >
-                                {/* Points Animation for Author */}
-                                <AnimatePresence>
-                                    {currentAnswer.votes.length > 0 && (
-                                        <PointsPopup
-                                            amount={pointsConfig.lie * currentAnswer.votes.length}
-                                            label={getText(state.language, 'GAME_LIE_BONUS')}
-                                            placement="top"
-                                        />
-                                    )}
-                                </AnimatePresence>
-
-                                <div className="border-2 md:border-4 border-white rounded-full overflow-hidden shadow-lg">
-                                    <Avatar seed={author.avatarSeed} size={70} expression={'SMUG'} className="!w-10 !h-10 md:!w-[70px] md:!h-[70px]" />
-                                </div>
-                                <div className="text-left flex flex-col justify-center">
-                                    <span className="text-[6px] md:text-[10px] font-black tracking-widest text-purple-200 mb-0.5 block">{getText(state.language, 'GAME_WRITTEN_BY')}</span>
-                                    <span className="text-sm md:text-2xl font-black leading-none block">{author.name}</span>
-                                </div>
-                            </motion.div>
-                        ))}
-                        {phase === 'AUTHOR' && !isTruth && currentAnswer.authorIds.includes('HOST_BOT') && (
-                            <motion.div
-                                key="HOST_BOT"
-                                initial={{ scale: 0, rotate: -5 }}
-                                animate={{ scale: 1, rotate: 0 }}
-                                transition={{ delay: 0.1, type: "spring" }}
-                                className="flex items-center gap-2 md:gap-4 bg-gray-900 text-white pl-2 pr-4 md:pl-4 md:pr-8 py-2 md:py-3 rounded-full border-2 md:border-4 border-gray-400 uppercase relative shadow-2xl"
-                            >
-                                <div className="border-2 md:border-4 border-white rounded-full overflow-hidden shadow-lg">
-                                    <Avatar seed={NARRATOR_SEED} size={70} expression={'SMUG'} className="!w-10 !h-10 md:!w-[70px] md:!h-[70px]" />
-                                </div>
-                                <div className="text-left flex flex-col justify-center">
-                                    <span className="text-[6px] md:text-[10px] font-black tracking-widest text-gray-400 mb-0.5 block">{getText(state.language, 'GAME_WRITTEN_BY')}</span>
-                                    <span className="text-sm md:text-2xl font-black leading-none block text-gray-200">{getText(state.language, 'GAME_NARRATOR_NAME')}</span>
-                                </div>
-                            </motion.div>
-                        )}
-                        {(phase === 'AUTHOR' || phase === 'VOTERS') && isTruth && (
-                            <motion.div
-                                initial={{ scale: 3, opacity: 0 }}
-                                animate={{ scale: 1, opacity: 1 }}
-                                className="text-2xl md:text-4xl font-black text-white drop-shadow-xl border-4 border-white px-8 py-4 bg-green-500 rounded-2xl transform -rotate-3 uppercase shadow-2xl max-h-20"
-                            >
-                                {getText(state.language, 'GAME_THE_TRUTH')}
-                            </motion.div>
-                        )}
-                    </div>
-
-                </motion.div >
-            </AnimatePresence >
-        </div >
+                </motion.div>
+            </AnimatePresence>
+        </div>
     );
 };
 

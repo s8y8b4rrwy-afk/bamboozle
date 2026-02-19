@@ -76,67 +76,68 @@ const HomeSelector = ({ onSelect, isMobile, language, setLanguage }: { onSelect:
   }, []);
 
   return (
-    <GameBackground className="flex flex-col items-center justify-center p-4 overflow-y-auto">
-      <div className="relative z-10 w-full max-w-6xl flex flex-col items-center py-8">
+    <GameBackground className="flex flex-col items-center justify-center p-2 md:p-4 overflow-hidden h-[100dvh]">
+      <div className="relative z-10 w-full max-w-5xl flex flex-col items-center py-4 md:py-8 h-full min-h-0 justify-center">
 
         {/* Narrator Avatar */}
-        <div className="relative mb-6 transform hover:scale-105 transition-transform duration-300 cursor-pointer" onClick={() => setNarratorExpression('SHOCKED')}>
+        <div className="relative mb-2 md:mb-4 transform hover:scale-105 transition-transform duration-300 cursor-pointer" onClick={() => setNarratorExpression('SHOCKED')}>
           <div className="absolute inset-0 bg-yellow-400 blur-3xl opacity-20 animate-pulse"></div>
-          <div className="filter drop-shadow-2xl animate-float">
+          <div className="filter drop-shadow-lg animate-float">
             <Avatar
               seed={NARRATOR_SEED}
-              size={isMobile ? 120 : 160}
+              size={120}
               expression={narratorExpression}
+              className="!w-24 !h-24 md:!w-32 md:!h-32"
             />
           </div>
         </div>
 
-        <h1 className="text-5xl md:text-8xl font-black text-transparent bg-clip-text bg-gradient-to-b from-yellow-300 to-yellow-600 mb-8 md:mb-12 drop-shadow-2xl tracking-tighter uppercase transform -rotate-2 text-center">
+        <h1 className="text-4xl md:text-5xl lg:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-b from-yellow-300 to-yellow-600 mb-4 drop-shadow-xl tracking-tighter uppercase transform -rotate-2 text-center">
           Bamboozle
         </h1>
 
-        <div className="w-full max-w-sm md:max-w-2xl space-y-3 md:space-y-0 relative z-20">
+        <div className="w-full max-w-sm md:max-w-2xl lg:max-w-3xl space-y-3 md:space-y-0 relative z-20 flex-1 min-h-0 flex flex-col justify-center pb-safe-bottom">
           {/* Main Action Buttons */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 lg:gap-6">
             <button
               onClick={() => onSelect('HOST')}
-              className="group relative bg-purple-600 hover:bg-purple-500 text-white p-4 md:p-8 rounded-3xl md:rounded-[2.5rem] border-b-8 border-purple-800 hover:border-purple-700 transition-all duration-200 flex flex-col items-center shadow-2xl active:translate-y-2 active:border-b-0"
+              className="group relative bg-purple-600 hover:bg-purple-500 text-white p-4 lg:p-6 rounded-3xl md:rounded-[2rem] border-b-[4px] md:border-b-[6px] border-purple-800 hover:border-purple-700 transition-all duration-200 flex flex-col items-center shadow-2xl active:translate-y-2 active:border-b-0"
             >
-              <div className="bg-white/20 p-4 md:p-6 rounded-full mb-3 md:mb-6 group-hover:scale-110 transition-transform">
-                <Monitor className="text-white w-6 h-6 md:w-10 md:h-10" />
+              <div className="bg-white/20 p-3 md:p-4 rounded-full mb-2 md:mb-4 group-hover:scale-110 transition-transform">
+                <Monitor className="text-white w-6 h-6 md:w-8 md:h-8" />
               </div>
-              <h2 className="text-xl md:text-3xl font-black mb-1 md:mb-2 uppercase tracking-wide">{getText(language, 'HOME_HOST_GAME')}</h2>
-              <p className="text-xs md:text-sm font-bold opacity-80 uppercase tracking-widest">{isMobile ? getText(language, 'HOME_HOST_DESC_MOBILE') : getText(language, 'HOME_HOST_DESC_DESKTOP')}</p>
+              <h2 className="text-xl md:text-2xl lg:text-3xl font-black mb-1 md:mb-2 uppercase tracking-wide">{getText(language, 'HOME_HOST_GAME')}</h2>
+              <p className="text-[10px] md:text-xs lg:text-sm font-bold opacity-80 uppercase tracking-widest">{isMobile ? getText(language, 'HOME_HOST_DESC_MOBILE') : getText(language, 'HOME_HOST_DESC_DESKTOP')}</p>
             </button>
 
             <button
               onClick={() => onSelect('PLAYER')}
-              className="group relative bg-blue-600 hover:bg-blue-500 text-white p-4 md:p-8 rounded-3xl md:rounded-[2.5rem] border-b-8 border-blue-800 hover:border-blue-700 transition-all duration-200 flex flex-col items-center shadow-2xl active:translate-y-2 active:border-b-0"
+              className="group relative bg-blue-600 hover:bg-blue-500 text-white p-4 lg:p-6 rounded-3xl md:rounded-[2rem] border-b-[4px] md:border-b-[6px] border-blue-800 hover:border-blue-700 transition-all duration-200 flex flex-col items-center shadow-2xl active:translate-y-2 active:border-b-0"
             >
-              <div className="bg-white/20 p-4 md:p-6 rounded-full mb-3 md:mb-6 group-hover:scale-110 transition-transform">
-                <Smartphone className="text-white w-6 h-6 md:w-10 md:h-10" />
+              <div className="bg-white/20 p-3 md:p-4 rounded-full mb-2 md:mb-4 group-hover:scale-110 transition-transform">
+                <Smartphone className="text-white w-6 h-6 md:w-8 md:h-8" />
               </div>
-              <h2 className="text-xl md:text-3xl font-black mb-1 md:mb-2 uppercase tracking-wide">{getText(language, 'HOME_JOIN_GAME')}</h2>
-              <p className="text-xs md:text-sm font-bold opacity-80 uppercase tracking-widest">{getText(language, 'HOME_JOIN_DESC')}</p>
+              <h2 className="text-xl md:text-2xl lg:text-3xl font-black mb-1 md:mb-2 uppercase tracking-wide">{getText(language, 'HOME_JOIN_GAME')}</h2>
+              <p className="text-[10px] md:text-xs lg:text-sm font-bold opacity-80 uppercase tracking-widest">{getText(language, 'HOME_JOIN_DESC')}</p>
             </button>
           </div>
 
           {/* Utility Buttons */}
-          <div className="grid grid-cols-2 gap-3 py-6 md:gap-6">
+          <div className="grid grid-cols-2 gap-3 py-3 md:py-4 lg:py-6 md:gap-4 lg:gap-6">
             <button
               onClick={toggleLanguage}
-              className="group relative bg-pink-600 hover:bg-pink-500 text-white p-4 md:p-6 rounded-3xl md:rounded-[2rem] border-b-4 md:border-b-8 border-pink-800 hover:border-pink-700 transition-all duration-200 flex flex-col items-center shadow-xl active:translate-y-2 active:border-b-0"
+              className="group relative bg-pink-600 hover:bg-pink-500 text-white p-3 md:p-4 rounded-2xl md:rounded-3xl border-b-[3px] md:border-b-[4px] border-pink-800 hover:border-pink-700 transition-all duration-200 flex flex-col items-center shadow-xl active:translate-y-2 active:border-b-0"
             >
-              <Globe className="text-pink-200 group-hover:text-white w-6 h-6 md:w-8 md:h-8 mb-2" />
-              <h2 className="text-sm md:text-xl font-black uppercase tracking-wide">{language === 'en' ? 'ENGLISH' : 'ΕΛΛΗΝΙΚΑ'}</h2>
+              <Globe className="text-pink-200 group-hover:text-white w-5 h-5 md:w-6 md:h-6 mb-1 md:mb-2" />
+              <h2 className="text-xs md:text-sm lg:text-lg font-black uppercase tracking-wide">{language === 'en' ? 'ENGLISH' : 'ΕΛΛΗΝΙΚΑ'}</h2>
             </button>
 
             <button
               onClick={() => navigate('/settings')}
-              className="group relative bg-gray-700 hover:bg-gray-600 text-white p-4 md:p-6 rounded-3xl md:rounded-[2rem] border-b-4 md:border-b-8 border-gray-900 hover:border-gray-800 transition-all duration-200 flex flex-col items-center shadow-xl active:translate-y-2 active:border-b-0"
+              className="group relative bg-gray-700 hover:bg-gray-600 text-white p-3 md:p-4 rounded-2xl md:rounded-3xl border-b-[3px] md:border-b-[4px] border-gray-900 hover:border-gray-800 transition-all duration-200 flex flex-col items-center shadow-xl active:translate-y-2 active:border-b-0"
             >
-              <SettingsIcon className="text-gray-300 group-hover:text-white w-6 h-6 md:w-8 md:h-8 mb-2" />
-              <h2 className="text-sm md:text-xl font-black uppercase tracking-wide">Settings</h2>
+              <SettingsIcon className="text-gray-300 group-hover:text-white w-5 h-5 md:w-6 md:h-6 mb-1 md:mb-2" />
+              <h2 className="text-xs md:text-sm lg:text-lg font-black uppercase tracking-wide">Settings</h2>
             </button>
           </div>
 
@@ -192,30 +193,31 @@ const GameHostWrapper = ({ onHome, debugMode, language, setLanguage }: { onHome:
     }
   }, [state.language, language, setLanguage]);
 
-  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth <= 768;
+  // Temporarily force all Hosts to use OnlinePlayerView
+  const shouldForceOnlineMode = true;
 
-  // Automatically switch to online mode if on mobile
+  // Automatically switch to online mode
   useEffect(() => {
-    if (isMobile && !state.isOnlineMode && state.roomCode) {
+    if (shouldForceOnlineMode && !state.isOnlineMode && state.roomCode) {
       actions.sendToggleOnlineMode();
     }
-  }, [state.isOnlineMode, state.roomCode, actions, isMobile]);
+  }, [state.isOnlineMode, state.roomCode, actions, shouldForceOnlineMode]);
 
   // Loading Screen Logic: Narrator Face Cycling
   const [loadingExpression, setLoadingExpression] = useState<Expression>('HAPPY');
 
   useEffect(() => {
-    if (!state.roomCode || (isMobile && !state.isOnlineMode)) {
+    if (!state.roomCode || (shouldForceOnlineMode && !state.isOnlineMode)) {
       const timer = setInterval(() => {
         const exprs: Expression[] = ['HAPPY', 'SHOCKED', 'THINKING', 'SMUG', 'ANGRY', 'SAD'];
         setLoadingExpression(exprs[Math.floor(Math.random() * exprs.length)]);
       }, 700);
       return () => clearInterval(timer);
     }
-  }, [state.roomCode, isMobile, state.isOnlineMode]);
+  }, [state.roomCode, shouldForceOnlineMode, state.isOnlineMode]);
 
   // Loading Screen if not connected yet or switch pending on mobile
-  if (!state.roomCode || (isMobile && !state.isOnlineMode)) {
+  if (!state.roomCode || (shouldForceOnlineMode && !state.isOnlineMode)) {
     return (
       <div className="h-full w-full bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900 flex flex-col items-center justify-center relative overflow-hidden font-display text-white selection:bg-pink-500">
         {/* Background Pattern */}
