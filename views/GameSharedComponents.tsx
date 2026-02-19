@@ -224,7 +224,7 @@ export const CategoryRoulette = ({ state, onSelect }: { state: GameState, onSele
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 md:gap-4 w-full max-w-5xl p-2 md:p-6 pb-8 overflow-y-auto flex-1 content-start md:content-center no-scrollbar">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 md:gap-4 w-full max-w-5xl px-4 md:px-6 py-2 md:py-6 pb-8 overflow-y-auto overflow-x-hidden flex-1 content-start md:content-center no-scrollbar">
                 {options.map((opt, idx) => {
                     const isSelected = selected === opt;
                     const isDimmed = selected && !isSelected;
