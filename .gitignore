@@ -25,3 +25,17 @@ dist-ssr
 
 # Google Cloud Credentials
 google-credentials.json
+*.json
+
+# Env Files
+.env
+.env.*
+
+# Server Specific
+server/data
+server/server.log
+server/node_modules
+
+# Audio Cache (Local Dev)
+bamboozle_audio_cache
+tmp/bamboozle_audio_cache
