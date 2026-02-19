@@ -51,8 +51,8 @@ body,
   overflow: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  /* Prevent elastic scrolling on iOS body */
-  position: fixed;
+  /* Prevent elastic scrolling on mobile */
+  overscroll-behavior: none;
 }
 
 /* Custom Scrollbar for overflow areas */

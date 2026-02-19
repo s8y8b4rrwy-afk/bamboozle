@@ -214,7 +214,7 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
     // --- JOIN FLOW ---
     if (!isJoined) {
         return (
-            <GameBackground className="h-full flex flex-col overflow-y-auto pb-safe-bottom">
+            <GameBackground className="flex flex-col h-[100svh] w-full overflow-hidden relative">
                 <TopBar />
                 <div className="flex-1 flex flex-col items-center justify-center p-6 relative min-h-[60vh]">
                     <div className="w-full max-w-sm space-y-6 relative z-10">
@@ -375,7 +375,7 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
     // --- MAIN GAME RENDER ---
 
     return (
-        <GameBackground className="flex flex-col h-[100dvh] w-full overflow-hidden relative">
+        <GameBackground className="flex flex-col h-[100svh] w-full overflow-hidden relative">
             <DevPauseButton isPaused={state.isPaused} onToggle={actions.sendTogglePause} />
             <EmotePopupLayer emotes={state.emotes} />
             <TopBar />
@@ -392,13 +392,13 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
 
             {/* MAIN CONTENT AREA - FlexGrow to fill space */}
             <div className={`
-                flex-1 relative flex flex-col w-full max-w-6xl mx-auto min-h-0 justify-center
-                ${(state.phase === GamePhase.VOTING || state.phase === GamePhase.REVEAL) ? 'overflow-hidden' : 'overflow-y-auto no-scrollbar'}
+                flex-1 relative flex flex-col w-full max-w-6xl mx-auto min-h-0
+                ${(state.phase === GamePhase.VOTING || state.phase === GamePhase.REVEAL) ? 'overflow-hidden' : 'overflow-y-auto no-scrollbar pb-[env(safe-area-inset-bottom,20px)]'}
             `}>
 
                 {/* 1. LOBBY */}
                 {state.phase === GamePhase.LOBBY && (
-                    <div className="flex-1 flex flex-col md:flex-row w-full max-w-6xl mx-auto p-4 md:p-8 gap-4 md:gap-16 lg:gap-24 relative min-h-full md:items-center">
+                    <div className="flex-1 flex flex-col md:flex-row w-full max-w-6xl mx-auto p-4 md:p-8 gap-1 md:gap-16 lg:gap-24 relative md:items-center">
                         {/* LEFT COLUMN: Dashboard & Grid */}
                         <div className="flex-1 flex flex-col w-full max-w-md md:max-w-xl mx-auto">
                             {/* A. DASHBOARD (Fixed Top) */}
@@ -428,8 +428,8 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
                             </div>
 
                             {/* B. CENTERED PLAYER GRID */}
-                            <div className="flex-1 flex flex-col items-center justify-center p-2">
-                                <div className="grid grid-cols-3 gap-y-12 gap-x-2 w-full">
+                            <div className="flex-1 flex flex-col items-center justify-center p-2 min-h-0 overflow-y-auto no-scrollbar">
+                                <div className="grid grid-cols-3 gap-y-4 md:gap-y-12 gap-x-2 w-full">
                                     {Object.values(state.players).map((p) => (
                                         <div key={p.id} className="flex flex-col items-center relative">
                                             {p.id === state.vipId && (
@@ -776,7 +776,7 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
             {/* PERSISTENT BOTTOM BAR (Avatar Strip + Emotes) - With Safe Area support */}
             {
                 state.phase !== GamePhase.LOBBY && state.phase !== GamePhase.LEADERBOARD && state.phase !== GamePhase.GAME_OVER && (
-                    <div className="z-50 flex flex-col justify-center bg-transparent" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 16px) + 4px)' }}>
+                    <div className="z-50 flex flex-col justify-center bg-transparent shrink-0" style={{ paddingBottom: 'env(safe-area-inset-bottom, 16px)' }}>
                         <AvatarStrip
                             players={Object.values(state.players)}
                             onToggleReactions={toggleReactions}

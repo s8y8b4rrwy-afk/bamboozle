@@ -215,16 +215,16 @@ export const CategoryRoulette = ({ state, onSelect }: { state: GameState, onSele
     const selected = state.categorySelection?.selected;
 
     return (
-        <div className="flex flex-col items-center justify-center h-full w-full z-30 relative px-4 py-safe">
-            <div className="mt-4 text-center max-w-2xl mx-auto flex-shrink-0 pt-4 md:pt-0">
-                <h2 className="text-xs md:text-xl text-purple-200 uppercase tracking-widest font-black drop-shadow-sm mb-2">{getText(state.language, 'GAME_CATEGORY_SELECTION')}</h2>
+        <div className="flex flex-col items-center justify-start flex-1 min-h-0 w-full z-30 relative px-4">
+            <div className="mt-2 text-center max-w-2xl mx-auto flex-shrink-0 pt-2 md:pt-0">
+                <h2 className="text-xs md:text-xl text-purple-200 uppercase tracking-widest font-black drop-shadow-sm mb-1">{getText(state.language, 'GAME_CATEGORY_SELECTION')}</h2>
                 <div className="flex flex-col items-center">
-                    <span className="text-yellow-400 font-black text-2xl md:text-4xl uppercase tracking-tighter drop-shadow-xl">{selectorName}</span>
-                    <span className="text-white text-[10px] md:text-lg font-black uppercase tracking-[0.3em] mb-2 opacity-50">{onSelect ? getText(state.language, 'GAME_PICK_CATEGORY') : getText(state.language, 'GAME_IS_CHOOSING')}</span>
+                    <span className="text-yellow-400 font-black text-2xl md:text-4xl uppercase tracking-tighter drop-shadow-xl leading-tight">{selectorName}</span>
+                    <span className="text-white text-[10px] md:text-lg font-black uppercase tracking-[0.3em] mb-1 opacity-50">{onSelect ? getText(state.language, 'GAME_PICK_CATEGORY') : getText(state.language, 'GAME_IS_CHOOSING')}</span>
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4 w-full max-w-5xl p-4 md:p-6 pb-24 md:pb-8 overflow-y-auto flex-1 content-start md:content-center no-scrollbar">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 md:gap-4 w-full max-w-5xl p-2 md:p-6 pb-8 overflow-y-auto flex-1 content-start md:content-center no-scrollbar">
                 {options.map((opt, idx) => {
                     const isSelected = selected === opt;
                     const isDimmed = selected && !isSelected;
