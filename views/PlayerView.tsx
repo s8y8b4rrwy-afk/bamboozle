@@ -6,8 +6,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { sfx } from '../services/audioService';
 import { getText } from '../i18n';
 import { GameBackground } from './GameSharedComponents';
-import { GameButton } from '../components/ui/GameButton';
-import { GameInput } from '../components/ui/GameInput';
 
 interface PlayerViewProps {
     state: GameState;
@@ -140,8 +138,10 @@ export const PlayerView: React.FC<PlayerViewProps> = ({ state, actions, playerId
                         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
                             <div className="bg-white/10 backdrop-blur-lg p-6 rounded-3xl border border-white/20 shadow-xl">
                                 <label className="block text-center text-white/80 mb-4 uppercase text-sm font-bold tracking-wider">Room Code</label>
-                                <GameInput
+                                <input
+                                    type="text"
                                     placeholder="ABCD"
+                                    className="w-full p-4 text-center text-4xl font-black rounded-xl uppercase tracking-[0.5em] bg-white text-black placeholder-gray-300 border-4 border-transparent focus:border-yellow-400 outline-none transition-all shadow-xl"
                                     maxLength={4}
                                     value={inputCode}
                                     onChange={(e) => {
@@ -158,17 +158,22 @@ export const PlayerView: React.FC<PlayerViewProps> = ({ state, actions, playerId
                             )}
 
                             {rejoinCode && !inputCode && (
-                                <GameButton variant="secondary" size="md" onClick={() => {
-                                    sfx.play('CLICK');
-                                    actions.joinRoom(rejoinCode, (success: boolean, error?: string) => {
-                                        if (success) {
-                                            setJoinStep('NAME');
-                                        } else {
-                                            setRejoinCode(null);
-                                            localStorage.removeItem('bamboozle_room_code');
-                                        }
-                                    });
-                                }} className="flex justify-between items-center w-full">
+                                <motion.button
+                                    initial={{ opacity: 0, scale: 0.9 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    onClick={() => {
+                                        sfx.play('CLICK');
+                                        actions.joinRoom(rejoinCode, (success: boolean, error?: string) => {
+                                            if (success) {
+                                                setJoinStep('NAME');
+                                            } else {
+                                                setRejoinCode(null);
+                                                localStorage.removeItem('bamboozle_room_code');
+                                            }
+                                        });
+                                    }}
+                                    className="w-full bg-white/10 hover:bg-white/20 border-2 border-dashed border-yellow-400/50 p-4 rounded-2xl flex items-center justify-between group transition-all"
+                                >
                                     <div className="text-left">
                                         <p className="text-[10px] font-black text-yellow-400 uppercase tracking-widest opacity-80">{getText(state.language, 'JOIN_ACTIVE_GAME')}</p>
                                         <p className="text-2xl font-black text-white tracking-[0.2em]">{rejoinCode}</p>
@@ -176,12 +181,10 @@ export const PlayerView: React.FC<PlayerViewProps> = ({ state, actions, playerId
                                     <div className="bg-yellow-400 text-black p-2 rounded-lg group-hover:scale-110 transition-transform">
                                         <RotateCcw size={20} />
                                     </div>
-                                </GameButton>
+                                </motion.button>
                             )}
 
-                            <GameButton
-                                variant="primary"
-                                size="lg"
+                            <button
                                 onClick={() => {
                                     const codeToUse = inputCode || rejoinCode;
                                     if (!codeToUse) return;
@@ -197,22 +200,20 @@ export const PlayerView: React.FC<PlayerViewProps> = ({ state, actions, playerId
                                     });
                                 }}
                                 disabled={!inputCode && !rejoinCode}
-                                className="w-full"
+                                className="w-full bg-yellow-400 hover:bg-yellow-300 disabled:opacity-50 disabled:bg-gray-400 text-black py-5 rounded-2xl font-black text-2xl shadow-lg uppercase tracking-wide transform active:scale-95 transition-all"
                             >
                                 {getText(state.language, 'JOIN_BTN_ENTER')}
-                            </GameButton>
+                            </button>
 
-                            <GameButton
-                                variant="secondary"
-                                size="md"
+                            <button
                                 onClick={() => {
                                     sfx.play('CLICK');
                                     window.location.reload();
                                 }}
-                                className="w-full"
+                                className="w-full bg-white/10 hover:bg-white/20 text-white py-4 rounded-2xl font-bold text-lg border border-white/20 uppercase tracking-wide transform active:scale-95 transition-all flex items-center justify-center gap-2"
                             >
                                 <Home size={20} /> Cancel
-                            </GameButton>
+                            </button>
                         </motion.div>
                     )}
 
@@ -231,8 +232,10 @@ export const PlayerView: React.FC<PlayerViewProps> = ({ state, actions, playerId
 
                             <div className="space-y-2">
                                 <label className="block ml-2 text-white/80 uppercase text-xs font-bold tracking-wider">Your Name</label>
-                                <GameInput
+                                <input
+                                    type="text"
                                     placeholder="NICKNAME"
+                                    className="w-full p-5 text-center text-2xl font-black rounded-2xl bg-white text-black placeholder-gray-300 uppercase shadow-lg border-4 border-transparent focus:border-purple-400 outline-none"
                                     value={joinName}
                                     onChange={e => setJoinName(e.target.value.toUpperCase())}
                                     maxLength={12}
@@ -242,38 +245,33 @@ export const PlayerView: React.FC<PlayerViewProps> = ({ state, actions, playerId
                             {state.phase === GamePhase.LOBBY ? (
                                 <div className="space-y-4 pt-2">
                                     {/* Join as Player if Lobby */}
-                                    <GameButton
-                                        variant="green"
-                                        size="lg"
+                                    <button
                                         disabled={!joinName || Object.keys(state.players).length >= 6}
                                         onClick={() => { sfx.play('CLICK'); actions.sendJoin(joinName, joinName); }}
-                                        className="w-full"
+                                        className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-400 hover:to-emerald-500 text-white py-5 rounded-2xl font-black text-2xl shadow-xl transform transition active:scale-95 disabled:opacity-50 disabled:transform-none uppercase tracking-wide flex items-center justify-center relative overflow-hidden group"
                                     >
+                                        <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
                                         {Object.keys(state.players).length >= 6 ? 'Game Full' : 'Join Game'}
-                                    </GameButton>
+                                    </button>
 
-                                    <GameButton
-                                        variant="secondary"
-                                        size="md"
+                                    <button
                                         disabled={!joinName}
                                         onClick={() => { sfx.play('CLICK'); actions.sendJoinAudience(joinName, joinName); }}
-                                        className="w-full"
+                                        className="w-full bg-blue-600/20 hover:bg-blue-600/40 text-blue-200 hover:text-white py-4 rounded-2xl font-bold text-lg border-2 border-blue-500/30 flex items-center justify-center gap-2 transform transition active:scale-95 disabled:opacity-50 uppercase"
                                     >
                                         <Users size={20} /> Join Audience
-                                    </GameButton>
+                                    </button>
                                 </div>
                             ) : (
                                 <div className="space-y-4">
                                     {/* Only Join Audience if In Progress */}
-                                    <GameButton
-                                        variant="blue"
-                                        size="lg"
+                                    <button
                                         disabled={!joinName}
                                         onClick={() => { sfx.play('CLICK'); actions.sendJoinAudience(joinName, joinName); }}
-                                        className="w-full"
+                                        className="w-full bg-blue-600 hover:bg-blue-500 text-white py-5 rounded-2xl font-black text-xl shadow-lg flex items-center justify-center gap-2 transform transition active:scale-95 disabled:opacity-50 uppercase"
                                     >
                                         <Users size={24} /> Join Audience
-                                    </GameButton>
+                                    </button>
                                     <p className="text-center text-white/50 text-xs uppercase font-bold">
                                         Late players must watch first
                                     </p>
