@@ -375,7 +375,7 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
     // --- MAIN GAME RENDER ---
 
     return (
-        <GameBackground className="flex flex-col h-full w-full pb-safe-bottom overflow-y-auto  relative">
+        <GameBackground className="flex flex-col h-[100dvh] w-full overflow-hidden relative">
             <DevPauseButton isPaused={state.isPaused} onToggle={actions.sendTogglePause} />
             <EmotePopupLayer emotes={state.emotes} />
             <TopBar />
@@ -392,7 +392,7 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
 
             {/* MAIN CONTENT AREA - FlexGrow to fill space */}
             <div className={`
-                flex-1 relative flex flex-col w-full max-w-6xl mx-auto min-h-0 pb-safe-bottom justify-center
+                flex-1 relative flex flex-col w-full max-w-6xl mx-auto min-h-0 justify-center
                 ${(state.phase === GamePhase.VOTING || state.phase === GamePhase.REVEAL) ? 'overflow-hidden' : 'overflow-y-auto no-scrollbar'}
             `}>
 
@@ -776,7 +776,7 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
             {/* PERSISTENT BOTTOM BAR (Avatar Strip + Emotes) - With Safe Area support */}
             {
                 state.phase !== GamePhase.LOBBY && state.phase !== GamePhase.LEADERBOARD && state.phase !== GamePhase.GAME_OVER && (
-                    <div className="pb-safe-bottom z-50 py-1 justify-center bg-transparent">
+                    <div className="z-50 flex flex-col justify-center bg-transparent" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 16px) + 4px)' }}>
                         <AvatarStrip
                             players={Object.values(state.players)}
                             onToggleReactions={toggleReactions}
