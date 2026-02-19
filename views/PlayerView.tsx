@@ -5,6 +5,7 @@ import { Clock, Users, CheckCircle, Lock, Play, Minus, Plus, RotateCcw, Crown, H
 import { motion, AnimatePresence } from 'framer-motion';
 import { sfx } from '../services/audioService';
 import { getText } from '../i18n';
+import { GameBackground } from './GameSharedComponents';
 
 interface PlayerViewProps {
     state: GameState;
@@ -126,9 +127,7 @@ export const PlayerView: React.FC<PlayerViewProps> = ({ state, actions, playerId
     // --- UNIFIED JOIN FLOW ---
     if (!isJoined) {
         return (
-            <div className="h-full bg-purple-900 min-h-safe-screen flex flex-col items-center justify-center p-6 relative overflow-hidden">
-                <div className="absolute inset-0 z-0 opacity-20" style={{ backgroundImage: 'radial-gradient(circle, #ffffff 1px, transparent 1px)', backgroundSize: '30px 30px' }} />
-
+            <GameBackground className="h-full min-h-safe-screen flex flex-col items-center justify-center p-6 relative overflow-hidden">
                 <div className="w-full max-w-md space-y-8 relative z-10 w-full">
                     <div className="text-center">
                         <h1 className="text-5xl font-display text-yellow-400 mb-2 drop-shadow-md tracking-tighter transform -rotate-2">Bamboozle</h1>
@@ -142,7 +141,7 @@ export const PlayerView: React.FC<PlayerViewProps> = ({ state, actions, playerId
                                 <input
                                     type="text"
                                     placeholder="ABCD"
-                                    className="w-full p-4 text-center text-4xl font-black rounded-xl uppercase tracking-[0.5em] bg-black/40 text-white placeholder-white/20 border-2 border-white/10 focus:border-yellow-400 outline-none transition-all shadow-inner"
+                                    className="w-full p-4 text-center text-4xl font-black rounded-xl uppercase tracking-[0.5em] bg-white text-black placeholder-gray-300 border-4 border-transparent focus:border-yellow-400 outline-none transition-all shadow-xl"
                                     maxLength={4}
                                     value={inputCode}
                                     onChange={(e) => {
@@ -285,7 +284,7 @@ export const PlayerView: React.FC<PlayerViewProps> = ({ state, actions, playerId
                         </motion.div>
                     )}
                 </div>
-            </div>
+            </GameBackground>
         );
     }
 

@@ -8,6 +8,10 @@ import { OnlinePlayerView } from './views/OnlinePlayerView';
 import { SettingsView } from './views/SettingsView';
 import { AdminView } from './views/AdminView';
 import { getText } from './i18n';
+import { Avatar } from './components/Avatar'; // Import Avatar
+import { NARRATOR_SEED } from './constants'; // Import Seed
+import { Expression } from './types'; // Import Expression Type
+import { GameBackground } from './views/GameSharedComponents'; // Import GameBackground
 
 const App: React.FC = () => {
   return (
@@ -61,80 +65,92 @@ const HomeSelector = ({ onSelect, isMobile, language, setLanguage }: { onSelect:
   };
   const navigate = useNavigate();
 
-  return (
-    <div className="h-full w-full bg-gradient-to-br from-indigo-900 via-purple-900 to-black text-white flex flex-col items-center justify-center p-4 relative overflow-y-auto">
-      <div className="absolute inset-0 z-0 opacity-20 pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle, #ffffff 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
+  // Lively Narrator Logic
+  const [narratorExpression, setNarratorExpression] = useState<Expression>('HAPPY');
+  useEffect(() => {
+    const timer = setInterval(() => {
+      const exprs: Expression[] = ['HAPPY', 'SMUG', 'THINKING', 'HAPPY', 'HAPPY']; // Mostly happy/confident
+      setNarratorExpression(exprs[Math.floor(Math.random() * exprs.length)]);
+    }, 3000);
+    return () => clearInterval(timer);
+  }, []);
 
+  return (
+    <GameBackground className="flex flex-col items-center justify-center p-4 overflow-y-auto">
       <div className="relative z-10 w-full max-w-6xl flex flex-col items-center py-8">
-        <h1 className="text-4xl md:text-8xl font-black text-transparent bg-clip-text bg-gradient-to-b from-yellow-300 to-yellow-600 mb-8 md:mb-12 drop-shadow-2xl tracking-tighter uppercase transform -rotate-2 text-center">
+
+        {/* Narrator Avatar */}
+        <div className="relative mb-6 transform hover:scale-105 transition-transform duration-300 cursor-pointer" onClick={() => setNarratorExpression('SHOCKED')}>
+          <div className="absolute inset-0 bg-yellow-400 blur-3xl opacity-20 animate-pulse"></div>
+          <div className="filter drop-shadow-2xl animate-float">
+            <Avatar
+              seed={NARRATOR_SEED}
+              size={isMobile ? 120 : 160}
+              expression={narratorExpression}
+            />
+          </div>
+        </div>
+
+        <h1 className="text-5xl md:text-8xl font-black text-transparent bg-clip-text bg-gradient-to-b from-yellow-300 to-yellow-600 mb-8 md:mb-12 drop-shadow-2xl tracking-tighter uppercase transform -rotate-2 text-center">
           Bamboozle
         </h1>
 
-        <div className="w-full max-w-sm md:max-w-2xl space-y-3 md:space-y-0">
-          {/* Main Action Buttons - Full width on mobile, 2 cols on desktop */}
+        <div className="w-full max-w-sm md:max-w-2xl space-y-3 md:space-y-0 relative z-20">
+          {/* Main Action Buttons */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-6">
             <button
               onClick={() => onSelect('HOST')}
-              className="group relative bg-white/10 backdrop-blur-md p-4 md:p-8 rounded-3xl md:rounded-[2.5rem] border border-white/20 hover:bg-purple-600/40 hover:border-purple-400 transition-all duration-300 flex flex-col items-center shadow-xl hover:shadow-purple-500/30 hover:-translate-y-2 active:scale-95"
+              className="group relative bg-purple-600 hover:bg-purple-500 text-white p-4 md:p-8 rounded-3xl md:rounded-[2.5rem] border-b-8 border-purple-800 hover:border-purple-700 transition-all duration-200 flex flex-col items-center shadow-2xl active:translate-y-2 active:border-b-0"
             >
-              <div className="bg-purple-500/20 p-4 md:p-6 rounded-full mb-3 md:mb-6 group-hover:bg-purple-500 group-hover:text-white transition-colors">
-                <Monitor className="text-purple-300 group-hover:text-white w-6 h-6 md:w-10 md:h-10" />
+              <div className="bg-white/20 p-4 md:p-6 rounded-full mb-3 md:mb-6 group-hover:scale-110 transition-transform">
+                <Monitor className="text-white w-6 h-6 md:w-10 md:h-10" />
               </div>
               <h2 className="text-xl md:text-3xl font-black mb-1 md:mb-2 uppercase tracking-wide">{getText(language, 'HOME_HOST_GAME')}</h2>
-              <p className="text-xs md:text-sm font-bold opacity-60 uppercase tracking-widest">{isMobile ? getText(language, 'HOME_HOST_DESC_MOBILE') : getText(language, 'HOME_HOST_DESC_DESKTOP')}</p>
+              <p className="text-xs md:text-sm font-bold opacity-80 uppercase tracking-widest">{isMobile ? getText(language, 'HOME_HOST_DESC_MOBILE') : getText(language, 'HOME_HOST_DESC_DESKTOP')}</p>
             </button>
 
             <button
               onClick={() => onSelect('PLAYER')}
-              className="group relative bg-white/10 backdrop-blur-md p-4 md:p-8 rounded-3xl md:rounded-[2.5rem] border border-white/20 hover:bg-blue-600/40 hover:border-blue-400 transition-all duration-300 flex flex-col items-center shadow-xl hover:shadow-blue-500/30 hover:-translate-y-2 active:scale-95"
+              className="group relative bg-blue-600 hover:bg-blue-500 text-white p-4 md:p-8 rounded-3xl md:rounded-[2.5rem] border-b-8 border-blue-800 hover:border-blue-700 transition-all duration-200 flex flex-col items-center shadow-2xl active:translate-y-2 active:border-b-0"
             >
-              <div className="bg-blue-500/20 p-4 md:p-6 rounded-full mb-3 md:mb-6 group-hover:bg-blue-500 group-hover:text-white transition-colors">
-                <Smartphone className="text-blue-300 group-hover:text-white w-6 h-6 md:w-10 md:h-10" />
+              <div className="bg-white/20 p-4 md:p-6 rounded-full mb-3 md:mb-6 group-hover:scale-110 transition-transform">
+                <Smartphone className="text-white w-6 h-6 md:w-10 md:h-10" />
               </div>
               <h2 className="text-xl md:text-3xl font-black mb-1 md:mb-2 uppercase tracking-wide">{getText(language, 'HOME_JOIN_GAME')}</h2>
-              <p className="text-xs md:text-sm font-bold opacity-60 uppercase tracking-widest">{getText(language, 'HOME_JOIN_DESC')}</p>
+              <p className="text-xs md:text-sm font-bold opacity-80 uppercase tracking-widest">{getText(language, 'HOME_JOIN_DESC')}</p>
             </button>
           </div>
 
-          {/* Utility Buttons - 2 cols on mobile and desktop */}
+          {/* Utility Buttons */}
           <div className="grid grid-cols-2 gap-3 py-6 md:gap-6">
-            {/* Language Toggle Button */}
             <button
               onClick={toggleLanguage}
-              className="group relative bg-white/10 backdrop-blur-md p-4 md:p-8 rounded-3xl md:rounded-[2.5rem] border border-white/20 hover:bg-pink-600/40 hover:border-pink-400 transition-all duration-300 flex flex-col items-center shadow-xl hover:shadow-pink-500/30 hover:-translate-y-2 active:scale-95"
+              className="group relative bg-pink-600 hover:bg-pink-500 text-white p-4 md:p-6 rounded-3xl md:rounded-[2rem] border-b-4 md:border-b-8 border-pink-800 hover:border-pink-700 transition-all duration-200 flex flex-col items-center shadow-xl active:translate-y-2 active:border-b-0"
             >
-              <div className="bg-pink-500/20 p-4 md:p-6 rounded-full mb-3 md:mb-6 group-hover:bg-pink-500 group-hover:text-white transition-colors">
-                <Globe className="text-pink-300 group-hover:text-white w-6 h-6 md:w-10 md:h-10" />
-              </div>
-              <h2 className="text-xl md:text-3xl font-black mb-1 md:mb-2 uppercase tracking-wide">{language === 'en' ? 'ENGLISH' : 'ΕΛΛΗΝΙΚΑ'}</h2>
-              <p className="text-xs md:text-sm font-bold opacity-60 uppercase tracking-widest">{language === 'en' ? 'CHANGE LANGUAGE' : 'ΑΛΛΑΓΗ ΓΛΩΣΣΑΣ'}</p>
+              <Globe className="text-pink-200 group-hover:text-white w-6 h-6 md:w-8 md:h-8 mb-2" />
+              <h2 className="text-sm md:text-xl font-black uppercase tracking-wide">{language === 'en' ? 'ENGLISH' : 'ΕΛΛΗΝΙΚΑ'}</h2>
             </button>
 
-            {/* Settings Button */}
             <button
               onClick={() => navigate('/settings')}
-              className="group relative bg-white/10 backdrop-blur-md p-4 md:p-8 rounded-3xl md:rounded-[2.5rem] border border-white/20 hover:bg-gray-600/40 hover:border-gray-400 transition-all duration-300 flex flex-col items-center shadow-xl hover:shadow-gray-500/30 hover:-translate-y-2 active:scale-95"
+              className="group relative bg-gray-700 hover:bg-gray-600 text-white p-4 md:p-6 rounded-3xl md:rounded-[2rem] border-b-4 md:border-b-8 border-gray-900 hover:border-gray-800 transition-all duration-200 flex flex-col items-center shadow-xl active:translate-y-2 active:border-b-0"
             >
-              <div className="bg-gray-500/20 p-4 md:p-6 rounded-full mb-3 md:mb-6 group-hover:bg-gray-500 group-hover:text-white transition-colors">
-                <SettingsIcon className="text-gray-300 group-hover:text-white w-6 h-6 md:w-10 md:h-10" />
-              </div>
-              <h2 className="text-xl md:text-3xl font-black mb-1 md:mb-2 uppercase tracking-wide">Settings</h2>
-              <p className="text-xs md:text-sm font-bold opacity-60 uppercase tracking-widest">Configure App</p>
+              <SettingsIcon className="text-gray-300 group-hover:text-white w-6 h-6 md:w-8 md:h-8 mb-2" />
+              <h2 className="text-sm md:text-xl font-black uppercase tracking-wide">Settings</h2>
             </button>
           </div>
 
-          {/* Test Mode Button - Desktop only, full width if shown */}
+          {/* Test Mode Button */}
           {!isMobile && import.meta.env.DEV && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-6 md:mt-6">
               <button
                 onClick={() => onSelect('TEST')}
-                className="group relative bg-white/10 backdrop-blur-md p-4 md:p-8 rounded-2xl md:rounded-[2.5rem] border border-white/20 hover:bg-orange-600/40 hover:border-orange-400 transition-all duration-300 flex flex-col items-center shadow-xl hover:shadow-orange-500/30 hover:-translate-y-2 active:scale-95 md:col-span-2"
+                className="group relative bg-orange-600 hover:bg-orange-500 text-white p-4 md:p-6 rounded-3xl md:rounded-[2rem] border-b-4 md:border-b-8 border-orange-800 hover:border-orange-700 transition-all duration-200 flex flex-col items-center shadow-xl active:translate-y-2 active:border-b-0 md:col-span-2"
               >
-                <div className="bg-orange-500/20 p-4 md:p-6 rounded-full mb-3 md:mb-6 group-hover:bg-orange-500 group-hover:text-white transition-colors">
-                  <SplitSquareHorizontal className="text-orange-300 group-hover:text-white w-6 h-6 md:w-10 md:h-10" />
+                <div className="flex items-center gap-3">
+                  <SplitSquareHorizontal className="text-orange-200 group-hover:text-white w-6 h-6" />
+                  <h2 className="text-lg md:text-2xl font-black uppercase tracking-wide">{getText(language, 'HOME_TEST_MODE')}</h2>
                 </div>
-                <h2 className="text-xl md:text-3xl font-black mb-1 md:mb-2 uppercase tracking-wide">{getText(language, 'HOME_TEST_MODE')}</h2>
-                <p className="text-xs md:text-sm font-bold opacity-60 uppercase tracking-widest">{getText(language, 'HOME_TEST_DESC')}</p>
               </button>
             </div>
           )}
@@ -144,7 +160,7 @@ const HomeSelector = ({ onSelect, isMobile, language, setLanguage }: { onSelect:
           {getText(language, 'HOME_TAGLINE')}
         </p>
       </div>
-    </div>
+    </GameBackground>
   );
 };
 
@@ -185,26 +201,50 @@ const GameHostWrapper = ({ onHome, debugMode, language, setLanguage }: { onHome:
     }
   }, [state.isOnlineMode, state.roomCode, actions, isMobile]);
 
+  // Loading Screen Logic: Narrator Face Cycling
+  const [loadingExpression, setLoadingExpression] = useState<Expression>('HAPPY');
+
+  useEffect(() => {
+    if (!state.roomCode || (isMobile && !state.isOnlineMode)) {
+      const timer = setInterval(() => {
+        const exprs: Expression[] = ['HAPPY', 'SHOCKED', 'THINKING', 'SMUG', 'ANGRY', 'SAD'];
+        setLoadingExpression(exprs[Math.floor(Math.random() * exprs.length)]);
+      }, 700);
+      return () => clearInterval(timer);
+    }
+  }, [state.roomCode, isMobile, state.isOnlineMode]);
+
   // Loading Screen if not connected yet or switch pending on mobile
   if (!state.roomCode || (isMobile && !state.isOnlineMode)) {
     return (
-      <div className="h-full w-full flex flex-col items-center justify-center bg-black text-white relative overflow-hidden">
-        {/* Abstract Background */}
-        <div className="absolute inset-0 z-0">
-          <div className="absolute top-[-20%] left-[-20%] w-[70%] h-[70%] bg-purple-900/40 rounded-full blur-[100px] animate-pulse" />
-          <div className="absolute bottom-[-20%] right-[-20%] w-[70%] h-[70%] bg-blue-900/40 rounded-full blur-[100px] animate-pulse delay-700" />
-        </div>
+      <div className="h-full w-full bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900 flex flex-col items-center justify-center relative overflow-hidden font-display text-white selection:bg-pink-500">
+        {/* Background Pattern */}
+        <div className="absolute inset-0 z-0 opacity-10 pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle, #ffffff 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
 
-        <div className="relative z-10 flex flex-col items-center">
-          <div className="relative mb-8">
-            <div className="absolute inset-0 bg-purple-500 blur-xl opacity-50 animate-pulse"></div>
-            <div className="w-20 h-20 border-t-4 border-l-4 border-purple-400 rounded-full animate-spin"></div>
+        <div className="relative z-10 flex flex-col items-center translate-y-[-10%]">
+          <div className="relative mb-8 transform scale-125 md:scale-150 transition-transform duration-500">
+            <div className="absolute inset-0 bg-yellow-400 blur-3xl opacity-20 animate-pulse"></div>
+            <div className="filter drop-shadow-2xl animate-bounce" style={{ animationDuration: '3s' }}>
+              <Avatar
+                seed={NARRATOR_SEED}
+                size={180}
+                expression={loadingExpression}
+              />
+            </div>
           </div>
-          <h2 className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-300 to-blue-300 animate-pulse tracking-widest uppercase">
-            {getText(language, 'GAME_LOADING')}
+
+          <h2 className="text-3xl md:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-200 to-yellow-500 drop-shadow-lg tracking-widest uppercase mb-6 text-center animate-pulse">
+            {getText(language || 'en', 'GAME_LOADING')}
           </h2>
-          <p className="mt-4 text-white/50 text-sm font-bold uppercase tracking-wider">
-            {state.roomCode ? 'Setting up interface...' : 'Connecting to Server...'}
+
+          <div className="flex gap-3">
+            <div className="w-3 h-3 md:w-4 md:h-4 bg-yellow-400 rounded-full animate-bounce shadow-lg shadow-yellow-400/50" style={{ animationDelay: '0s', animationDuration: '1s' }} />
+            <div className="w-3 h-3 md:w-4 md:h-4 bg-yellow-400 rounded-full animate-bounce shadow-lg shadow-yellow-400/50" style={{ animationDelay: '0.15s', animationDuration: '1s' }} />
+            <div className="w-3 h-3 md:w-4 md:h-4 bg-yellow-400 rounded-full animate-bounce shadow-lg shadow-yellow-400/50" style={{ animationDelay: '0.3s', animationDuration: '1s' }} />
+          </div>
+
+          <p className="mt-6 text-white/40 text-xs md:text-sm font-bold uppercase tracking-[0.2em] text-center">
+            {state.roomCode ? 'Setting up...' : 'Connecting...'}
           </p>
         </div>
       </div>

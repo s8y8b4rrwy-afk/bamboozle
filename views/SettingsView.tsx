@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Settings as SettingsIcon, ArrowLeft, BookOpen } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { ChangelogModal } from '../components/ChangelogModal';
+import { GameBackground } from './GameSharedComponents';
 
 export const SettingsView: React.FC = () => {
     const navigate = useNavigate();
@@ -66,7 +67,7 @@ export const SettingsView: React.FC = () => {
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-800 text-white flex flex-col items-center p-4">
+        <GameBackground className="min-h-screen text-white flex flex-col items-center p-4">
             <div className="w-full max-w-md bg-white/10 backdrop-blur-md rounded-3xl p-6 shadow-2xl border border-white/20">
 
                 <div className="flex items-center justify-between mb-8">
@@ -165,6 +166,6 @@ export const SettingsView: React.FC = () => {
                 onClose={() => setIsChangelogOpen(false)}
                 serverUrl={getServerUrl()}
             />
-        </div>
+        </GameBackground>
     );
 };

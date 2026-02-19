@@ -199,7 +199,7 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
     // --- JOIN FLOW ---
     if (!isJoined) {
         return (
-            <div className="h-full bg-purple-900 flex flex-col overflow-y-auto pb-safe-bottom">
+            <GameBackground className="h-full flex flex-col overflow-y-auto pb-safe-bottom">
                 <TopBar />
                 <div className="flex-1 flex flex-col items-center justify-center p-6 relative min-h-[60vh]">
                     <EmotePopupLayer emotes={state.emotes} />
@@ -338,7 +338,7 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
                         )}
                     </div>
                 </div>
-            </div >
+            </GameBackground>
         );
     }
 
