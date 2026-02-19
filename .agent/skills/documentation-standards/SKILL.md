@@ -56,7 +56,11 @@ Each major subsystem (Audio, Network, Game Logic) should have a dedicated markdo
 
 ### Responsiveness
 - **Mobile First**: Design for mobile screens first, then enhance for desktop (`md:` prefix).
-- Use `min-h-screen` and `h-full` carefully to avoid scrolling issues on mobile browsers (Safari address bar).
+- **Layout Stability**:
+  - Use `h-[100svh]` for root containers to guarantee visibility above mobile browser toolbars.
+  - Use `flex-1 min-h-0` on central content areas to ensure they scroll internally without expanding the total height.
+  - Apply `env(safe-area-inset-bottom)` to footers and fixed bottom elements.
+  - Use `overscroll-behavior: none` to disable elastic bouncing on mobile.
 
 ### Online Play & Networking
 - All game-critical actions must be sent via `socket.emit`.
