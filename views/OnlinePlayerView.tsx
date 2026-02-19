@@ -190,10 +190,7 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
 
     const TopBar = () => (
         <div className="flex items-center justify-between w-full px-6 pt-safe-top pb-2 z-50 shrink-0">
-            <button onClick={() => { sfx.play('CLICK'); onHome(); }} className="flex items-center gap-2 text-white/30 hover:text-white transition-colors group">
-                <Home size={18} className="group-hover:text-yellow-400 transition-colors" />
-                <span className="font-bold text-sm uppercase tracking-widest group-hover:text-yellow-400 transition-colors">Home</span>
-            </button>
+            <span className="text-white/30 font-bold text-sm uppercase tracking-widest">Bamboozle</span>
             <span className="text-white/30 font-bold uppercase text-sm tracking-wider">{getText(state.language, 'LOBBY_ROOM_CODE', { code: state.roomCode })}</span>
         </div>
     );
@@ -478,15 +475,21 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
                                             >
                                                 {getText(state.language, 'LOBBY_ADD_BOT')}
                                             </button>
-                                            {import.meta.env.DEV && (
-                                                <button
-                                                    onClick={actions.addAudienceBot}
-                                                    className="bg-indigo-600/50 hover:bg-indigo-600 py-3 rounded-xl text-xs font-bold uppercase"
-                                                >
-                                                    {getText(state.language, 'LOBBY_ADD_AUDIENCE')}
-                                                </button>
-                                            )}
+                                            <button
+                                                onClick={() => { sfx.play('CLICK'); onHome(); }}
+                                                className="bg-red-600/50 hover:bg-red-600 py-3 rounded-xl text-xs font-bold uppercase flex items-center justify-center gap-2"
+                                            >
+                                                <Home size={14} /> Home
+                                            </button>
                                         </div>
+                                        {import.meta.env.DEV && (
+                                            <button
+                                                onClick={actions.addAudienceBot}
+                                                className="w-full bg-indigo-600/30 hover:bg-indigo-600/50 py-2 rounded-xl text-[10px] font-bold uppercase border border-white/10"
+                                            >
+                                                + Audience (Dev)
+                                            </button>
+                                        )}
 
                                         <button
                                             disabled={!Object.values(state.players).every(p => p.isReady) || Object.values(state.players).length === 0}
