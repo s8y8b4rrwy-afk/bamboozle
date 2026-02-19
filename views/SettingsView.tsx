@@ -7,7 +7,7 @@ import { GameBackground } from './GameSharedComponents';
 export const SettingsView: React.FC = () => {
     const navigate = useNavigate();
     const [useLocalServer, setUseLocalServer] = useState(false);
-    const [usePremiumVoices, setUsePremiumVoices] = useState(false);
+    const [usePremiumVoices, setUsePremiumVoices] = useState(true);
     const [customServerUrl, setCustomServerUrl] = useState('http://localhost:3001');
     const [isChangelogOpen, setIsChangelogOpen] = useState(false);
 

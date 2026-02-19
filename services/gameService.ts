@@ -111,7 +111,7 @@ const INITIAL_STATE: GameState = {
   revealSubPhase: 'CARD',
   leaderboardPhase: 'INTRO',
   language: 'en',
-  usePremiumVoices: false, // Default to Premium Voices OFF
+  usePremiumVoices: true, // Default to Premium Voices ON
   isPaused: false
 };
 
