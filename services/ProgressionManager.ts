@@ -163,44 +163,31 @@ export class ProgressionManager {
                 });
             }
 
-            // 2. Show Voters
-            let voterText = '';
-            if (voters.length > 0) {
-                if (isTruth) {
-                    voterText = getNarratorPhrase(state.language, 'REVEAL_CORRECT_GROUP', { names: voterNames }) || `Smart move, ${voterNames}!`;
-                } else {
-                    if (ans.audienceVotes.length > 2) {
+            // 2. Prepare Steps and Push to Queue
+            if (!isTruth) {
+                // --- LIE REVEAL SEQUENCE ---
+                // 1. Show Voters (Who fell for it)
+                let voterText = '';
+                if (voters.length > 0) {
+                    if (ans.audienceVotes && ans.audienceVotes.length > 2) {
                         voterText = getNarratorPhrase(state.language, 'PLAYER_FOOLED_BY_AUDIENCE', { names: voterNames }) || `The audience tricked ${voterNames}!`;
                     } else {
                         voterText = getNarratorPhrase(state.language, 'REVEAL_FOOLED_GROUP', { names: voterNames }) || `Oh no, ${voterNames} fell for it!`;
                     }
                 }
-            } else {
-                if (isTruth) {
-                    voterText = getNarratorPhrase(state.language, 'REVEAL_NOBODY', {}) || `Nobody got this right.`;
-                } else {
-                    // Empty lie - skip speaking or say something generic?
-                    // gameService logic didn't speak here for lies with no voters.
+
+                if (voterText) {
+                    queue.push({
+                        type: 'VOTERS',
+                        answerId,
+                        text: voterText,
+                        duration: 3000
+                    });
                 }
-            }
 
-            // 2. Prepare Steps
-            const votersStep: RevealStep = {
-                type: 'VOTERS',
-                answerId,
-                text: voterText,
-                duration: 3000
-            };
-
-            // 3. Show Author (Truth or Lie)
-            let authorText = '';
-            const authors = ans.authorIds.map(id => state.players[id]).filter(Boolean);
-
-            if (isTruth) {
-                const intro = getNarratorPhrase(state.language, 'REVEAL_TRUTH_INTRO', {}) || `It's the truth!`;
-                const fullFact = state.currentQuestion?.fact.replace('<BLANK>', ans.text) || ans.text;
-                authorText = `${intro} ${fullFact}`;
-            } else {
+                // 2. Show Author (Who wrote it)
+                let authorText = '';
+                const authors = ans.authorIds.map(id => state.players[id]).filter(Boolean);
                 if (authors.length > 0) {
                     if (authors.length === 1) {
                         authorText = getNarratorPhrase(state.language, 'REVEAL_LIAR', { name: authors[0].name }) || `${authors[0].name} made that up!`;
@@ -211,27 +198,45 @@ export class ProgressionManager {
                 } else if (ans.authorIds.includes('HOST_BOT')) {
                     authorText = getNarratorPhrase(state.language, 'REVEAL_HOST_LIE', { names: voterNames }) || `I made that one up!`;
                 }
-            }
 
-            const wordCount = authorText ? authorText.split(' ').length : 0;
-            const authorDuration = Math.max(4000, wordCount * 450 + 1000);
-
-            const authorStep: RevealStep = {
-                type: 'AUTHOR',
-                answerId,
-                text: authorText,
-                duration: authorDuration
-            };
-
-            // 3. Push to Queue (Order differs for Truth vs Lie)
-            if (isTruth) {
-                // Truth: Card -> Author (Truth Revealed) -> Voters (Who got it)
-                queue.push(authorStep);
-                queue.push(votersStep);
+                if (authorText) {
+                    queue.push({
+                        type: 'AUTHOR',
+                        answerId,
+                        text: authorText,
+                        duration: Math.max(4000, authorText.split(' ').length * 450 + 1000)
+                    });
+                }
             } else {
-                // Lie: Card -> Voters (Who fell for it) -> Author (Who wrote it)
-                queue.push(votersStep);
-                queue.push(authorStep);
+                // --- TRUTH REVEAL SEQUENCE ---
+                // 1. Truth Intro (Uses cached Phrase)
+                queue.push({
+                    type: 'AUTHOR',
+                    answerId,
+                    text: getNarratorPhrase(state.language, 'REVEAL_TRUTH_INTRO', {}) || `It's the truth!`,
+                    duration: 2000
+                });
+
+                // 2. The Actual Fact (Uses cached Question Content)
+                const fullFact = state.currentQuestion?.fact.replace('<BLANK>', ans.text) || ans.text;
+                queue.push({
+                    type: 'AUTHOR',
+                    answerId,
+                    text: fullFact,
+                    duration: Math.max(4000, fullFact.split(' ').length * 450 + 1000)
+                });
+
+                // 3. Show Voters (Who got it right)
+                let truthVoterText = voters.length > 0
+                    ? getNarratorPhrase(state.language, 'REVEAL_CORRECT_GROUP', { names: voterNames }) || `Smart move, ${voterNames}!`
+                    : getNarratorPhrase(state.language, 'REVEAL_NOBODY', {}) || `Nobody got this right.`;
+
+                queue.push({
+                    type: 'VOTERS',
+                    answerId,
+                    text: truthVoterText,
+                    duration: 3000
+                });
             }
         });
 

@@ -137,6 +137,13 @@ const ttsService = {
             console.error('[TTS] Failed to clear cache:', e);
             throw e;
         }
+    },
+
+    /**
+     * No-op for now as we use GCS and don't store local room state.
+     */
+    cleanupRoom: (roomCode) => {
+        // console.log(`[TTS] Cleaning up room ${roomCode}`);
     }
 };
 

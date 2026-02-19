@@ -17,6 +17,10 @@ class AudioService {
     }
   }
 
+  public unlock() {
+    this.ensureContext();
+  }
+
   private ensureContext() {
     if (this.ctx && this.ctx.state === 'suspended') {
       this.ctx.resume();
@@ -30,7 +34,7 @@ class AudioService {
 
     const osc = this.ctx.createOscillator();
     const gain = this.ctx.createGain();
-    
+
     osc.connect(gain);
     gain.connect(this.masterGain);
 
@@ -112,7 +116,7 @@ class AudioService {
         const noiseBuffer = this.ctx.createBuffer(1, noiseBufferSize, this.ctx.sampleRate);
         const output = noiseBuffer.getChannelData(0);
         for (let i = 0; i < noiseBufferSize; i++) {
-            output[i] = Math.random() * 2 - 1;
+          output[i] = Math.random() * 2 - 1;
         }
         const noise = this.ctx.createBufferSource();
         noise.buffer = noiseBuffer;
@@ -121,7 +125,7 @@ class AudioService {
         noiseFilter.frequency.setValueAtTime(200, t);
         noiseFilter.frequency.linearRampToValueAtTime(2000, t + 0.2);
         noiseFilter.frequency.linearRampToValueAtTime(100, t + 0.5);
-        
+
         noise.connect(noiseFilter);
         noiseFilter.connect(gain);
         gain.gain.setValueAtTime(0.2, t);
@@ -139,37 +143,37 @@ class AudioService {
         osc.start(t);
         osc.stop(t + 1.5);
         break;
-        
+
       case 'DRUMROLL':
-         // Rapid snare hits
-         for(let i=0; i<10; i++) {
-            const snare = this.ctx.createOscillator();
-            const snareGain = this.ctx.createGain();
-            snare.type = 'triangle';
-            snare.connect(snareGain);
-            snareGain.connect(this.masterGain);
-            snare.frequency.setValueAtTime(200, t + (i*0.05));
-            snareGain.gain.setValueAtTime(0.1, t + (i*0.05));
-            snareGain.gain.exponentialRampToValueAtTime(0.01, t + (i*0.05) + 0.05);
-            snare.start(t + (i*0.05));
-            snare.stop(t + (i*0.05) + 0.05);
-         }
-         break;
+        // Rapid snare hits
+        for (let i = 0; i < 10; i++) {
+          const snare = this.ctx.createOscillator();
+          const snareGain = this.ctx.createGain();
+          snare.type = 'triangle';
+          snare.connect(snareGain);
+          snareGain.connect(this.masterGain);
+          snare.frequency.setValueAtTime(200, t + (i * 0.05));
+          snareGain.gain.setValueAtTime(0.1, t + (i * 0.05));
+          snareGain.gain.exponentialRampToValueAtTime(0.01, t + (i * 0.05) + 0.05);
+          snare.start(t + (i * 0.05));
+          snare.stop(t + (i * 0.05) + 0.05);
+        }
+        break;
     }
   }
 
   private playNote(freq: number, time: number, type: OscillatorType, duration: number = 0.2) {
-      if (!this.ctx || !this.masterGain) return;
-      const osc = this.ctx.createOscillator();
-      const gain = this.ctx.createGain();
-      osc.type = type;
-      osc.frequency.value = freq;
-      osc.connect(gain);
-      gain.connect(this.masterGain);
-      gain.gain.setValueAtTime(0.1, time);
-      gain.gain.exponentialRampToValueAtTime(0.01, time + duration);
-      osc.start(time);
-      osc.stop(time + duration);
+    if (!this.ctx || !this.masterGain) return;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = type;
+    osc.frequency.value = freq;
+    osc.connect(gain);
+    gain.connect(this.masterGain);
+    gain.gain.setValueAtTime(0.1, time);
+    gain.gain.exponentialRampToValueAtTime(0.01, time + duration);
+    osc.start(time);
+    osc.stop(time + duration);
   }
 }
 

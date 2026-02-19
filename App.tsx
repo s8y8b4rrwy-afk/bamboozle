@@ -6,6 +6,7 @@ import { PlayerView } from './views/PlayerView';
 import { Monitor, Smartphone, Users, SplitSquareHorizontal, Globe, Settings as SettingsIcon } from 'lucide-react';
 import { OnlinePlayerView } from './views/OnlinePlayerView';
 import { SettingsView } from './views/SettingsView';
+import { AdminView } from './views/AdminView';
 import { getText } from './i18n';
 
 const App: React.FC = () => {
@@ -14,6 +15,7 @@ const App: React.FC = () => {
       <Routes>
         <Route path="/" element={<AppContent />} />
         <Route path="/settings" element={<SettingsView />} />
+        {import.meta.env.DEV && <Route path="/admin" element={<AdminView />} />}
       </Routes>
     </BrowserRouter>
   );
@@ -122,7 +124,7 @@ const HomeSelector = ({ onSelect, isMobile, language, setLanguage }: { onSelect:
           </div>
 
           {/* Test Mode Button - Desktop only, full width if shown */}
-          {!isMobile && (
+          {!isMobile && import.meta.env.DEV && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-6 md:mt-6">
               <button
                 onClick={() => onSelect('TEST')}
@@ -174,13 +176,40 @@ const GameHostWrapper = ({ onHome, debugMode, language, setLanguage }: { onHome:
     }
   }, [state.language, language, setLanguage]);
 
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth <= 768;
+
   // Automatically switch to online mode if on mobile
   useEffect(() => {
-    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth <= 768;
     if (isMobile && !state.isOnlineMode && state.roomCode) {
       actions.sendToggleOnlineMode();
     }
-  }, [state.isOnlineMode, state.roomCode, actions]);
+  }, [state.isOnlineMode, state.roomCode, actions, isMobile]);
+
+  // Loading Screen if not connected yet or switch pending on mobile
+  if (!state.roomCode || (isMobile && !state.isOnlineMode)) {
+    return (
+      <div className="h-full w-full flex flex-col items-center justify-center bg-black text-white relative overflow-hidden">
+        {/* Abstract Background */}
+        <div className="absolute inset-0 z-0">
+          <div className="absolute top-[-20%] left-[-20%] w-[70%] h-[70%] bg-purple-900/40 rounded-full blur-[100px] animate-pulse" />
+          <div className="absolute bottom-[-20%] right-[-20%] w-[70%] h-[70%] bg-blue-900/40 rounded-full blur-[100px] animate-pulse delay-700" />
+        </div>
+
+        <div className="relative z-10 flex flex-col items-center">
+          <div className="relative mb-8">
+            <div className="absolute inset-0 bg-purple-500 blur-xl opacity-50 animate-pulse"></div>
+            <div className="w-20 h-20 border-t-4 border-l-4 border-purple-400 rounded-full animate-spin"></div>
+          </div>
+          <h2 className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-300 to-blue-300 animate-pulse tracking-widest uppercase">
+            {getText(language, 'GAME_LOADING')}
+          </h2>
+          <p className="mt-4 text-white/50 text-sm font-bold uppercase tracking-wider">
+            {state.roomCode ? 'Setting up interface...' : 'Connecting to Server...'}
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   if (state.isOnlineMode) {
     return <OnlinePlayerView state={state} actions={actions} playerId={playerId} isSpeaking={isSpeaking} onHome={onHome} hostDisconnected={hostDisconnected} roomClosed={roomClosed} />;

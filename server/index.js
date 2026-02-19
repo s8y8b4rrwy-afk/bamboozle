@@ -4,6 +4,7 @@ const { Server } = require('socket.io');
 const path = require('path');
 const cors = require('cors');
 const ttsService = require('./ttsService');
+const adminRoutes = require('./adminRoutes');
 
 const app = express();
 const server = http.createServer(app);
@@ -19,6 +20,11 @@ const PORT = process.env.PORT || 3001;
 app.use(express.json());
 app.use(cors());
 
+// Admin routes - only for local development/management
+if (process.env.NODE_ENV !== 'production') {
+  app.use('/api/admin', adminRoutes);
+}
+
 // Serve Static Audio Files from Cache
 // Route: /audio/:roomCode/:filename
 app.use('/audio', express.static('/tmp/bamboozle_audio_cache', {
@@ -31,16 +37,18 @@ app.get('/', (req, res) => {
   res.send('Bamboozle server is running');
 });
 
+// Get server version
+app.get('/api/version', (req, res) => {
+  const packageJson = require('./package.json');
+  res.json({ version: packageJson.version });
+});
+
 // Trigger TTS manually (fallback/test endpoint)
 app.post('/api/tts', async (req, res) => {
   try {
     const { text, language, roomCode } = req.body;
     const result = await ttsService.getAudio(text, language || 'en', roomCode || 'test');
-    // Return full URL
-    const protocol = req.protocol;
-    const host = req.get('host');
-    const url = `${protocol}://${host}/audio/${roomCode || 'test'}/${result.file}`;
-    res.json({ url, isHit: result.isHit });
+    res.json({ url: result.url, isHit: result.isHit });
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
@@ -187,8 +195,8 @@ io.on('connection', (socket) => {
       // Generate (or get from cache)
       const result = await ttsService.getAudio(text, language || 'en', roomCode);
 
-      // Construct public URL
-      const audioUrl = `/audio/${roomCode}/${result.file}`;
+      // Use GCS URL directly
+      const audioUrl = result.url;
 
       // Broadcast to everyone ONLY if in Online Mode, otherwise only to Host (the sender)
       const isOnlineMode = rooms[roomCode].state && rooms[roomCode].state.isOnlineMode;
@@ -198,6 +206,7 @@ io.on('connection', (socket) => {
           audioUrl,
           text,
           requestId,
+          isHit: result.isHit,
           hash: null
         });
       } else {
@@ -206,6 +215,7 @@ io.on('connection', (socket) => {
           audioUrl,
           text,
           requestId,
+          isHit: result.isHit,
           hash: null
         });
       }
@@ -254,9 +264,6 @@ io.on('connection', (socket) => {
               delete playerTimeouts[key];
             }
           });
-
-          // TTS Cleanup
-          ttsService.cleanupRoom(roomCode);
 
           delete rooms[roomCode];
           delete hostTimeouts[roomCode];

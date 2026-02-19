@@ -131,14 +131,14 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
 
     // Check for rejoinable session
     useEffect(() => {
-        console.log('[OnlinePlayerView] Session check effect. isJoined:', isJoined, 'joinStep:', joinStep, 'actions available:', !!actions);
+        // console.log('[OnlinePlayerView] Session check effect. isJoined:', isJoined, 'joinStep:', joinStep, 'actions available:', !!actions);
         if (isJoined || joinStep !== 'CODE') return;
 
         const storedCode = localStorage.getItem('bamboozle_room_code');
-        console.log('[OnlinePlayerView] Stored room code in localStorage:', storedCode);
+        // console.log('[OnlinePlayerView] Stored room code in localStorage:', storedCode);
         if (storedCode && storedCode.length === 4) {
             actions.checkRoomExists(storedCode, (exists: boolean) => {
-                console.log('[OnlinePlayerView] Room check result for', storedCode, ':', exists);
+                // console.log('[OnlinePlayerView] Room check result for', storedCode, ':', exists);
                 if (exists) {
                     setRejoinCode(storedCode);
                 } else {
@@ -157,6 +157,7 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
     }, [state.roomCode, joinStep]);
 
     const handleEmote = (type: 'LAUGH' | 'SHOCK' | 'LOVE' | 'TOMATO') => {
+        actions.unlockAudio();
         const name = me ? me.name : (amAudience ? amAudience.name : 'Unknown');
         const seed = me ? me.avatarSeed : (amAudience ? amAudience.avatarSeed : 'unknown');
         actions.sendEmote(type, name, seed);
@@ -257,6 +258,7 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
                                         const codeToUse = inputCode || rejoinCode;
                                         if (!codeToUse) return;
 
+                                        actions.unlockAudio();
                                         actions.joinRoom(codeToUse, (success: boolean, error?: string) => {
                                             if (success) {
                                                 sfx.play('CLICK');
@@ -482,7 +484,10 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
 
                                         <button
                                             disabled={!Object.values(state.players).every(p => p.isReady) || Object.values(state.players).length === 0}
-                                            onClick={() => actions.sendStartGame(state.totalRounds)}
+                                            onClick={() => {
+                                                actions.unlockAudio();
+                                                actions.sendStartGame(state.totalRounds);
+                                            }}
                                             className="w-full bg-yellow-400 text-black py-3 rounded-xl font-black text-lg shadow-xl uppercase disabled:opacity-50 disabled:grayscale"
                                         >
                                             {getText(state.language, 'LOBBY_START_GAME')}
@@ -526,6 +531,11 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
                                     {(state.currentRound === state.totalRounds) && (
                                         <div className="bg-yellow-400 text-black text-[10px] font-black uppercase px-2 py-1 rounded-lg border-2 border-white shadow-sm animate-pulse">
                                             {getText(state.language, 'GAME_TRIPLE_POINTS')}
+                                        </div>
+                                    )}
+                                    {(state.currentRound === state.totalRounds - 1) && (
+                                        <div className="bg-yellow-400 text-black text-[10px] font-black uppercase px-2 py-1 rounded-lg border-2 border-white shadow-sm animate-pulse">
+                                            {getText(state.language, 'GAME_DOUBLE_POINTS')}
                                         </div>
                                     )}
                                 </div>

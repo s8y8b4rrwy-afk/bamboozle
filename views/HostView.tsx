@@ -61,12 +61,12 @@ export const HostView: React.FC<HostViewProps> = ({ state, actions, onHome, debu
             </div>
 
             <div className="flex gap-4 mt-8 flex-wrap justify-center">
-                <button onClick={() => { sfx.play('CLICK'); actions.addBot(); }} className="px-6 py-3 bg-blue-600/50 hover:bg-blue-600 text-white text-base md:text-xl font-bold rounded-2xl flex items-center gap-2">
+                <button onClick={() => { actions.unlockAudio(); sfx.play('CLICK'); actions.addBot(); }} className="px-6 py-3 bg-blue-600/50 hover:bg-blue-600 text-white text-base md:text-xl font-bold rounded-2xl flex items-center gap-2">
                     <Bot size={24} /> {getText(state.language, 'HOST_ADD_BOT')}
                 </button>
 
                 <button
-                    onClick={() => { sfx.play('CLICK'); actions.addAudienceBot(); }}
+                    onClick={() => { actions.unlockAudio(); sfx.play('CLICK'); actions.addAudienceBot(); }}
                     className="px-6 py-3 bg-indigo-600/50 hover:bg-indigo-600 text-white text-base md:text-xl font-bold rounded-2xl flex items-center gap-2"
                 >
                     <Users size={24} /> {getText(state.language, 'HOST_ADD_AUDIENCE_BOT')}
@@ -84,7 +84,7 @@ export const HostView: React.FC<HostViewProps> = ({ state, actions, onHome, debu
                         <div className="flex gap-4 w-full justify-center">
                             {/* ONLINE MODE TOGGLE */}
                             <button
-                                onClick={() => { sfx.play('CLICK'); actions.sendToggleOnlineMode(); }}
+                                onClick={() => { actions.unlockAudio(); sfx.play('CLICK'); actions.sendToggleOnlineMode(); }}
                                 className={`flex flex-col items-center p-4 rounded-3xl border-2 transition-all shadow-xl hover:scale-105 active:scale-95 flex-1 min-w-[140px] ${state.isOnlineMode ? 'bg-green-600/20 border-green-400' : 'bg-black/40 border-gray-500 hover:border-white hover:bg-black/60'}`}
                             >
                                 <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center transition-colors mb-2 ${state.isOnlineMode ? 'bg-white border-white' : 'border-gray-500'}`}>
