@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, Fragment } from 'react';
 import { GameState, GamePhase, Player, Expression, Emote } from '../types';
 import { Avatar } from '../components/Avatar';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -128,20 +128,22 @@ export const PointsPopup = ({ amount, label = 'PTS', placement = 'bottom' }: { a
 
 /**
  * Renders floating emotes (reactions) from other players.
+ * Mimics TikTok Live hearts: each emote spawns at the sender's avatar position,
+ * floats upward with a unique randomised S-curve wiggle, and fades out at the top.
  */
 export const EmotePopupLayer = ({ emotes }: { emotes: Emote[] }) => {
-    // Keep a local copy so emotes finish their animation even after server removes them
-    const [localEmotes, setLocalEmotes] = useState<(Emote & { addedAt: number })[]>([]);
+    type LocalEmote = Emote & { addedAt: number; drift: number[] };
+    const [localEmotes, setLocalEmotes] = useState<LocalEmote[]>([]);
     const seenIds = useRef<Set<string>>(new Set());
-    const ANIM_DURATION = 3200; // ms — must match CSS animation below
+    const ANIM_DURATION = 3600;
 
     useEffect(() => {
         emotes.forEach(e => {
             if (!seenIds.current.has(e.id)) {
                 seenIds.current.add(e.id);
-                const entry = { ...e, addedAt: Date.now() };
-                setLocalEmotes(prev => [...prev, entry]);
-                // Remove after animation finishes
+                // Generate 5 random horizontal drift offsets (px) for unique S-curve per emote
+                const drift = Array.from({ length: 5 }, () => (Math.random() - 0.5) * 40);
+                setLocalEmotes(prev => [...prev, { ...e, addedAt: Date.now(), drift }]);
                 setTimeout(() => {
                     setLocalEmotes(prev => prev.filter(le => le.id !== e.id));
                     seenIds.current.delete(e.id);
@@ -152,51 +154,56 @@ export const EmotePopupLayer = ({ emotes }: { emotes: Emote[] }) => {
 
     return (
         <div className="fixed inset-0 z-[60] pointer-events-none overflow-hidden">
-            <style>{`
-                @keyframes emote-burst {
-                    0%   { transform: translate(-50%, 0) scale(0);    opacity: 0; }
-                    12%  { transform: translate(-50%, -5vh) scale(0.7); opacity: 1; }
-                    20%  { transform: translate(-50%, -10vh) scale(0.55); opacity: 1; }
-                    85%  { opacity: 1; }
-                    100% { transform: translate(-50%, -75vh) scale(0.45); opacity: 0; }
-                }
-            `}</style>
-            {localEmotes.map((e) => {
+            {localEmotes.map(e => {
                 let expression: Expression = 'HAPPY';
                 if (e.type === 'SHOCK') expression = 'SHOCKED';
                 if (e.type === 'TOMATO') expression = 'ANGRY';
 
                 const emojis: Record<string, string> = { LAUGH: '😂', SHOCK: '😮', LOVE: '❤️', TOMATO: '🍅' };
+                const [d1, d2, d3, d4, d5] = e.drift;
+                // Unique keyframe name per emote (id is alphanumeric safe after strip)
+                const kf = `ef${e.id.replace(/[^a-z0-9]/gi, '')}`;
 
                 return (
-                    <div
-                        key={e.id}
-                        className="absolute flex flex-col items-center"
-                        style={{
-                            // Pin to the avatar's exact position in the viewport
-                            left: `${e.x}%`,
-                            bottom: `${e.y}%`,
-                            // Scale up from the avatar's centre-bottom
-                            transformOrigin: 'bottom center',
-                            animation: `emote-burst ${ANIM_DURATION}ms cubic-bezier(0.22, 1, 0.36, 1) forwards`,
-                            willChange: 'transform, opacity',
-                        }}
-                    >
-                        <div className="relative">
-                            <Avatar seed={e.senderSeed || 'guest'} size={120} expression={expression} className="filter drop-shadow-2xl" />
-                            <div className="absolute -top-4 -right-4 text-4xl bg-white rounded-full p-1 shadow-md">
-                                {emojis[e.type] ?? '😂'}
+                    <Fragment key={e.id}>
+                        {/* Inject a unique keyframe for this emote's drift path */}
+                        <style>{`
+                            @keyframes ${kf} {
+                                0%   { transform: translate(-50%, 0)                         scale(0.6);  opacity: 0;   }
+                                6%   { transform: translate(calc(-50% + ${d1}px), -4vh)     scale(1.0);  opacity: 1;   }
+                                25%  { transform: translate(calc(-50% + ${d2}px), -18vh)    scale(1.0);  opacity: 1;   }
+                                50%  { transform: translate(calc(-50% + ${d3}px), -35vh)    scale(0.98); opacity: 1;   }
+                                75%  { transform: translate(calc(-50% + ${d4}px), -52vh)    scale(0.95); opacity: 0.7; }
+                                100% { transform: translate(calc(-50% + ${d5}px), -68vh)    scale(0.92); opacity: 0;   }
+                            }
+                        `}</style>
+                        <div
+                            className="absolute flex flex-col items-center"
+                            style={{
+                                left: `${e.x}%`,
+                                bottom: `${e.y}%`,
+                                animation: `${kf} ${ANIM_DURATION}ms cubic-bezier(0.33, 0, 0.66, 1) forwards`,
+                                willChange: 'transform, opacity',
+                            }}
+                        >
+                            <div className="relative">
+                                {/* Match the avatar strip size */}
+                                <Avatar seed={e.senderSeed || 'guest'} size={56} expression={expression} className="filter drop-shadow-xl" />
+                                <div className="absolute -top-2 -right-2 text-xl bg-white rounded-full p-0.5 shadow-md leading-none">
+                                    {emojis[e.type] ?? '😂'}
+                                </div>
+                            </div>
+                            <div className="bg-black/50 text-white px-2 py-0.5 rounded-full text-[10px] font-bold mt-1 backdrop-blur-sm uppercase whitespace-nowrap">
+                                {e.senderName}
                             </div>
                         </div>
-                        <div className="bg-black/60 text-white px-3 py-1 rounded-full text-sm font-bold mt-2 backdrop-blur-sm uppercase whitespace-nowrap">
-                            {e.senderName}
-                        </div>
-                    </div>
+                    </Fragment>
                 );
             })}
         </div>
     );
 };
+
 
 /**
  * Component for selecting a category when it's a player's turn.

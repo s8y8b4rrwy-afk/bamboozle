@@ -104,6 +104,7 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
     const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
     const [showReactions, setShowReactions] = useState(false);
     const reactionTimerRef = useRef<NodeJS.Timeout | null>(null);
+    const lastEmoteRef = useRef<number>(0); // Cooldown: prevent multi-fire on one click
 
     useEffect(() => {
         const handleResize = () => setIsMobile(window.innerWidth < 768);
@@ -152,6 +153,11 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
     }, [state.roomCode, joinStep]);
 
     const handleEmote = (type: 'LAUGH' | 'SHOCK' | 'LOVE' | 'TOMATO') => {
+        // Cooldown: ignore if fired within 800ms of last emote (double-tap / event bubbling)
+        const now = Date.now();
+        if (now - lastEmoteRef.current < 800) return;
+        lastEmoteRef.current = now;
+
         const name = me ? me.name : (amAudience ? amAudience.name : 'Unknown');
         const seed = me ? me.avatarSeed : (amAudience ? amAudience.avatarSeed : 'unknown');
 
@@ -216,7 +222,6 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
             <GameBackground className="h-full flex flex-col overflow-y-auto pb-safe-bottom">
                 <TopBar />
                 <div className="flex-1 flex flex-col items-center justify-center p-6 relative min-h-[60vh]">
-                    <EmotePopupLayer emotes={state.emotes} />
                     <div className="w-full max-w-sm space-y-6 relative z-10">
                         <h1 className="text-3xl md:text-5xl font-display text-center text-yellow-400 mb-8 drop-shadow-lg">Bamboozle</h1>
 
