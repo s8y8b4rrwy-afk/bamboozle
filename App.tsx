@@ -12,6 +12,7 @@ import { Avatar } from './components/Avatar'; // Import Avatar
 import { NARRATOR_SEED } from './constants'; // Import Seed
 import { Expression } from './types'; // Import Expression Type
 import { GameBackground } from './views/GameSharedComponents'; // Import GameBackground
+import { GameButton } from './components/ui/GameButton';
 
 const App: React.FC = () => {
   return (
@@ -98,60 +99,70 @@ const HomeSelector = ({ onSelect, isMobile, language, setLanguage }: { onSelect:
         <div className="w-full max-w-sm md:max-w-2xl space-y-3 md:space-y-0 relative z-20">
           {/* Main Action Buttons */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-6">
-            <button
+            <GameButton
+              variant="purple"
+              size="xl"
               onClick={() => onSelect('HOST')}
-              className="group relative bg-purple-600 hover:bg-purple-500 text-white p-4 md:p-8 rounded-3xl md:rounded-[2.5rem] border-b-8 border-purple-800 hover:border-purple-700 transition-all duration-200 flex flex-col items-center shadow-2xl active:translate-y-2 active:border-b-0"
+              className="w-full h-full"
             >
-              <div className="bg-white/20 p-4 md:p-6 rounded-full mb-3 md:mb-6 group-hover:scale-110 transition-transform">
-                <Monitor className="text-white w-6 h-6 md:w-10 md:h-10" />
+              <div className="bg-white/20 p-3 md:p-4 rounded-full mb-1 group-hover:scale-110 transition-transform">
+                <Monitor className="text-white w-6 h-6 md:w-8 md:h-8" />
               </div>
-              <h2 className="text-xl md:text-3xl font-black mb-1 md:mb-2 uppercase tracking-wide">{getText(language, 'HOME_HOST_GAME')}</h2>
-              <p className="text-xs md:text-sm font-bold opacity-80 uppercase tracking-widest">{isMobile ? getText(language, 'HOME_HOST_DESC_MOBILE') : getText(language, 'HOME_HOST_DESC_DESKTOP')}</p>
-            </button>
+              <h2 className="text-xl md:text-3xl font-black mb-1 uppercase tracking-wide">{getText(language, 'HOME_HOST_GAME')}</h2>
+              <p className="text-[10px] md:text-xs font-bold opacity-80 uppercase tracking-widest">{isMobile ? getText(language, 'HOME_HOST_DESC_MOBILE') : getText(language, 'HOME_HOST_DESC_DESKTOP')}</p>
+            </GameButton>
 
-            <button
+            <GameButton
+              variant="blue"
+              size="xl"
               onClick={() => onSelect('PLAYER')}
-              className="group relative bg-blue-600 hover:bg-blue-500 text-white p-4 md:p-8 rounded-3xl md:rounded-[2.5rem] border-b-8 border-blue-800 hover:border-blue-700 transition-all duration-200 flex flex-col items-center shadow-2xl active:translate-y-2 active:border-b-0"
+              className="w-full h-full"
             >
-              <div className="bg-white/20 p-4 md:p-6 rounded-full mb-3 md:mb-6 group-hover:scale-110 transition-transform">
-                <Smartphone className="text-white w-6 h-6 md:w-10 md:h-10" />
+              <div className="bg-white/20 p-3 md:p-4 rounded-full mb-1 group-hover:scale-110 transition-transform">
+                <Smartphone className="text-white w-6 h-6 md:w-8 md:h-8" />
               </div>
-              <h2 className="text-xl md:text-3xl font-black mb-1 md:mb-2 uppercase tracking-wide">{getText(language, 'HOME_JOIN_GAME')}</h2>
-              <p className="text-xs md:text-sm font-bold opacity-80 uppercase tracking-widest">{getText(language, 'HOME_JOIN_DESC')}</p>
-            </button>
+              <h2 className="text-xl md:text-3xl font-black mb-1 uppercase tracking-wide">{getText(language, 'HOME_JOIN_GAME')}</h2>
+              <p className="text-[10px] md:text-xs font-bold opacity-80 uppercase tracking-widest">{getText(language, 'HOME_JOIN_DESC')}</p>
+            </GameButton>
           </div>
 
           {/* Utility Buttons */}
           <div className="grid grid-cols-2 gap-3 py-6 md:gap-6">
-            <button
+            <GameButton
+              variant="pink"
+              size="lg"
               onClick={toggleLanguage}
-              className="group relative bg-pink-600 hover:bg-pink-500 text-white p-4 md:p-6 rounded-3xl md:rounded-[2rem] border-b-4 md:border-b-8 border-pink-800 hover:border-pink-700 transition-all duration-200 flex flex-col items-center shadow-xl active:translate-y-2 active:border-b-0"
+              className="w-full"
             >
               <Globe className="text-pink-200 group-hover:text-white w-6 h-6 md:w-8 md:h-8 mb-2" />
               <h2 className="text-sm md:text-xl font-black uppercase tracking-wide">{language === 'en' ? 'ENGLISH' : 'ΕΛΛΗΝΙΚΑ'}</h2>
-            </button>
+            </GameButton>
 
-            <button
+            <GameButton
+              variant="gray"
+              size="lg"
               onClick={() => navigate('/settings')}
-              className="group relative bg-gray-700 hover:bg-gray-600 text-white p-4 md:p-6 rounded-3xl md:rounded-[2rem] border-b-4 md:border-b-8 border-gray-900 hover:border-gray-800 transition-all duration-200 flex flex-col items-center shadow-xl active:translate-y-2 active:border-b-0"
+              className="w-full"
             >
               <SettingsIcon className="text-gray-300 group-hover:text-white w-6 h-6 md:w-8 md:h-8 mb-2" />
               <h2 className="text-sm md:text-xl font-black uppercase tracking-wide">Settings</h2>
-            </button>
+            </GameButton>
           </div>
 
           {/* Test Mode Button */}
           {!isMobile && import.meta.env.DEV && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-6 md:mt-6">
-              <button
+              <GameButton
+                variant="orange"
+                size="lg"
                 onClick={() => onSelect('TEST')}
-                className="group relative bg-orange-600 hover:bg-orange-500 text-white p-4 md:p-6 rounded-3xl md:rounded-[2rem] border-b-4 md:border-b-8 border-orange-800 hover:border-orange-700 transition-all duration-200 flex flex-col items-center shadow-xl active:translate-y-2 active:border-b-0 md:col-span-2"
+                className="md:col-span-2"
               >
                 <div className="flex items-center gap-3">
                   <SplitSquareHorizontal className="text-orange-200 group-hover:text-white w-6 h-6" />
                   <h2 className="text-lg md:text-2xl font-black uppercase tracking-wide">{getText(language, 'HOME_TEST_MODE')}</h2>
                 </div>
-              </button>
+              </GameButton>
             </div>
           )}
         </div>
