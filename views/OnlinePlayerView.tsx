@@ -393,7 +393,7 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
             {/* MAIN CONTENT AREA - FlexGrow to fill space */}
             <div className={`
                 flex-1 relative flex flex-col w-full max-w-6xl mx-auto min-h-0 pb-safe-bottom justify-center
-                ${(state.phase === GamePhase.VOTING) ? 'overflow-hidden' : 'overflow-y-auto no-scrollbar'}
+                ${(state.phase === GamePhase.VOTING || state.phase === GamePhase.REVEAL) ? 'overflow-hidden' : 'overflow-y-auto no-scrollbar'}
             `}>
 
                 {/* 1. LOBBY */}
@@ -473,14 +473,12 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
                         <div className="w-full md:w-96 flex flex-col justify-center shrink-0 max-w-md mx-auto z-20 md:mt-0">
                             {me && (
                                 <div className="w-full flex flex-col gap-3 md:gap-4 mt-6 md:mt-0 pb-safe-bottom md:pb-0">
-                                    <Button
+                                    <button
                                         onClick={actions.sendToggleReady}
-                                        variant={me?.isReady ? 'secondary' : 'success'}
-                                        className={`w-full ${me?.isReady ? '!bg-gray-700 !text-gray-400 !border-gray-800' : ''}`}
-                                        size="lg"
+                                        className={`w-full py-4 rounded-xl font-black text-lg shadow-xl uppercase transition-all duration-150 active:scale-95 ${me?.isReady ? 'bg-gray-600 hover:bg-gray-500 text-gray-300' : 'bg-green-500 hover:bg-green-400 text-white'}`}
                                     >
                                         {me?.isReady ? getText(state.language, 'LOBBY_IS_READY') : getText(state.language, 'LOBBY_READY_UP')}
-                                    </Button>
+                                    </button>
                                     {isVip && (
                                         <div className="flex flex-col gap-4 w-full">
                                             <div className="flex items-center justify-between bg-black/40 p-3 rounded-xl border border-white/10">
@@ -738,7 +736,7 @@ export const OnlinePlayerView: React.FC<OnlinePlayerViewProps> = ({ state, actio
 
                 {/* 5. REVEAL & LEADERBOARD (Shared) */}
                 {state.phase === GamePhase.REVEAL && (
-                    <div className="flex-1 flex flex-col items-center p-2 md:p-3 min-h-0 w-full overflow-hidden">
+                    <div className="flex-1 flex flex-col items-center p-2 md:p-3 px-6 md:px-8 min-h-0 w-full overflow-hidden">
                         <RevealSequence state={state} actions={actions} setGalleryOverrides={() => { }} isHost={isVip} />
                     </div>
                 )}

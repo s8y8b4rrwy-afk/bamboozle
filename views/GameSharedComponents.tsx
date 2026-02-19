@@ -354,12 +354,12 @@ export const RevealSequence = ({ state, actions, setGalleryOverrides, isHost }: 
                     key={currentAnswer.id}
                     initial={{ scale: 0.8, opacity: 0, rotate: -2 }}
                     animate={{ scale: 1, opacity: 1, rotate: 0 }}
-                    exit={{ scale: 1.2, opacity: 0 }}
+                    exit={{ scale: 0.9, opacity: 0 }}
                     transition={{ type: 'spring', bounce: 0.4 }}
-                    className={`relative w-full min-h-0 flex-1 max-w-xl mx-auto rounded-3xl md:rounded-[2rem] border-4 flex flex-col items-center justify-between text-center transition-colors duration-500 uppercase overflow-hidden shadow-2xl
+                    className={`relative w-full min-h-0 flex-1 max-w-xl mx-auto mb-2 rounded-3xl md:rounded-[2rem] border-4 flex flex-col items-center justify-between text-center transition-colors duration-500 uppercase overflow-hidden
                       ${isTruth && phase === 'AUTHOR'
-                            ? 'bg-green-600 border-green-300 text-white shadow-[0_20px_60px_-15px_rgba(22,163,74,0.6)]'
-                            : 'bg-white border-gray-200 text-black shadow-[0_20px_60px_-15px_rgba(255,255,255,0.4)]'}
+                            ? 'bg-green-600 border-green-300 text-white shadow-[0_0_30px_2px_rgba(22,163,74,0.35)]'
+                            : 'bg-white border-gray-200 text-black shadow-[0_0_30px_2px_rgba(255,255,255,0.25)]'}
                   `}
                 >
                     <div className="w-full h-full flex flex-col items-center p-4 md:p-6 gap-2">
@@ -444,8 +444,8 @@ export const RevealSequence = ({ state, actions, setGalleryOverrides, isHost }: 
                             )}
                         </div>
 
-                        {/* Area 3: Author Box at bottom of card — inline (no absolute) */}
-                        <div className="shrink-0 w-full flex flex-wrap items-center justify-center gap-2 pb-1">
+                        {/* Area 3: Author Box at bottom of card — inline (no absolute), with reserved height to prevent layout shift */}
+                        <div className="shrink-0 w-full flex flex-wrap items-center justify-center gap-2 pb-1 min-h-[3.5rem] md:min-h-[4rem]">
                             {/* Written by player(s) — with inline lie bonus points */}
                             {phase === 'AUTHOR' && !isTruth && authors.length > 0 && authors.map((author, idx) => (
                                 <div key={author.id} className="flex flex-col items-center gap-1">

@@ -633,12 +633,12 @@ export const PlayerView: React.FC<PlayerViewProps> = ({ state, actions, playerId
                         placeholder="MAKE IT BELIEVABLE..."
                         value={lieText}
                         autoComplete="off"
-                        autoCorrect="off"
-                        autoCapitalize="characters"
-                        spellCheck={false}
+                        autoCorrect="on"
+                        autoCapitalize="sentences"
+                        spellCheck={true}
                         inputMode="text"
-                        onChange={e => setLieText(e.target.value.toUpperCase())}
-                        onCompositionEnd={(e) => setLieText((e.target as HTMLTextAreaElement).value.toUpperCase())}
+                        onChange={e => setLieText(e.target.value)}
+                        onCompositionEnd={(e) => setLieText((e.target as HTMLTextAreaElement).value)}
                     />
                 </div>
 
