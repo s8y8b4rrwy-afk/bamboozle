@@ -5,15 +5,18 @@ import { Clock, Users, CheckCircle, Lock, Play, Minus, Plus, RotateCcw, Crown, H
 import { motion, AnimatePresence } from 'framer-motion';
 import { sfx } from '../services/audioService';
 import { getText } from '../i18n';
-import { GameBackground } from './GameSharedComponents';
+import { GameBackground, ConnectionOverlay } from './GameSharedComponents';
 
 interface PlayerViewProps {
     state: GameState;
     actions: any;
     playerId: string;
+    hostDisconnected?: boolean;
+    roomClosed?: boolean;
+    onHome?: () => void;
 }
 
-export const PlayerView: React.FC<PlayerViewProps> = ({ state, actions, playerId }) => {
+export const PlayerView: React.FC<PlayerViewProps> = ({ state, actions, playerId, hostDisconnected, roomClosed, onHome }) => {
     // Game Interactions State
     const [lieText, setLieText] = useState('');
     const [showTruthWarning, setShowTruthWarning] = useState(false);
@@ -124,9 +127,11 @@ export const PlayerView: React.FC<PlayerViewProps> = ({ state, actions, playerId
         </div>
     );
 
+    let content;
+
     // --- UNIFIED JOIN FLOW ---
     if (!isJoined) {
-        return (
+        content = (
             <GameBackground className="h-full min-h-safe-screen flex flex-col items-center justify-center p-6 relative overflow-hidden">
                 <div className="w-full max-w-md space-y-8 relative z-10 w-full">
                     <div className="text-center">
@@ -304,13 +309,13 @@ export const PlayerView: React.FC<PlayerViewProps> = ({ state, actions, playerId
     }
 
     // --- LOBBY WAIT (READY/START) ---
-    if (state.phase === GamePhase.LOBBY && me) {
+    else if (state.phase === GamePhase.LOBBY && me) {
         const allPlayers = Object.values(state.players);
         const allReady = allPlayers.length > 0 && allPlayers.every(p => p.isReady);
         const amIHost = state.vipId === playerId;
         const readyCount = allPlayers.filter(p => p.isReady).length;
 
-        return (
+        content = (
             <div className="h-full bg-indigo-900 text-white flex flex-col items-center pt-safe-top pb-safe-bottom px-6 min-h-safe-screen relative overflow-hidden">
                 <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle, #ffffff 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
 
@@ -383,8 +388,8 @@ export const PlayerView: React.FC<PlayerViewProps> = ({ state, actions, playerId
     }
 
     // --- AUDIENCE VIEW ---
-    if (amAudience) {
-        return (
+    else if (amAudience) {
+        content = (
             <div className="h-full bg-slate-900 text-white flex flex-col relative overflow-hidden min-h-safe-screen">
                 {/* Header */}
                 <div className="bg-slate-800/80 backdrop-blur-md px-6 pt-safe-top pb-4 flex items-center justify-between border-b border-white/5 z-20">
@@ -457,14 +462,14 @@ export const PlayerView: React.FC<PlayerViewProps> = ({ state, actions, playerId
     }
 
     // --- PLAYER: CATEGORY SELECTION ---
-    if (state.phase === GamePhase.CATEGORY_SELECT) {
+    else if (state.phase === GamePhase.CATEGORY_SELECT) {
         const isSelector = state.categorySelection?.selectorId === playerId;
         const options = state.categorySelection?.options || [];
         const hasSelected = !!state.categorySelection?.selected;
 
         if (isSelector) {
             if (hasSelected) {
-                return (
+                content = (
                     <div className="h-full bg-indigo-900 text-white flex flex-col items-center justify-center p-8 text-center min-h-safe-screen">
                         <h2 className="text-4xl font-black mb-4 uppercase drop-shadow-lg">Locked In!</h2>
                         <p className="text-xl opacity-75 uppercase font-bold tracking-wider">Good luck...</p>
@@ -475,7 +480,7 @@ export const PlayerView: React.FC<PlayerViewProps> = ({ state, actions, playerId
                 );
             }
 
-            return (
+            content = (
                 <div className="h-full bg-indigo-900 text-white flex flex-col p-6 pt-safe-top pb-safe-bottom min-h-safe-screen overflow-hidden">
                     <div className="text-center mb-8 mt-4 relative z-10">
                         <div className="inline-block bg-yellow-400 text-indigo-900 px-4 py-1 rounded-full font-black uppercase text-sm mb-2 shadow-lg">Your Turn</div>
@@ -503,7 +508,7 @@ export const PlayerView: React.FC<PlayerViewProps> = ({ state, actions, playerId
         } else {
             const selectorName = state.categorySelection?.selectorId ? state.players[state.categorySelection.selectorId]?.name : 'Someone';
 
-            return (
+            content = (
                 <div className="h-full bg-indigo-900 text-white flex flex-col items-center justify-center p-8 text-center space-y-8 min-h-safe-screen">
                     <div className="relative">
                         <div className="absolute inset-0 bg-white/10 rounded-full blur-3xl animate-pulse" />
@@ -524,7 +529,7 @@ export const PlayerView: React.FC<PlayerViewProps> = ({ state, actions, playerId
     }
 
     // --- PLAYER: WAITING SCREENS ---
-    if ((state.phase === GamePhase.WRITING && state.submittedLies[playerId]) ||
+    else if ((state.phase === GamePhase.WRITING && state.submittedLies[playerId]) ||
         (state.phase === GamePhase.VOTING && me.currentVote) ||
         state.phase === GamePhase.INTRO ||
         state.phase === GamePhase.REVEAL ||
@@ -542,7 +547,7 @@ export const PlayerView: React.FC<PlayerViewProps> = ({ state, actions, playerId
 
         const isVip = state.vipId === playerId;
 
-        return (
+        content = (
             <div className="h-full bg-indigo-950 text-white flex flex-col items-center p-8 pt-safe-top pb-safe-bottom min-h-safe-screen relative overflow-hidden">
                 <div className="absolute inset-0 opacity-20 pointer-events-none bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-purple-800 via-indigo-950 to-black" />
 
@@ -593,8 +598,8 @@ export const PlayerView: React.FC<PlayerViewProps> = ({ state, actions, playerId
     }
 
     // --- PLAYER: WRITING PHASE ---
-    if (state.phase === GamePhase.WRITING) {
-        return (
+    else if (state.phase === GamePhase.WRITING) {
+        content = (
             <div className="h-full bg-indigo-950 text-white p-6 pt-safe-top pb-safe-bottom flex flex-col relative overflow-hidden min-h-safe-screen">
                 <div className="absolute inset-0 z-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle, #ffffff 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
 
@@ -654,10 +659,10 @@ export const PlayerView: React.FC<PlayerViewProps> = ({ state, actions, playerId
     }
 
     // --- PLAYER: VOTING PHASE ---
-    if (state.phase === GamePhase.VOTING) {
+    else if (state.phase === GamePhase.VOTING) {
         const choices = state.roundAnswers.filter(a => !a.authorIds.includes(playerId));
 
-        return (
+        content = (
             <div className="h-full bg-slate-900 text-white p-4 pt-safe-top pb-safe-bottom flex flex-col min-h-safe-screen relative overflow-hidden">
                 <div className="absolute inset-0 z-0 opacity-10 bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-blue-500 to-transparent" />
 
@@ -700,5 +705,20 @@ export const PlayerView: React.FC<PlayerViewProps> = ({ state, actions, playerId
         );
     }
 
-    return <div>Loading...</div>;
+    else {
+        content = <div>Loading...</div>;
+    }
+
+    return (
+        <>
+            {content}
+            <ConnectionOverlay
+                hostDisconnected={hostDisconnected || false}
+                roomClosed={roomClosed || false}
+                language={state.language}
+                roomCode={state.roomCode}
+                onHomeClick={onHome}
+            />
+        </>
+    );
 };

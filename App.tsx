@@ -278,7 +278,7 @@ const GamePlayerWrapper = ({ onHome, language, setLanguage }: { onHome: () => vo
 
   // Regular Player View doesn't need isSpeaking yet (it's mobile only, no narrator usually)
   // But if we want to add it later we can.
-  return <PlayerView state={state} actions={actions} playerId={playerId} />;
+  return <PlayerView state={state} actions={actions} playerId={playerId} hostDisconnected={hostDisconnected} roomClosed={roomClosed} onHome={onHome} />;
 };
 
 export default App;

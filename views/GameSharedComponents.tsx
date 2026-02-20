@@ -698,12 +698,12 @@ export const ConnectionOverlay = ({
                     </div>
                 )}
 
-                {/* Home button for room closed */}
-                {roomClosed && onHomeClick && (
+                {/* Home button */}
+                {onHomeClick && (
                     <motion.button
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.5 }}
+                        transition={{ delay: roomClosed ? 0.5 : 3.0 }}
                         onClick={onHomeClick}
                         className="mt-4 bg-yellow-400 hover:bg-yellow-300 text-black px-8 py-4 rounded-2xl font-black text-xl uppercase shadow-lg active:scale-95 transition-transform"
                     >
